@@ -12,7 +12,11 @@ Astra developer tool(ADT) is to setup Astra Control Services(ACS) on OS X, WSL a
 
 ## Get Astra developer tool
 
+### For OS X and Linux system
 Download [astra](./astra) file, name it `astra` and `chmod +x astra`. It is best to move `astra` to a directory in your $PATH so that you do not have to refer its location when running it.
+
+### For Windows system
+Download [astra.cmd](./astra.cmd) file, name it `astra.cmd`. It is best to move `astra.cmd` to a directory in your %PATH% so that you do not have to refer its location when running it.
 
 ## One-step ACS deployment
 All the command should run from your polaris root directory
