@@ -152,7 +152,7 @@ function setupDefaults() {
   CLUSTERNAME="astra"
   NAMESPACE="pcloud"
   CERTNAME="secure-testing-cert"
-  WORKDIR="$(pwd)/vars"
+  WORKDIR=${WORKDIR:-/tmp/astra}
   CERTDOMAINNAME="integration.astra.netapp.io"
 
   SOURCETAG=""
@@ -936,7 +936,7 @@ function processProxy() {
   
   mkdir -p "${WORKDIR}"
   # Create the the nginx configuration
-  cat <<EOF > ${WORKDIR}/kubeproxy.conf
+  cat <<EOF > ${WORKDIR}/proxy.conf
 worker_processes  5;
 events {
   worker_connections  4096;
@@ -948,7 +948,7 @@ EOF
 
   # Now start up the proxy container
   thecmd=$(echo docker run --name kubeproxy -d --network=kind ${PORTMAP} \
-    -v ${WORKDIR}/kubeproxy.conf:/etc/nginx/nginx.conf:ro nginx:latest)
+    -v ${WORKDIR}/proxy.conf:/etc/nginx/nginx.conf:ro nginx:latest)
   eval ${thecmd}
   echo "${MSG}"
 }
