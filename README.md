@@ -15,8 +15,11 @@ Astra developer tool(ADT) is to setup Astra Control Services(ACS) on OS X, WSL a
 ```
 curl -o astra -sL https://tinyurl.com/yc89kjvf && chmod +x astra
 ```
+It is best to move `astra` to a directory in your $PATH
 
 ## One-step ACS deployment
+All the command should run from your polaris root directory
+
 1. ### Create k8s cluster and stand up ACS
 ```
    astra up
