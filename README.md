@@ -9,14 +9,10 @@ Astra developer tool(ADT) is to setup Astra Control Services(ACS) on OS X, WSL a
    * Ensure `/etc/hosts` file has entry `127.0.0.1 integration.astra.netapp.io`
    * Login to NetApp docker registry to avoid image pulling failures
     `docker login -u <your SSO login> https://docker.repo.eng.netapp.com/v2`
-   * Utilities required by Astra Control Development
-      [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-kubectl-binary-with-curl-on-linux) [helm](https://helm.sh/docs/intro/install/) [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) [docker](https://docs.docker.com/get-docker/)
-   * Utilities required by this tool
-      [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installing-from-release-binaries) [openssl](#)
 
 ## Get Astra developer tool
 
-Copy [astra](./astra) and [k8stool](./k8stool) to a directory which is in your $PATH, such as `~/.local/bin`, run `chmod +x astra k8stool`, then use `astra` like any other command line tool. You can also simply run the tool from polaris `scripts/k8stool` directory once the tool merges into the integration branch
+Copy [astra](./astra) to a directory which is in your $PATH, such as `~/.local/bin`, run `chmod +x astra `, then use `astra` like any other command line tool. You can also simply run the tool from polaris `scripts/k8stool` directory once the tool merges into the integration branch
 
 ## One-step ACS deployment
 1. ### Create k8s cluster and stand up ACS
