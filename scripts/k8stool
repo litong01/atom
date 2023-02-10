@@ -1,0 +1,1023 @@
+#!/bin/bash
+# This is a tool to setup kubernetes cluster using kind
+# it does the following:
+#   1. Create k8s cluster or clusters based on configuration
+#   2. Add load balancer to your k8s cluster
+#   3. Create self signed certificate to a cluster in a given namespace
+#   4. Network your clusters if you decided to create multiple ones
+#   5. Setup k8s cluster image registry to load up your own images
+#   6. Create proxy to route traffic from your host machine to your k8s cluster
+#   7. Remove clusters
+ColorOff='\033[0m'        # Text Reset
+Black='\033[0;30m'        # Black
+Red='\033[0;31m'          # Red
+Green='\033[0;32m'        # Green
+SCRIPTDIR=$(dirname $0)
+APPNAME=$(basename "$0")
+
+#====================Help modules===============================
+function clustersHelp() {
+  echo ""
+  echo "Usage: create or delete multiple clusters"
+  echo "    ${APPNAME} clusters [options]"
+  echo ""
+  echo -e "Command ${Green}clusters${ColorOff} Options:"
+  echo "    -d|--delete        - delete a specified cluster or all kind clusters"
+  echo "       --config-file   - name of the cluster config file"
+  echo "    -t|--target-dir    - target kubeconfig directory"
+  echo "    -l|--image-repo    - load the dev image for all cluster"
+  echo "    -w|--worker-nodes  - additional worker nodes, default 0"
+  echo "       --registry-name - registry name, default is kind-registry"
+  echo "       --registry-port - registry port, default is 5001"
+}
+function clusterHelp() {
+  echo ""
+  echo "Usage: create or delete a cluster"
+  echo "    ${APPNAME} cluster [options]"
+  echo ""
+  echo -e "Command ${Green}cluster${ColorOff} Options:"
+  echo "    -d|--delete         - delete a specified cluster or all kind clusters"
+  echo "       --cluster-name   - name of the k8s cluster to be created"
+  echo "    -r|--k8s-release    - the release of the k8s to setup, latest available if not given"
+  echo "    -s|--ip-octet       - the 2rd to the last octet for public ip addresses, 255 if not given, valid range: 0-255"
+  echo "    -i|--ip-family      - ip family to be supported, default is ipv4 only. Value should be ipv4, ipv6, or dual"
+  echo "    -p|--pod-subnet     - pod subnet, ex. 10.244.0.0/16"
+  echo "       --service-subnet - service subnet, ex. 10.96.0.0/16"
+  echo "       --cni            - CNI plugin, KindNet or Calico, default is KindNet"
+  echo "       --load-balancer  - deploy load balancer, default false"
+  echo "    -w|--worker-nodes   - additional worker nodes, default 0"
+}
+function proxyHelp() {
+  echo ""
+  echo "Usage: create a proxy for given port maps"
+  echo "    ${APPNAME} proxy [options]"
+  echo ""
+  echo -e "Command ${Green}proxy${ColorOff} Options:"
+  echo "    -d|--delete         - delete the proxy"
+  echo "       --cluster-name   - the cluster name"
+  echo "       --context        - kubernetes context, kind-{clustname} if not given"
+  echo "       --targetports    - the service port maps"
+}
+function certHelp() {
+  echo ""
+  echo "Usage: "
+  echo "    ${APPNAME} cert [options]"
+  echo ""
+  echo -e "Command ${Green}cert${ColorOff} Options:"
+  echo "    -d|--delete         - delete the specified cert from cluster namespace"
+  echo "       --namespace      - namespace to be used, will create namespace if not exist"
+  echo "       --cluster-name   - the cluster name"
+  echo "       --context        - kubernetes context, kind-{clustname} if not given"
+  echo "       --certname       - the cert name to be used"
+  echo "       --certdomain     - the cert host fqdn"
+  echo "       --workdir        - directory to save generated certs and keys"
+}
+function imageHelp() {
+  echo ""
+  echo "Usage: load or push images onto a cluster or image repository"
+  echo "    ${APPNAME} image [options]"
+  echo ""
+  echo -e "Command ${Green}image${ColorOff} Options:"
+  echo "       --source-tag     - source tag of the image"
+  echo "       --load-or-push   - load to node or push to repo, default to push"
+}
+
+function printHelp() {
+  if [[ "${1}" == "true" ]]; then
+    thecmd=$(echo ${CMD}Help)
+    eval ${thecmd}
+    echo ""
+  elif [[ -z "${CMD}" ]] || [[ "-h" == "${CMD}" ]] || [[ "--help" == "${CMD}" ]]; then
+    echo ""
+    echo "Usage: "
+    echo "    ${APPNAME} <cmd> [options]"
+    echo ""
+    echo "Where:"
+    echo -e "   cmd - one of ${Green}cluster, proxy, cert, image, user, clusters${ColorOff} command"
+    echo "   options - command parameters"
+    echo ""
+    echo -e "Run ${Green}${APPNAME} <cmd> -h${ColorOff} to see details"
+    echo ""
+  fi
+}
+
+# Pick the first parameter as the subcommand, and validate. If it does not equal to
+# one of the supported, quit immediately
+CMD=$1
+shift
+
+function validateCMD() {
+  cmd=$1
+  allCommands=("cluster" "proxy" "cert" "image" "user" "clusters")
+  ccmd=""
+  for item in "${allCommands[@]}"; do
+    if [[ "${cmd}" == "${item}" ]]; then
+      ccmd="${cmd}"
+      isValidCMD="true"
+      break
+    fi
+  done
+  if [[ -z "${ccmd}" ]]; then
+    if [[ "${cmd}" != "-h" ]] && [[ "${cmd}" != "--help" ]] && [[ "${cmd}" != "" ]]; then
+      echo ""
+      echo -e "ERROR: ${Red}${cmd}${ColorOff} is not a supported command!"
+    fi
+    CMD=""
+    printHelp "${isValidCMD}"
+    exit 1
+  fi
+}
+
+# Setup default values, this function sets up all the default values for every command
+# May not be used by all commands, each of the value should be override by command line
+# parameters
+function setupDefaults() {
+  TARGETDIR="$(pwd)"
+  TOPOLOGY="$(pwd)/topology.json"
+  TOPOLOGYCONTENT=""
+  ACTION=""
+  LOADIMAGE="true"
+  WORKERNODES=0
+
+  K8SRELEASE=""
+  IPSPACE=255
+  IPFAMILY="ipv4"
+  PODSUBNET=""
+  SERVICESUBNET=""
+  ACTION=""
+  CNI=""
+  WORKERNODES=0
+  LOADBALANCER="false"
+
+  CLUSTERNAME="astra"
+  NAMESPACE="pcloud"
+  CERTNAME="secure-testing-cert"
+  WORKDIR="$(pwd)/vars"
+  CERTDOMAINNAME="integration.astra.netapp.io"
+
+  SOURCETAG=""
+  LOAD="false"
+
+  UNAME=""
+  GNAME=""
+}
+
+# This method should be called after all the command line parameters have been processed
+function setupWithParameters() {
+REGISTRY_NAME="${REGISTRY_NAME:-kind-registry}"
+REGISTRY_PORT="${REGISTRY_PORT:-5001}"
+
+FEATURES=$(cat << EOF
+featureGates:
+  MixedProtocolLBService: true
+  GRPCContainerProbe: true
+kubeadmConfigPatches:
+  - |
+    apiVersion: kubeadm.k8s.io/v1beta2
+    kind: ClusterConfiguration
+    metadata:
+      name: config
+    etcd:
+      local:
+        # Run etcd in a tmpfs (in RAM) for performance improvements
+        dataDir: /tmp/kind-cluster-etcd
+    # We run single node, drop leader election to reduce overhead
+    controllerManagerExtraArgs:
+      leader-elect: "false"
+    schedulerExtraArgs:
+      leader-elect: "false"
+    apiServer:
+      extraArgs:
+        "service-account-issuer": "kubernetes.default.svc"
+        "service-account-signing-key-file": "/etc/kubernetes/pki/sa.key"
+containerdConfigPatches:
+  - |-
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:${REGISTRY_PORT}"]
+      endpoint = ["http://${REGISTRY_NAME}:5000"]
+EOF
+)
+}
+
+# Check prerequisites
+function checkRequiredTools() {
+  requisites=("kubectl" "kind" "docker" "openssl" "helm")
+  for item in "${requisites[@]}"; do
+    if [[ -z $(which "${item}") ]]; then
+      echo "${item} cannot be found on your system, please install ${item}"
+      exit 1
+    fi
+  done
+}
+
+# Check required tools
+checkRequiredTools
+
+# Setup all default
+setupDefaults
+
+# Validate the command
+validateCMD "${CMD}"
+
+# Handling parameters
+while [[ $# -gt 0 ]]; do
+  optkey="$1"
+  case $optkey in
+    -h|--help)
+      printHelp "true"; exit 0;;
+    -d|--delete)
+      ACTION="DEL";shift;;
+    -c|--config-file)
+      TOPOLOGY="$2";shift 2;;
+    -t|--target-dir)
+      TARGETDIR="$2";shift 2;;
+    -l|--image-repo)
+      LOADIMAGE=$(echo "$2"|tr '[:upper:]' '[:lower:]');shift 2;;
+    -w|--worker-nodes)
+      WORKERNODES="$(($2+0))";shift 2;;
+    --registry-name)
+      REGISTRY_NAME="$2";shift 2;;
+    --registry-port)
+      REGISTRY_PORT="$2";shift 2;;
+    --cluster-name)
+      CLUSTERNAME="$2";shift 2;;
+    -r|--k8s-release)
+      K8SRELEASE="--image=kindest/node:v$2";shift 2;;
+    -s|--ip-space)
+      IPSPACE="$2";shift;shift;;
+    -i|--ip-family)
+      IPFAMILY=$(echo "$2"|tr '[:upper:]' '[:lower:]');shift 2;;
+    -p|--pod-subnet)
+      PODSUBNET="podSubnet: ";PODSUBNET+=$(echo "$2"|tr '[:upper:]' '[:lower:]');shift 2;;
+    --service-subnet)
+      SERVICESUBNET="serviceSubnet: ";SERVICESUBNET+=$(echo "$2"|tr '[:upper:]' '[:lower:]');shift 2;;
+    --cni)
+      CNI=$(echo "$2"|tr '[:upper:]' '[:lower:]');shift 2;;
+    --load-balancer)
+      LOADBALANCER=$(echo "$2"|tr '[:upper:]' '[:lower:]');shift 2;;
+    --context)
+      CONTEXT="$2";shift 2;;
+    --targetports)
+      TARGETPORTS="$2";shift 2;;
+    -n|--namespace)
+      NAMESPACE="$2";shift 2;;
+    --certname)
+      CERTNAME=$(echo "$2"|tr '[:upper:]' '[:lower:]');shift 2;;
+    --workdir)
+      WORKDIR="$2";shift 2;;
+    --certdomain)
+      CERTDOMAINNAME="$2";shift 2;;
+    --source-tag)
+      SOURCETAG="$2";shift 2;;
+    --load-or-push)
+      LOAD=$(echo "$2"|tr '[:upper:]' '[:lower:]');shift 2;;
+    -u|--user-name)
+      UNAME="$2";shift 2;;
+    -g|--group-name)
+      GNAME="$2";shift 2;;
+    *) # unknown option
+      echo "parameter $1 is not supported"; exit 1;;
+  esac
+done
+
+# All the parameters have been processed, now setup values
+# with 
+setupWithParameters
+
+# Check if stdin or pipe contains some
+if [[ -p /dev/stdin ]]; then
+  TOPOLOGYCONTENT="$(cat)"
+fi
+
+#=================begin cluster modules======================
+function setupLoadBalancer() {
+# Setup metallb using a specific version
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.5/config/manifests/metallb-native.yaml
+
+# The following scripts are to make sure that the kube configuration for the cluster
+# is not using loopback ip as part of the api server endpoint. Without doing this,
+# multiple clusters wont be able to interact with each other
+addrName="IPAddress"
+ipv4Prefix=""
+ipv6Prefix=""
+
+# Get both ipv4 and ipv6 gateway for the cluster
+gatewaystr=$(docker network inspect -f '{{range .IPAM.Config }}{{ .Gateway }} {{end}}' kind | cut -f1,2)
+gateways=($(echo ${gatewaystr}))
+for gateway in "${gateways[@]}"; do
+  if [[ "$gateway" == *"."* ]]; then
+    ipv4Prefix=$(echo "${gateway}" |cut -d'.' -f1,2)
+  else
+    ipv6Prefix=$(echo "${gateway}" |cut -d':' -f1,2,3,4)
+  fi
+done
+
+if [[ "${IPFAMILY}" == "ipv4" ]]; then
+  addrName="IPAddress"
+  ipv4Range="- ${ipv4Prefix}.$IPSPACE.200-${ipv4Prefix}.$IPSPACE.240"
+  ipv6Range=""
+elif [[ "${IPFAMILY}" == "ipv6" ]]; then
+  ipv4Range=""
+  ipv6Range="- ${ipv6Prefix}::$IPSPACE:200-${ipv6Prefix}::$IPSPACE:240"
+  addrName="GlobalIPv6Address"
+else
+  ipv4Range="- ${ipv4Prefix}.$IPSPACE.200-${ipv4Prefix}.$IPSPACE.240"
+  ipv6Range="- ${ipv6Prefix}::$IPSPACE:200-${ipv6Prefix}::$IPSPACE:240"
+fi
+
+# Wait for metallb to be ready
+waitForPods metallb-system app=metallb 10
+
+# Now configure the loadbalancer public IP range
+cat <<EOF | kubectl apply -f -
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  namespace: metallb-system
+  name: address-pool
+spec:
+  addresses:
+    ${ipv4Range}
+    ${ipv6Range}
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: empty
+  namespace: metallb-system
+EOF
+}
+
+# utility function to wait for pods to be ready
+function waitForPods() {
+  ns=$1
+  lb=$2
+  waittime=$3
+  # Wait for the pods to be ready in the given namespace with lable
+  while : ; do
+    res=$(kubectl wait --context "kind-${CLUSTERNAME}" -n ${ns} pod \
+      -l ${lb} --for=condition=Ready --timeout=${waittime}s 2>/dev/null ||true)
+    if [[ "${res}" == *"condition met"* ]]; then
+      break
+    fi
+    echo "Waiting for pods in namespace ${ns} with label ${lb} to be ready..."
+    sleep ${waittime}
+  done
+}
+
+# setupkind creates one kind k8s cluster
+function setupkind() {
+  if [[ -z "${CLUSTERNAME}" ]]; then
+    CLUSTERNAME="astra"
+  fi
+
+  netExtra=""
+  # Verify specified CNI
+  if [[ "calico" == "${CNI}" ]]; then
+    netExtra="disableDefaultCNI: true"
+  else
+    # any other value currently is considered not supported value
+    # use default kind net instead
+    CNI=""
+  fi
+
+  validIPFamilies=("ipv4" "ipv6" "dual")
+  # Validate if the ip family value is correct.
+  isValid="false"
+  for family in "${validIPFamilies[@]}"; do
+    if [[ "$family" == "${IPFAMILY}" ]]; then
+      isValid="true"
+      break
+    fi
+  done
+
+  if [[ "${isValid}" == "false" ]]; then
+    echo "${IPFAMILY} is not valid ip family, valid values are ipv4, ipv6 or dual"
+    exit 1
+  fi
+
+  MOREROLE=""
+  while [ "$WORKERNODES" -gt 0 ]; do
+    MOREROLE+=$'- role: worker\n'
+    WORKERNODES=$((WORKERNODES-1))
+  done
+
+# Create k8s cluster using the giving release and name, do not format the following code
+# because it creates a yaml file.
+if [[ -z "${K8SRELEASE}" ]]; then
+  cat << EOF | kind create cluster --config -
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+${FEATURES}
+name: ${CLUSTERNAME}
+networking:
+  ipFamily: ${IPFAMILY}
+  ${PODSUBNET}
+  ${SERVICESUBNET}
+  ${netExtra}
+nodes:
+- role: control-plane
+${MOREROLE}
+EOF
+else
+  cat << EOF | kind create cluster "${K8SRELEASE}" --config -
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+${FEATURES}
+name: ${CLUSTERNAME}
+networking:
+  ipFamily: ${IPFAMILY}
+  ${PODSUBNET}
+  ${SERVICESUBNET}
+  ${netExtra}
+nodes:
+- role: control-plane
+${MOREROLE}
+EOF
+fi
+
+  # Setup cluster context
+  CLUSTERNAME=$(echo $CLUSTERNAME|xargs)
+  kubectl cluster-info --context kind-${CLUSTERNAME}
+  # Label the node to allow nginx ingress controller to be installed
+  kubectl label nodes ${CLUSTERNAME}-control-plane ingress-ready="true"
+  
+  # if CNI is calico, set it up now
+  if [[ "${CNI}" == "calico" ]]; then
+    # Now setup calico
+    kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.1/manifests/calico.yaml
+  
+    # Make sure that calico controller is running
+    waitForPods kube-system k8s-app=calico-kube-controllers 10
+    waitForPods kube-system k8s-app=calico-node 10
+  fi
+
+  # wait for all nodes to be ready
+  kubectl wait --for=condition=Ready nodes --all --timeout=600s
+  # Try to untaint the control node
+  kubectl taint node ${CLUSTERNAME}-control-plane node-role.kubernetes.io/control-plane- 2>/dev/null || true
+
+  if [[ "${LOADBALANCER}" == "true" ]]; then
+    setupLoadBalancer
+  fi
+  echo "Kubernetes cluster ${CLUSTERNAME} was created successfully!"
+}
+#=================end cluster modules========================
+#=================begin clusters modules=====================
+function deleteMCS() {
+  # delete every cluster
+  allnames=$(kind get clusters)
+  allclusters=($(echo ${allnames}))
+  for acluster in "${allclusters[@]}"; do
+    kind delete cluster --name "${acluster}"
+  done
+  # check if the registry container exists
+  registry=$(docker ps -a | grep ${REGISTRY_NAME} || true)
+  if [[ ! -z $registry ]]; then
+    docker rm -f ${REGISTRY_NAME}
+  fi
+  docker volume prune -f
+}
+
+function getTopology() {
+  allthings=$(echo ${TOPOLOGYCONTENT} | docker run --rm -i imega/jq:1.6 -c \
+    '.[] | .clusterName, .network, .podSubnet,.svcSubnet,.meta.kubeconfig')
+
+  # Replace special characters with space
+  # allthings="${allthings//[$'\t\r\n\"']/ }"
+  cInfo=($(echo ${allthings}))
+  cInfoLength="$((${#cInfo[@]} - 1))"
+  # validate if we are getting null that means some fields were not specified
+  if [[ "${allthings}" == *null* ]]; then
+    echo "Your topology file missing critical information for a cluster."
+    echo "Each cluster must have clusterName, network, podSubnet, svcSubnet and meta.kubeconfig specified"
+    exit 1
+  fi
+}
+
+function setup_kind_registry() {
+  # create a registry container if it not running already
+  running="$(docker inspect -f '{{.State.Running}}' "${REGISTRY_NAME}" 2>/dev/null || true)"
+  if [[ "${running}" != 'true' ]]; then
+      docker run -d --restart=always -p "127.0.0.1:${REGISTRY_PORT}:5000" \
+        --name "${REGISTRY_NAME}" registry:2
+
+    # Allow kind nodes to reach the registry
+    docker network connect "kind" "${REGISTRY_NAME}" 2>/dev/null || true
+  fi
+}
+
+function createCluster() {
+  ss=255
+  for i in $(seq 0 5 "${cInfoLength}"); do
+    cname="${cInfo[i]}"
+    echo "Creating cluster ${cname} pod-subnet=${cInfo[i+2]} svc-subnet=${cInfo[i+3]} ..."
+
+    CLUSTERNAME="${cname}"
+    PODSUBNET="podSubnet: ${cInfo[i+2]}"
+    SERVICESUBNET="serviceSubnet: ${cInfo[i+3]}"
+    IPSPACE="${ss}"
+    WORKERNODES="${WORKERNODES}"
+    LOADBALANCER="true"
+
+    # setupkind -n "${cname}" -p "${cInfo[i+2]}" -t "${cInfo[i+3]}" -s "${ss}" -w "${WORKERNODES}" -l true
+    setupkind
+
+    if [[ -z "${cInfo[i+4]}" ]]; then
+      targetfile="${TARGETDIR}/${cInfo[i]}"
+    else
+      targetfile="${cInfo[i+4]}"
+    fi
+    targetfile=$(echo ${targetfile}|xargs)
+    cname=$(echo ${cname}|xargs)
+    kind export kubeconfig --name "${cname}" --kubeconfig "${targetfile}"
+
+    ss="$(($ss-1))"
+  done
+}
+
+function addRoutes() {
+  for i in $(seq 0 5 "${cInfoLength}"); do
+    # Get clusters which share same network for a given cluster and network name
+    cn=$(echo ${cInfo[i]}|xargs)
+    nn=$(echo ${cInfo[i+1]}|xargs)
+    allthings=$(echo ${TOPOLOGYCONTENT} | docker run --rm -i imega/jq:1.6 --arg cn "${cn}" \
+      --arg nn "${nn}" -c \
+      '[ .[] | select( .network == $nn and .clusterName != $cn )] |.[]| .clusterName,.podSubnet,.svcSubnet')
+
+    allsubs=($(echo ${allthings}))
+    endloopj="$((${#allsubs[@]} - 1))"
+    if [[ "${endloopj}" -gt 0 ]]; then
+      echo -e "Adding routes for cluster ${Green}${cInfo[i]}${ColorOff}:"
+      for j in $(seq 0 3 "${endloopj}"); do
+        # strip the double quotes
+        thename=$(echo ${allsubs[j]}|xargs)
+        # Now get the IP address of the changing cluster public IP
+        ip=$(docker inspect -f '{{ .NetworkSettings.Networks.kind.IPAddress }}' "${thename}-control-plane" 2>/dev/null)
+        if [[ ! -z "${ip}" ]]; then
+          sub1=$(echo ${allsubs[j+1]}|xargs)
+          sub2=$(echo ${allsubs[j+2]}|xargs)
+          docker exec "${cn}-control-plane" ip route add "${sub1}" via "${ip}"
+          echo -e "   Route ${Green}${allsubs[j+1]}${ColorOff} via ${Green}${ip}${ColorOff} for cluster ${allsubs[j]} added"
+          docker exec "${cn}-control-plane" ip route add "${sub2}" via "${ip}"
+          echo -e "   Route ${Green}${allsubs[j+2]}${ColorOff} via ${Green}${ip}${ColorOff} for cluster ${allsubs[j]} added"
+        fi
+      done
+    fi
+  done
+}
+
+function processTopologyContent() {
+# content did not come from stdin or pipe, try the topology file
+  if [[ -z "${TOPOLOGYCONTENT}" ]]; then
+    if [[ ! -f "${TOPOLOGY}" ]]; then
+      # "Topology file ${TOPOLOGY} cannot be found, Use embedded topology file"
+
+TOPOLOGYCONTENT=$(cat << EOF
+[
+  {
+    "kind": "Kubernetes",
+    "clusterName": "astra",
+    "podSubnet": "10.10.0.0/16",
+    "svcSubnet": "10.255.10.0/24",
+    "network": "network",
+    "meta": {
+      "kubeconfig": "${TARGETDIR}/kubeconfig/astra"
+    }
+  }
+]
+EOF
+)
+
+    else
+      TOPOLOGYCONTENT=$(cat ${TOPOLOGY})
+    fi
+  fi
+  
+  if [[ ! -d "${TARGETDIR}" ]]; then
+    echo "Target directory ${TARGETDIR} does not exist, try to create it"
+    mkdir -p "${TARGETDIR}"
+  fi
+}
+#=================end clusters modules=======================
+#=================begin image modules========================
+function getImageTag() {
+  aTag=$(docker images "$1" --format "{{.Repository}}:{{.Tag}}")
+  if [[ ! -z "${aTag}" ]]; then
+    SOURCETAGS+=($(echo ${aTag}))
+  fi
+}
+
+function loadImagesToNodes() {
+  CLUSTERNAME=$1
+  for image in "${SOURCETAGS[@]}"; do
+    echo "push image ${image}"
+    kind load docker-image -n ${CLUSTERNAME} "${image}"
+  done
+}
+
+function pushImagesToRepo() {
+  for image in "${SOURCETAGS[@]}"; do
+    echo "push image ${image}"
+    docker tag "${image}" "${REGISTRY_NAME}${image}"
+    docker push "${REGISTRY_NAME}${image}"
+  done
+}
+
+function doAllClusters() {
+  # The registry name has to be localhost with given port since we are
+  # setup the image repository locally
+  REGISTRY_NAME="localhost:${REGISTRY_PORT}/"
+
+  if [[ -z "${SOURCETAG}" ]]; then
+    getImageTag '*-integration'
+  else
+    SOURCETAGS+=($SOURCETAG)
+  fi
+  
+  if [[ "${#SOURCETAGS[@]}" == 0 ]]; then
+    echo "No image to load, probably build a docker image first?"
+    exit 0
+  fi
+
+  if [[ "${LOAD}" == "true" ]]; then
+    allnames=$(kind get clusters)
+    allclusters=($(echo ${allnames}))
+    for acluster in "${allclusters[@]}"; do
+      loadImagesToNodes ${acluster}
+    done
+  else 
+    pushImagesToRepo
+  fi
+}
+
+#=================end image modules==========================
+#=================begin cert modules=========================
+function createRootCert() {
+  # Create the configuration file
+  rm -rf root-ca.conf
+  cat <<EOT >> root-ca.conf
+[ req ]
+encrypt_key = no
+prompt = no
+utf8 = yes
+default_md = sha256
+default_bits = 4096
+req_extensions = req_ext
+x509_extensions = req_ext
+distinguished_name = req_dn
+[ req_ext ]
+subjectKeyIdentifier = hash
+basicConstraints = critical, CA:true
+keyUsage = critical, digitalSignature, nonRepudiation, keyEncipherment, keyCertSign
+subjectAltName=@san
+[ san ]
+DNS.1 = ${CERTDOMAINNAME}
+IP.1 = 127.0.0.1
+IP.2 = ::1
+[ req_dn ]
+O = Astra
+CN = Root CA
+L = ${CLUSTERNAME}
+EOT
+
+  # Create the csr file
+  openssl req -new -key root-key.pem -config root-ca.conf -out root-cert.csr
+
+  # Create a root certificate
+  openssl x509 -req -days 3650 -extensions req_ext -extfile root-ca.conf \
+  -signkey root-key.pem -out root-cert.pem -in root-cert.csr
+}
+
+# Function to create an intermediate certificate
+function createIntermediateCert() {
+  # Create the configuration file
+  rm -rf ca.conf
+  cat <<EOT >> ca.conf
+[ req ]
+encrypt_key = no
+prompt = no
+utf8 = yes
+default_md = sha256
+default_bits = 4096
+req_extensions = req_ext
+x509_extensions = req_ext
+distinguished_name = req_dn
+[ req_ext ]
+subjectKeyIdentifier = hash
+basicConstraints = critical, CA:true, pathlen:0
+keyUsage = critical, digitalSignature, nonRepudiation, keyEncipherment, keyCertSign
+subjectAltName=@san
+[ san ]
+DNS.1 = ${CERTDOMAINNAME}
+IP.1 = 127.0.0.1
+IP.2 = ::1
+[ req_dn ]
+O = Astra
+CN = Intermediate CA
+L = ${CLUSTERNAME}
+EOT
+
+  # Create the csr file
+  openssl req -new -key tls.key -config ca.conf -out ca-cert.csr
+
+  # Create the certificate
+  openssl x509 -req -days 365 \
+  -CA ../root-cert.pem -CAkey ../root-key.pem -CAcreateserial \
+  -extensions req_ext -extfile ca.conf \
+  -in ca-cert.csr -out tls.crt
+
+  # Create the cert chain file
+  cat tls.crt ../root-cert.pem > cert-chain.pem
+}
+
+# Function to create root key and certificate
+function createRootKeyAndCert() {
+  mkdir -p "${WORKDIR}"
+  cd "${WORKDIR}"
+  if [[ -f "${WORKDIR}/root-key.pem" ]]; then
+    if [[ -f "${WORKDIR}/root-cert.pem" ]]; then
+      echo "Both root key and cert already exist"
+      return
+    else
+      createRootCert
+    fi
+  else
+    # Create the root ca key named root-key.pem
+    openssl genrsa -out root-key.pem 4096
+    # Create the root certificate
+    createRootCert
+  fi
+}
+
+# Function to create imtermediate key and cert
+function createIntermediateKeyAndCert() {
+  if [[ -f "${WORKDIR}/${CLUSTERNAME}/tls.key" ]]; then
+      echo "CA key already exist"
+      return
+  fi
+  mkdir -p "${WORKDIR}/${CLUSTERNAME}"
+  cd "${WORKDIR}/${CLUSTERNAME}"
+
+  # Create the  ca key named root-key.pem
+  openssl genrsa -out tls.key 2048
+  # Create the root certificate
+  createIntermediateCert
+}
+
+# Function to create k8s secret
+function createK8SSecret() {
+  set +e
+  kubectl get namespace "${NAMESPACE}" --context "${CONTEXT}" >/dev/null 2>&1
+  # namespace does not exist, create it
+  if [[ $? == 1 ]]; then
+    echo "Creating namespace ${NAMESPACE}"
+    set -e
+    kubectl create ns "${NAMESPACE}" --context "${CONTEXT}"
+  else
+    echo "Namespace ${NAMESPACE} already exists"
+  fi
+
+  set +e
+  kubectl get secret -n "${NAMESPACE}" ${CERTNAME} --context "${CONTEXT}" >/dev/null 2>&1
+  if [[ $? == 1 ]]; then
+    # secert does not exist in the namespace, create it
+    set -e
+    createRootKeyAndCert
+    createIntermediateKeyAndCert
+
+    kubectl create secret generic ${CERTNAME} -n "${NAMESPACE}" --context "${CONTEXT}" \
+    --from-file="${WORKDIR}/${CLUSTERNAME}/tls.crt" \
+    --from-file="${WORKDIR}/${CLUSTERNAME}/tls.key" \
+    --from-file="${WORKDIR}/root-cert.pem" \
+    --from-file="${WORKDIR}/${CLUSTERNAME}/cert-chain.pem"
+  else
+    # secret already exists in the namespace
+    echo "secure-testing-cert already exists in namespace ${NAMESPACE}, nothing changed."
+  fi
+}
+#=================end cert modules===========================
+#=================proxy modules==============================
+function getNextPort() {
+  PORT=$1
+  while
+    ret=$(lsof -i :"${PORT}")
+    if [[ -z ${ret} ]]; then
+       NEXTPORT=${PORT}
+       break
+    else
+      PORT=$((PORT+1))
+    fi
+  do :; done
+}
+
+function getLBServices() {
+  CLUSTERNAME=$1 #cluster name
+  lbservices=$(kubectl --context="${CONTEXT}" get services -A -o \
+    jsonpath='{range .items[?(@.spec.type == "LoadBalancer")]}{.metadata.name}{","}{.status.loadBalancer.ingress[0].ip}{","}{.spec.ports[*].port}{"\n"}{end}')
+  # get lbservice list
+  IFS=$'\n' lbservices=($(echo "${lbservices}"))
+  for lbs in "${lbservices[@]}"; do
+    # split each service to servie name in index 1, external ip in index 2, and ports in index 3
+    IFS=$',' sv=($(echo "${lbs}"))
+    IFS=$' ' svports=($(echo "${sv[2]}"))
+    for port in "${svports[@]}"; do
+      getNextPort "${STARTPORT}"
+      PORTMAP="${PORTMAP} -p ${NEXTPORT}:${NEXTPORT}"
+      # Generate the config content
+      CONFIG=$(cat << EOF
+${CONFIG}
+  server {
+    listen ${NEXTPORT};
+    proxy_pass ${sv[1]}:${port};
+  }
+EOF
+)
+      MSG=$(cat << EOF
+${MSG}
+${sv[0]}@${CLUSTERNAME} ${sv[1]}:${port} ==> ${NEXTPORT}
+EOF
+)
+       STARTPORT=$((NEXTPORT+1))
+    done
+  done
+}
+
+function getLBService() {
+  CLUSTERNAME=$1 #cluster name
+  SERVICENAME=$2 #service name
+  lbservices=$(kubectl --context="${CONTEXT}" get services -A -o \
+    jsonpath='{range .items[?(@.spec.type == "LoadBalancer")]}{.metadata.name}{","}{.status.loadBalancer.ingress[0].ip}{","}{.spec.ports[*].port}{"\n"}{end}' | grep "^${SERVICENAME},")
+  # get lbservice list
+  IFS=$'\n' lbservices=($(echo "${lbservices}"))
+  for lbs in "${lbservices[@]}"; do
+    # split each service to servie name in index 1, external ip in index 2, and ports in index 3
+    IFS=$',' sv=($(echo "${lbs}"))
+    IFS=$' ' svports=($(echo "${sv[2]}"))
+    if [[ -z "${sv[1]}" ]]; then
+       echo "Not getting the load balancer IP, it is probably not ready! quiting..."
+       exit 1
+    fi
+    i=0
+    for port in "${svports[@]}"; do
+      PORTMAP="${PORTMAP} -p ${SOURCEPORTS[$i]}:${SOURCEPORTS[$i]}"
+      # Generate the config content
+      CONFIG=$(cat << EOF
+${CONFIG}
+  server {
+    listen ${SOURCEPORTS[$i]};
+    proxy_pass ${sv[1]}:${port};
+  }
+EOF
+)
+      MSG=$(cat << EOF
+${MSG}
+${sv[0]}@${CLUSTERNAME} ${sv[1]}:${port} ==> ${SOURCEPORTS[$i]}
+EOF
+)
+      i=$((i+1))
+    done
+  done
+}
+
+function doTargets() {
+  clustername=$1
+  ports=()
+  svn=""
+  for target in "${TARGETPORTS[@]}"; do
+    # it is a port
+    if [[ ${target} =~ ${re} ]]; then
+      ports+=(${target})
+    else # this is a service name
+      svcname=${target}
+      # We've got a service name and a list of ports, now process that
+      if [[ ${#ports[@]} > 0 ]]; then
+        SOURCEPORTS=(${ports[@]})
+        getLBService $clustername $svcname
+        ports=()
+      fi
+    fi
+  done
+  if [[ ${#ports[@]} > 0 ]]; then
+    SOURCEPORTS=(${ports[@]})
+    getLBService $clustername $svcname
+  fi
+}
+
+function doProxyClusters() {
+  if [[ -z "${CLUSTERNAME}" ]]; then
+    allnames=$(kind get clusters)
+  else
+    allnames=($(echo "${CLUSTERNAME}"))
+  fi
+  allclusters=($(echo ${allnames}))
+  IFS=$' ' TARGETPORTS=($(echo "${TARGETPORTS}"))
+  for cluster in "${allclusters[@]}"; do
+    echo "Processing cluster ${cluster}..."
+    # We are setting specific port for services
+    if [[ -z "${CONTEXT}" ]]; then CONTEXT="kind-${cluster}"; fi
+    if [[ ${#TARGETPORTS[@]} > 0 ]]; then
+      doTargets $cluster
+    else
+      getLBServices "${cluster}"
+    fi
+  done
+}
+
+function processProxy() {
+  re='^[0-9]+$'
+  CONFIG=""
+  MSG=""
+
+  # Remove the running docker if there is one
+  docker rm -f kubeproxy &> /dev/null || true
+  
+  # Generate nginx configuration and messages
+  doProxyClusters
+  
+  mkdir -p "${WORKDIR}"
+  # Create the the nginx configuration
+  cat <<EOF > ${WORKDIR}/kubeproxy.conf
+worker_processes  5;
+events {
+  worker_connections  4096;
+}
+stream {
+${CONFIG}
+}
+EOF
+
+  # Now start up the proxy container
+  thecmd=$(echo docker run --name kubeproxy -d --network=kind ${PORTMAP} \
+    -v ${WORKDIR}/kubeproxy.conf:/etc/nginx/nginx.conf:ro nginx:latest)
+  eval ${thecmd}
+  echo "${MSG}"
+}
+
+#=================end proxy modules==========================
+#=================Start main process=========================
+
+set -e
+# cluster processes
+if [[ "${CMD}" == "clusters" ]]; then
+  if [[ "${ACTION}" == "DEL" ]]; then
+    deleteMCS
+    exit 0
+  fi
+  processTopologyContent
+
+  cInfo=""
+  cInfoLength=0
+  getTopology
+  createCluster
+  addRoutes
+
+  # push localhost images to local image repo if set to do so
+  if [[ "${LOADIMAGE}" == "true" ]]; then
+    setup_kind_registry
+  fi
+elif [[ "${CMD}" == "cluster" ]]; then
+  # handling removal of just one cluster
+  if [[ "$ACTION" == "DEL" ]]; then
+    if [[ -z "${CLUSTERNAME}" ]]; then
+      # delete every cluster
+      allnames=$(kind get clusters)
+      allclusters=($(echo ${allnames}))
+      for acluster in "${allclusters[@]}"; do
+        kind delete cluster --name "${acluster}"
+      done
+    else
+      # delete specified cluster
+      kind delete cluster --name "${CLUSTERNAME}"
+    fi
+    exit 0
+  fi
+  setupkind
+elif [[ "${CMD}" == "cert" ]]; then
+  if [[ -z "${CLUSTERNAME}" ]]; then
+    allnames=$(kind get clusters)
+    allclusters=($(echo ${allnames}))
+    CLUSTERNAME="${allclusters[0]}"
+    if [[ -z "${CLUSTERNAME}" ]]; then
+      echo "No cluster found, quiting..."
+      exit 1
+    fi
+  fi
+  if [[ -z "${CONTEXT}" && -n "${CLUSTERNAME}" ]]; then CONTEXT="kind-${CLUSTERNAME}"; fi
+  if [[ "${ACTION}" == "DEL" ]]; then
+    kubectl delete secret -n "${NAMESPACE}" ${CERTNAME} --context "${CONTEXT}" >/dev/null 2>&1 || true
+    echo "${CERTNAME} was removed"
+  else
+    createK8SSecret
+  fi
+elif [[ "${CMD}" == "image" ]]; then
+  doAllClusters
+elif [[ "${CMD}" == "proxy" ]]; then
+  # If it is a remove command
+  if [[ "${ACTION}" == "DEL" ]]; then
+    docker rm -f kubeproxy &> /dev/null || true
+    exit 0
+  fi
+
+  processProxy
+fi
+#=================End main process=========================

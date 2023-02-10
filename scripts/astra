@@ -1,0 +1,427 @@
+#!/bin/bash
+
+ColorOff='\033[0m'        # Text Reset
+Black='\033[0;30m'        # Black
+Red='\033[0;31m'          # Red
+Green='\033[0;32m'        # Green
+SCRIPTDIR=$(dirname $0)
+APPNAME=$(basename "$0")
+CURDIR=$(pwd)
+WORKDIR=${WORKDIR:-/tmp/astra}
+COMPONENT="all"
+NAMESPACE="${NAMESPACE:-pcloud}"
+IMAGE_REPOSITORY=${IMAGE_REPOSITORY:-docker.repo.eng.netapp.com}
+IMAGENAME=""
+
+POLARIS_BASE_COMPONENTS=()
+POLARIS_BASE_COMPONENTS+=("activity")
+POLARIS_BASE_COMPONENTS+=("astra-py-k8s")
+POLARIS_BASE_COMPONENTS+=("billing")
+POLARIS_BASE_COMPONENTS+=("bucketservice")
+POLARIS_BASE_COMPONENTS+=("cloud-extension")
+POLARIS_BASE_COMPONENTS+=("composite-compute")
+POLARIS_BASE_COMPONENTS+=("composite-volume")
+POLARIS_BASE_COMPONENTS+=("credentials")
+POLARIS_BASE_COMPONENTS+=("entitlement")
+POLARIS_BASE_COMPONENTS+=("features")
+POLARIS_BASE_COMPONENTS+=("features_init")
+POLARIS_BASE_COMPONENTS+=("features_upgrade")
+POLARIS_BASE_COMPONENTS+=("graphql-server")
+POLARIS_BASE_COMPONENTS+=("hybridauth")
+POLARIS_BASE_COMPONENTS+=("identity")
+POLARIS_BASE_COMPONENTS+=("krakend")
+POLARIS_BASE_COMPONENTS+=("nautilus")
+POLARIS_BASE_COMPONENTS+=("openapi")
+POLARIS_BASE_COMPONENTS+=("polaris-ui")
+POLARIS_BASE_COMPONENTS+=("support")
+POLARIS_BASE_COMPONENTS+=("support_hourly")
+POLARIS_BASE_COMPONENTS+=("support_weekly")
+POLARIS_BASE_COMPONENTS+=("task-service")
+POLARIS_BASE_COMPONENTS+=("task-service_task_purge")
+POLARIS_BASE_COMPONENTS+=("tenancy")
+POLARIS_BASE_COMPONENTS+=("trident-svc")
+
+function printHelp() {
+  echo ""
+  echo "Usage:"
+  echo "    ${APPNAME} <cmd> [options]"
+  echo ""
+  echo -e "Available commands:"
+  echo "     up       - Start up astra network include cluster"
+  echo "     down     - Remove all astra but k8s cluster"
+  echo "     image    - Update image to the local repo"
+  echo "     prepare  - Get cluster and image ready"
+  echo "     deplay   - Deploy astra components"
+  echo "     clean    - Remove all astra including k8s cluster"
+  echo "     pull     - pull tagged commit image from repo"
+  echo "     refresh  - restart a deployment and its image"
+  echo ""
+  echo -e "Parameters for ${Green}image${ColorOff} command:"
+  echo "     -i|--imagename  - an astra image name. default is all images"
+  echo ""
+  echo -e "Parameters for ${Green}pull${ColorOff} command:"
+  echo "     -i|--imagename   - an astra image name. default is all images"
+  echo ""
+  echo -e "Parameters for ${Green}deploy${ColorOff} command:"
+  echo "     -a|--astra-name) - a name of astra component to be deployed. Valid option"
+  echo "                        are all, main, traefik, post, default is all"
+  echo "        --context)    - a kubernetes context to use, if not specified, the"
+  echo "                        current kubernetes context will be used"
+  echo ""
+  echo -e "Parameters for ${Green}refresh${ColorOff} command:"
+  echo "     -d|--deployment-name  - a deployment name such as identity"
+  echo "     -n|--namespace        - the namespace where the deployment is, default pcloud"
+  echo "        --context)         - a kubernetes context to use, if not specified, the"
+  echo "                             current kubernetes context will be used"
+  echo ""
+}
+
+function validateCMD() {
+  cmd=$1
+  allCommands=("up" "down" "image" "deploy" "clean" "prepare" "pull" "refresh")
+  ccmd=""
+  for item in "${allCommands[@]}"; do
+    if [[ "${cmd}" == "${item}" ]]; then
+      ccmd="${cmd}"
+      isValidCMD="true"
+      break
+    fi
+  done
+  if [[ -z "${ccmd}" ]]; then
+    if [[ "${cmd}" != "-h" ]] && [[ "${cmd}" != "--help" ]] && [[ "${cmd}" != "" ]]; then
+      echo ""
+      echo -e "ERROR: ${Red}${cmd}${ColorOff} is not a supported command!"
+    fi
+    CMD=""
+    printHelp "${isValidCMD}"
+    exit 1
+  fi
+}
+
+CMD=$1
+shift
+
+# Validate the command
+validateCMD "${CMD}"
+
+# Handling parameters
+while [[ $# -gt 0 ]]; do
+  optkey="$1"
+  case $optkey in
+    -h|--help)
+      printHelp "true"; exit 0;;
+    --context)
+      CONTEXT="$2";shift 2;;
+    --targetports)
+      TARGETPORTS="$2";shift 2;;
+    -n|--namespace)
+      NAMESPACE="$2";shift 2;;
+    -w|--workdir)
+      WORKDIR="$2";shift 2;;
+    -a|--astra-name)
+      COMPONENT="$2";shift 2;;
+    -d|--deployment-name)
+      DEPLOYMENT="$2";shift 2;;
+    -i|--imagename)
+      IMAGENAME="$2";shift 2;;
+    *) # unknown option
+      echo "parameter $1 is not supported"; exit 1;;
+  esac
+done
+
+function validateContext() {
+  # Context was not set, trying to use current context
+  if [[ -z "${CONTEXT}" ]]; then
+    # Get current context
+    ctx=$(kubectl config current-context 2>/dev/null || true)
+  else # Context was set, verify it exists in the kubernetes context
+    ctx=$(kubectl config get-contexts "${CONTEXT}" -o=name 2>/dev/null || true)
+  fi
+
+  if [[ -z "${ctx}" ]]; then
+    echo -e "${Red}No kubernetes context available, cannot continue${ColorOff}"
+    exit 1
+  fi
+
+  CONTEXT="${ctx}"
+}
+
+function checkEnvironmentVariables() {
+  envs=(DEPLOY_TYPE VAULT_ADDR GITHUB_USERNAME \
+        GITHUB_TOKEN GITHUB_ID CREDS_AUTH_CLIENT_ID \
+        CREDS_AUTH_DOMAIN CREDS_ISSUER_URL)
+  for value in ${envs[@]}; do
+    if [[ -z ${!value} ]]; then
+      echo -e "${Red}${value}${ColorOff} was not set, quiting..."
+      exit 1
+    elif [[ "${value}" == "GITHUB_TOKEN" ]] || [[ "${value}" == "CREDS_IMAGE_PASSWORD" ]]; then
+      echo -e "${Green}${value}${ColorOff}=************"  
+    else
+      echo -e "${Green}${value}${ColorOff}=${!value}"
+    fi
+  done
+}
+
+function checkAuth2File() {
+  auth2json="${CURDIR}/scripts/beta/auth2.json"
+  if [[ ! -z "${PCLOUD_AUTH2}" ]]; then
+    auth2json="${PCLOUD_AUTH2}"
+    cp ${PCLOUD_AUTH2} ${CURDIR}/scripts/beta/auth2.json
+  fi
+
+  if [[ -f "${auth2json}" ]]; then
+    echo -e "${Green}auth2.json${ColorOff}=${auth2json}"
+  else
+    echo -e "${Red}auth2.json file was not present, quiting...${ColorOff}"
+    exit 1
+  fi
+}
+
+# The images retrieved from public
+function loadPublicImage() {
+  images=("zcube/bitnami-compat-mongodb:5.0.14" \
+    "theotw/httpproxy-server:0.9.202202170408" \
+    "theotw/natssync-server:1.0.202203111920" \
+    "nats:2.8.4-alpine3.15" \
+    "traefik:2.9.1"
+  )
+  for value in ${images[@]}; do
+    docker pull "${value}"
+    ${SCRIPTDIR}/k8stool image --load-or-push true --source-tag "${value}" --context ${CONTEXT}
+  done
+}
+
+function checkInPolaris() {
+    # check that the Makefile and pcloud directory exists
+    if [[ ! -f "${CURDIR}/Makefile" ]] || [[ ! -d "${CURDIR}/pcloud" ]]; then
+      echo -e "${Red}You are not in Polaris root directory, quiting...${ColorOff}"
+      exit 1
+    fi
+}
+
+function deployAC() {
+  CNAME=$1
+  if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "traefik" ]]; then
+    echo -e "${Green}Ready to deploy traefik${ColorOff}"
+    KUBE_CONTEXT=${CONTEXT} SKIP_KUBE_CONTEXT_CHECK=true \
+    make traefikinstall DEPLOY_TARGET=local \
+    CLUSTER_ENDPOINT=integration.astra.netapp.io \
+    TRAEFIK_ENDPOINT=integration.astra.netapp.io NAMESPACE=${NAMESPACE}
+
+    echo -e "${Green}Setting up proxy...${ColorOff}"
+    ${SCRIPTDIR}/k8stool proxy --targetports "traefik 80 443" --workdir "${WORKDIR}" --context ${CONTEXT}
+  fi
+
+  if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "main" ]]; then
+    echo -e "${Green}Ready to deploy Astra${ColorOff}"
+    KUBE_CONTEXT=${CONTEXT} SKIP_KUBE_CONTEXT_CHECK=true IMAGE_HOST=localhost:5001 \
+    make helminstall DEPLOY_TARGET=cicd \
+    CLUSTER_ENDPOINT=integration.astra.netapp.io \
+    TRAEFIK_ENDPOINT=integration.astra.netapp.io \
+    HELMOVERRIDE='--set mongodb.image.repository=zcube/bitnami-compat-mongodb --set mongodb.image.tag=5.0.14'
+  fi
+
+  if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "post" ]]; then
+    echo -e "${Green}Run post_install script${ColorOff}"
+    ${CURDIR}/scripts/beta/post_install.sh
+  fi
+}
+
+function pullAstraComponentImage() {
+  imagerepo=$1
+  imagename=$2
+  if [[ "${imagename}" == "astra-py-k8s" ]]; then
+    echo -e "${Green}Ready to pull ${imagename}:v0.0.6${ColorOff}"
+    docker pull "${imagerepo}${imagename}:v0.0.6"
+    docker tag "${imagerepo}${imagename}:v0.0.6" "${imagename}:v0.0.6"
+  elif [[ "${imagename}" == "features_upgrade" ]] || [[ "${imagename}" == "features_init" ]]; then
+    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh features --release-versioning false||true)
+    echo -e "${Green}Ready to pull ${imagename}:${tag}${ColorOff}"
+    docker pull "${imagerepo}${imagename}:${tag}"
+    docker tag "${imagerepo}${imagename}:${tag}" "${imagename}:${tag}"
+  elif [[ "${imagename}" == "support_hourly" ]] || [[ "${imagename}" == "support_weekly" ]]; then
+    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh support --release-versioning false||true)
+    echo -e "${Green}Ready to pull ${imagename}:${tag}${ColorOff}"
+    docker pull "${imagerepo}${imagename}:${tag}"
+    docker tag "${imagerepo}${imagename}:${tag}" "${imagename}:${tag}"
+  elif [[ "${imagename}" == "task-service_task_purge" ]]; then
+    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh task-service --release-versioning false||true)
+    echo -e "${Green}Ready to pull ${imagename}:${tag}${ColorOff}"
+    docker pull "${imagerepo}${imagename}:${tag}"
+    docker tag "${imagerepo}${imagename}:${tag}" "${imagename}:${tag}"
+  else
+    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh "${imagename}" --release-versioning false||true)
+    if [[ "${tag}" != "" ]] && [[ "${tag}" != *"no chart found"* ]]; then
+      echo -e "${Green}Ready to pull ${imagename}:${tag}${ColorOff}"
+      docker pull "${imagerepo}${imagename}:${tag}"
+      docker tag "${imagerepo}${imagename}:${tag}" "${imagename}:${tag}"
+    else
+      echo -e "${Red}Astra tool does not know how to handle ${imagename}${ColorOff}"
+    fi
+  fi
+}
+
+function pullACImages() {
+  # repologin="https://${IMAGE_REPOSITORY}/v2/"
+  # response=$(docker login -u ${CREDS_IMAGE_USERNAME} -p ${CREDS_IMAGE_PASSWORD} ${IMAGE_REPOSITORY})
+  imagerepo="${IMAGE_REPOSITORY}/globalcicd/astra/"
+  if [[ "${IMAGENAME}" == "" ]]; then
+    for imagename in "${POLARIS_BASE_COMPONENTS[@]}"; do
+      pullAstraComponentImage "${imagerepo}" "${imagename}"
+    done
+  else
+    pullAstraComponentImage "${imagerepo}" "${IMAGENAME}"
+  fi
+}
+
+# pushAstraComponentImage only pushes image to the local
+# image repository.
+function pushAstraComponentImage() {
+  imagename=$1
+  if [[ "${imagename}" == "astra-py-k8s" ]]; then
+    echo -e "${Green}Ready to push ${imagename}:v0.0.6${ColorOff}"
+    ${SCRIPTDIR}/k8stool image --source-tag "${imagename}:v0.0.6"
+  elif [[ "${imagename}" == "features_upgrade" ]] || [[ "${imagename}" == "features_init" ]]; then
+    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh features --release-versioning false||true)
+    echo -e "${Green}Ready to push ${imagename}:${tag}${ColorOff}"
+    ${SCRIPTDIR}/k8stool image --source-tag "${imagename}:${tag}"
+  elif [[ "${imagename}" == "support_hourly" ]] || [[ "${imagename}" == "support_weekly" ]]; then
+    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh support --release-versioning false||true)
+    echo -e "${Green}Ready to push ${imagename}:${tag}${ColorOff}"
+    ${SCRIPTDIR}/k8stool image --source-tag "${imagename}:${tag}"
+  else
+    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh "${imagename}" --release-versioning false||true)
+    if [[ "${tag}" != "" ]] && [[ "${tag}" != *"no chart found"* ]]; then
+      echo -e "${Green}Ready to push ${imagename}:${tag}${ColorOff}"
+      ${SCRIPTDIR}/k8stool image --source-tag "${imagename}:${tag}"
+    else
+      echo -e "${Red}Astra tool does not know how to handle ${imagename}${ColorOff}"
+    fi
+  fi
+}
+
+function pushACImages() {
+  # repologin="https://${IMAGE_REPOSITORY}/v2/"
+  # response=$(docker login -u ${CREDS_IMAGE_USERNAME} -p ${CREDS_IMAGE_PASSWORD} ${IMAGE_REPOSITORY})
+  if [[ "${IMAGENAME}" == "" ]]; then
+    for imagename in "${POLARIS_BASE_COMPONENTS[@]}"; do
+      pushAstraComponentImage "${imagename}"
+    done
+  else
+    pushAstraComponentImage "${IMAGENAME}"
+  fi
+}
+
+function refreshDeployment() {
+  if [[ "${DEPLOYMENT}" == "" ]]; then
+    echo -e "${Red}Use -d parameter to specify a deployment to be refreshed"
+    exit 1
+  else
+    OLDIFS=$IFS
+    dep=$(kubectl --context ${CONTEXT} get -n ${NAMESPACE} deployment "${DEPLOYMENT}" -o \
+      jsonpath='{.spec.template.spec.containers[*].image}' 2>/dev/null||true)
+    if [[ "${dep}" == "" ]]; then
+      echo -e "${Red}Could not find the deployment ${DEPLOYMENT}${ColorOff}"
+      IFS=$OLDIFS
+      exit 1
+    else
+      # Now need to get the tag and the actual image name
+      IFS=$'/' parts=($(echo "${dep}"|rev))
+      imagename=$(echo "${parts[0]}"|rev)
+      IFS=$OLDIFS
+      if [[ "${imagename}" != "" ]]; then
+        echo "Ready to update ${imagename}"
+        if [[ "${dep}" =~ "localhost:5001/" ]]; then
+          # astra image, push the newer image
+          ${SCRIPTDIR}/k8stool image --source-tag "${imagename}"
+          # Remove the cached image
+          docker exec astra-control-plane crictl rmi "${dep}" 2>/dev/null || true
+        else
+          # other images
+          ${SCRIPTDIR}/k8stool image --load-or-push true --source-tag "${imagename}"
+        fi
+        kubectl --context ${CONTEXT} rollout restart -n ${NAMESPACE} deployment ${DEPLOYMENT}
+      fi
+    fi
+  fi
+}
+#=================Start main process=========================
+
+set -e
+# cluster processes
+if [[ "${CMD}" == "up" ]]; then
+  echo ""
+  checkInPolaris
+  checkEnvironmentVariables
+  checkAuth2File
+
+  echo ""
+  echo -e "${Green}Start pulling Astra images...${ColorOff}"
+  pullACImages
+  echo ""  
+  echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
+  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}"
+  echo -e "${Green}Upload Astra images to image repostiory"
+  validateContext
+  pushACImages
+  loadPublicImage
+  echo -e "${Green}Create traefik certificate${ColorOff}"
+  ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
+
+  deployAC "${COMPONENT}"
+
+elif [[ "${CMD}" == "prepare" ]]; then
+  echo ""
+  checkInPolaris
+  checkEnvironmentVariables
+  checkAuth2File
+  echo ""
+  echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
+  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}"
+  echo -e "${Green}Upload Astra images to image repostiory"
+  validateContext
+  pushACImages
+  loadPublicImage
+  echo -e "${Green}Create traefik certificate${ColorOff}"
+  ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
+  echo -e "${Green}Ready to deploy Astra, please run deploy command${ColorOff}"
+
+elif [[ "${CMD}" == "down" ]]; then
+  echo ""
+  echo -e "${Green}Removing Astra main components...${ColorOff}"
+  checkInPolaris
+  checkEnvironmentVariables
+  validateContext
+  KUBE_CONTEXT=${CONTEXT} SKIP_KUBE_CONTEXT_CHECK=true \
+    make helmuninstall DEPLOY_TARGET=cicd
+
+elif [[ "${CMD}" == "clean" ]]; then
+  echo -e "${Green}Removing Astra and cluster...${ColorOff}"
+  ${SCRIPTDIR}/k8stool cluster -d
+
+elif [[ "${CMD}" == "image" ]]; then
+  echo -e "${Green}Updating image...${ColorOff}"
+  pushACImages
+
+elif [[ "${CMD}" == "deploy" ]]; then
+  checkInPolaris
+  checkEnvironmentVariables
+  checkAuth2File
+  validateContext
+  # Always check and recreate namespace and the cert in case it was removed
+  ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
+  deployAC "${COMPONENT}"
+
+elif [[ "${CMD}" == "pull" ]]; then
+  checkInPolaris
+  checkEnvironmentVariables
+  pullACImages
+
+elif [[ "${CMD}" == "refresh" ]]; then
+  checkInPolaris
+  checkEnvironmentVariables
+  validateContext
+  refreshDeployment
+
+fi
+#=================End main process=========================
