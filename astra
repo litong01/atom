@@ -1,5 +1,5 @@
 #!/bin/bash
-docker run --rm --name k8stool --network host \
+docker run --rm --name astra --network host \
    -e "SKIP_KUBE_CONTEXT_CHECK=true" \
    -e "DEPLOY_TYPE=dev" \
    -e "VAULT_ADDR=${VAULT_ADDR}" \
@@ -14,4 +14,4 @@ docker run --rm --name k8stool --network host \
    -v /var/run/docker.sock:/var/run/docker.sock \
    -v /tmp/work:/home/work \
    -v $(pwd):/home/polaris \
-   -v /Users/tli/.kube:/home/.kube k8stool astra $@
+   -v /Users/tli/.kube:/home/.kube tli551/astra astra $@
