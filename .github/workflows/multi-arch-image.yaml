@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: k8stool
+  IMAGE_NAME: astra
   IMAGE_TAG: latest
   IMAGE_REGISTRY: docker.io
   IMAGE_NAMESPACE: tli551
