@@ -12,7 +12,9 @@ Astra developer tool(ADT) is to setup Astra Control Services(ACS) on OS X, WSL a
 
 ## Get Astra developer tool
 
-Copy [astra](./astra) to a directory which is in your $PATH, such as `~/.local/bin`, run `chmod +x astra `, then use `astra` like any other command line tool. You can also simply run the tool from polaris `scripts/k8stool` directory once the tool merges into the integration branch
+```
+curl -o astra -sL https://tinyurl.com/yc89kjvf && chmod +x astra
+```
 
 ## One-step ACS deployment
 1. ### Create k8s cluster and stand up ACS
