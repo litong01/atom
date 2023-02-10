@@ -12,6 +12,6 @@ docker run --rm --name astra --network host \
    -e "CREDS_IMAGE_USERNAME=${CREDS_IMAGE_USERNAME}" \
    -e "CREDS_IMAGE_PASSWORD=${CREDS_IMAGE_PASSWORD}" \
    -v /var/run/docker.sock:/var/run/docker.sock \
-   -v /tmp/work:/home/work \
+   -v /tmp/astra:/tmp/astra \
    -v $(pwd):/home/polaris \
-   -v /Users/tli/.kube:/home/.kube tli551/astra astra $@
+   -v ${HOME}/.kube:/home/.kube tli551/astra astra $@
