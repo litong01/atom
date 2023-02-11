@@ -2,6 +2,7 @@
 docker run --rm --name astra --network host ^
    -e "SKIP_KUBE_CONTEXT_CHECK=true" ^
    -e "DEPLOY_TYPE=dev" ^
+   -e "WORKDIR=/home/work/astra" ^
    -e "VAULT_ADDR=%VAULT_ADDR%" ^
    -e "GITHUB_USERNAME=%GITHUB_USERNAME%" ^
    -e "GITHUB_TOKEN=%GITHUB_TOKEN%" ^
