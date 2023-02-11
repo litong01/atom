@@ -946,10 +946,16 @@ ${CONFIG}
 }
 EOF
 
+  # Consider when the script is running from inside of a container
+  if [[ ! -z "${HOSTWORKDIR}" ]]; then
+    configpath="${HOSTWORKDIR}/proxy.conf"
+  else
+    configpath="${WORKDIR}/proxy.conf"
+  fi
+  PORTMAP=$(echo ${PORTMAP})
   # Now start up the proxy container
-  thecmd=$(echo docker run --name kubeproxy -d --network=kind ${PORTMAP} \
-    -v ${WORKDIR}/proxy.conf:/etc/nginx/nginx.conf:ro nginx:latest)
-  eval ${thecmd}
+  docker run --name kubeproxy -d --network=kind ${PORTMAP} \
+    -v ${configpath}:/etc/nginx/nginx.conf:ro nginx:latest
   echo "${MSG}"
 }
 

@@ -3,6 +3,7 @@ docker run --rm --name astra --network host ^
    -e "SKIP_KUBE_CONTEXT_CHECK=true" ^
    -e "DEPLOY_TYPE=dev" ^
    -e "WORKDIR=/home/work/astra" ^
+   -e "HOSTWORKDIR=/tmp/astra" ^
    -e "VAULT_ADDR=%VAULT_ADDR%" ^
    -e "GITHUB_USERNAME=%GITHUB_USERNAME%" ^
    -e "GITHUB_TOKEN=%GITHUB_TOKEN%" ^
@@ -13,6 +14,6 @@ docker run --rm --name astra --network host ^
    -e "CREDS_IMAGE_USERNAME=%CREDS_IMAGE_USERNAME%" ^
    -e "CREDS_IMAGE_PASSWORD=%CREDS_IMAGE_PASSWORD%" ^
    -v /var/run/docker.sock:/var/run/docker.sock ^
-   -v /tmp/astra:/tmp/astra ^
+   -v /tmp/astra:/home/work/astra ^
    -v %CD%:/home/polaris ^
    -v %USERPROFILE%/.kube:/home/.kube tli551/astra astra %*
