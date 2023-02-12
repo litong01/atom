@@ -55,6 +55,7 @@ function printHelp() {
   echo "     clean    - Remove all astra including k8s cluster"
   echo "     pull     - pull tagged commit image from repo"
   echo "     refresh  - restart a deployment and its image"
+  echo "     make     - run polaris make command"
   echo ""
   echo -e "Parameters for ${Green}image${ColorOff} command:"
   echo "     -i|--imagename  - an astra image name. default is all images"
@@ -78,7 +79,7 @@ function printHelp() {
 
 function validateCMD() {
   cmd=$1
-  allCommands=("up" "down" "image" "deploy" "clean" "prepare" "pull" "refresh")
+  allCommands=("up" "down" "image" "deploy" "clean" "prepare" "pull" "refresh" "make")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -100,34 +101,38 @@ function validateCMD() {
 
 CMD=$1
 shift
-
+# This saves the rest of the command in case it is to pass along for make command
+REST="$@"
 # Validate the command
 validateCMD "${CMD}"
 
-# Handling parameters
-while [[ $# -gt 0 ]]; do
-  optkey="$1"
-  case $optkey in
-    -h|--help)
-      printHelp "true"; exit 0;;
-    --context)
-      CONTEXT="$2";shift 2;;
-    --targetports)
-      TARGETPORTS="$2";shift 2;;
-    -n|--namespace)
-      NAMESPACE="$2";shift 2;;
-    -w|--workdir)
-      WORKDIR="$2";shift 2;;
-    -a|--astra-name)
-      COMPONENT="$2";shift 2;;
-    -d|--deployment-name)
-      DEPLOYMENT="$2";shift 2;;
-    -i|--imagename)
-      IMAGENAME="$2";shift 2;;
-    *) # unknown option
-      echo "parameter $1 is not supported"; exit 1;;
-  esac
-done
+# We will only handle command parameters if command was not make
+if [[ "${CMD}" != "make" ]]; then
+  # Handling parameters
+  while [[ $# -gt 0 ]]; do
+    optkey="$1"
+    case $optkey in
+      -h|--help)
+        printHelp "true"; exit 0;;
+      --context)
+        CONTEXT="$2";shift 2;;
+      --targetports)
+        TARGETPORTS="$2";shift 2;;
+      -n|--namespace)
+        NAMESPACE="$2";shift 2;;
+      -w|--workdir)
+        WORKDIR="$2";shift 2;;
+      -a|--astra-name)
+        COMPONENT="$2";shift 2;;
+      -d|--deployment-name)
+        DEPLOYMENT="$2";shift 2;;
+      -i|--imagename)
+        IMAGENAME="$2";shift 2;;
+      *) # unknown option
+        echo "parameter $1 is not supported"; exit 1;;
+    esac
+  done
+fi
 
 function validateContext() {
   # Context was not set, trying to use current context
@@ -423,5 +428,7 @@ elif [[ "${CMD}" == "refresh" ]]; then
   validateContext
   refreshDeployment
 
+elif [[ "${CMD}" == "make" ]]; then
+  make "${REST}"
 fi
 #=================End main process=========================
