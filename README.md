@@ -66,12 +66,12 @@ environment variables were set as [described above](#one-time-environment-setup)
 
 - Build all images locally
 ```
-  make docker
+  astra make docker
 ```
 
 - Build just one image, for example, identity image
 ```
-  make docker-identity
+  astra make docker-identity
 ```
 
 - Pull all images from netapp Astra image repo:

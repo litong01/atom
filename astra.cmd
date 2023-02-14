@@ -15,5 +15,5 @@ docker run --rm --name astra --network host ^
    -e "CREDS_IMAGE_PASSWORD=%CREDS_IMAGE_PASSWORD%" ^
    -v /var/run/docker.sock:/var/run/docker.sock ^
    -v %TEMP%/astra:/home/work/astra ^
-   -v %CD%:/home/polaris ^
-   -v %USERPROFILE%/.kube:/home/.kube tli551/astra astra %*
+   -v %CD%:/home/polaris -v %USERPROFILE%/.kube:/home/.kube ^
+   ghrc.io/netapp-polaris/polaris/astra/astradt:v0.1.0 astra %*

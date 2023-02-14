@@ -11,10 +11,12 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: astra
-  IMAGE_TAG: latest
-  IMAGE_REGISTRY: docker.io
-  IMAGE_NAMESPACE: tli551
+  IMAGE_NAME: astradt
+  IMAGE_TAG: v0.1.0
+  DH_REGISTRY: docker.io
+  DH_NAMESPACE: tli551
+  GH_REGISTRY: ghcr.io
+  GH_NAMESPACE: netapp-polaris/polaris/astra
 
 jobs:
   build:
@@ -33,11 +35,25 @@ jobs:
       - name: login to DockerHub
         uses: docker/login-action@v2
         with:
+          registry: ${{ env.DH_REGISTRY }}
           username: ${{ secrets.DH_USER }}
           password: ${{ secrets.DH_KEY }}
 
       - name: build and push images
         run: |
           docker buildx build --push \
-            --tag ${{env.IMAGE_NAMESPACE }}/${{env.IMAGE_NAME}}:${{env.IMAGE_TAG}} \
+            --tag ${{ env.DH_REGISTRY }}/${{env.DH_NAMESPACE }}/${{env.IMAGE_NAME}}:${{env.IMAGE_TAG}} \
+            --platform linux/amd64,linux/arm64 .
+
+      - name: login to Github package
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.GH_REGISTRY }}
+          username: ${{ secrets.GHP_USER }}
+          password: ${{ secrets.GHP_KEY }}
+
+      - name: build and push images
+        run: |
+          docker buildx build --push \
+            --tag ${{ env.GH_REGISTRY }}/${{env.GH_NAMESPACE }}/${{env.IMAGE_NAME}}:${{env.IMAGE_TAG}} \
             --platform linux/amd64,linux/arm64 .
