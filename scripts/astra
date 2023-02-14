@@ -53,6 +53,7 @@ function printHelp() {
   echo "     prepare  - Get cluster and image ready"
   echo "     deplay   - Deploy astra components"
   echo "     clean    - Remove all astra including k8s cluster"
+  echo "     cleanall - Remove all astra including k8s cluster, proxy, local registry"
   echo "     pull     - pull tagged commit image from repo"
   echo "     refresh  - restart a deployment and its image"
   echo "     make     - run polaris make command"
@@ -79,7 +80,7 @@ function printHelp() {
 
 function validateCMD() {
   cmd=$1
-  allCommands=("up" "down" "image" "deploy" "clean" "prepare" "pull" "refresh" "make")
+  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "pull" "refresh" "make")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -403,6 +404,13 @@ elif [[ "${CMD}" == "down" ]]; then
 elif [[ "${CMD}" == "clean" ]]; then
   echo -e "${Green}Removing Astra and cluster...${ColorOff}"
   ${SCRIPTDIR}/k8stool cluster -d
+
+elif [[ "${CMD}" == "cleanall" ]]; then
+  echo -e "${Green}Removing everything...${ColorOff}"
+  ${SCRIPTDIR}/k8stool cluster -d
+  # Remove the proxy and the local registry as well
+  docker rm -f kubeproxy &> /dev/null || true
+  docker rm -f kind-registry &> /dev/null || true  
 
 elif [[ "${CMD}" == "image" ]]; then
   echo -e "${Green}Updating image...${ColorOff}"
