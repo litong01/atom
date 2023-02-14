@@ -51,7 +51,7 @@ function printHelp() {
   echo "     down     - Remove all astra but k8s cluster"
   echo "     image    - Update image to the local repo"
   echo "     prepare  - Get cluster and image ready"
-  echo "     deplay   - Deploy astra components"
+  echo "     deploy   - Deploy astra components"
   echo "     clean    - Remove all astra including k8s cluster"
   echo "     cleanall - Remove all astra including k8s cluster, proxy, local registry"
   echo "     pull     - pull tagged commit image from repo"
@@ -233,34 +233,44 @@ function deployAC() {
   fi
 }
 
+function pullAndTag() {
+  irepo=$1
+  iname=$2
+  itag=$3
+  echo -e "     Processing ${irepo}${iname}:${itag}"
+  anImage=$(docker images "${iname}:${itag}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
+  # The image already exists locally, do not need to pull
+  if [[ -z "${anImage}" ]]; then
+    docker pull "${irepo}${iname}:${itag}"
+    docker tag "${irepo}${iname}:${itag}" "${iname}:${itag}"
+  else
+    echo -e "     ${Green}Already exists locally, skipping${ColorOff}"
+  fi
+}
+
 function pullAstraComponentImage() {
   imagerepo=$1
   imagename=$2
   if [[ "${imagename}" == "astra-py-k8s" ]]; then
     echo -e "${Green}Ready to pull ${imagename}:v0.0.6${ColorOff}"
-    docker pull "${imagerepo}${imagename}:v0.0.6"
-    docker tag "${imagerepo}${imagename}:v0.0.6" "${imagename}:v0.0.6"
+    pullAndTag ${imagerepo} ${imagename} "v0.0.6"
   elif [[ "${imagename}" == "features_upgrade" ]] || [[ "${imagename}" == "features_init" ]]; then
     tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh features --release-versioning false||true)
     echo -e "${Green}Ready to pull ${imagename}:${tag}${ColorOff}"
-    docker pull "${imagerepo}${imagename}:${tag}"
-    docker tag "${imagerepo}${imagename}:${tag}" "${imagename}:${tag}"
+    pullAndTag ${imagerepo} ${imagename} ${tag}
   elif [[ "${imagename}" == "support_hourly" ]] || [[ "${imagename}" == "support_weekly" ]]; then
     tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh support --release-versioning false||true)
     echo -e "${Green}Ready to pull ${imagename}:${tag}${ColorOff}"
-    docker pull "${imagerepo}${imagename}:${tag}"
-    docker tag "${imagerepo}${imagename}:${tag}" "${imagename}:${tag}"
+    pullAndTag ${imagerepo} ${imagename} ${tag}
   elif [[ "${imagename}" == "task-service_task_purge" ]]; then
     tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh task-service --release-versioning false||true)
     echo -e "${Green}Ready to pull ${imagename}:${tag}${ColorOff}"
-    docker pull "${imagerepo}${imagename}:${tag}"
-    docker tag "${imagerepo}${imagename}:${tag}" "${imagename}:${tag}"
+    pullAndTag ${imagerepo} ${imagename} ${tag}
   else
     tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh "${imagename}" --release-versioning false||true)
     if [[ "${tag}" != "" ]] && [[ "${tag}" != *"no chart found"* ]]; then
       echo -e "${Green}Ready to pull ${imagename}:${tag}${ColorOff}"
-      docker pull "${imagerepo}${imagename}:${tag}"
-      docker tag "${imagerepo}${imagename}:${tag}" "${imagename}:${tag}"
+      pullAndTag ${imagerepo} ${imagename} ${tag}
     else
       echo -e "${Red}Astra tool does not know how to handle ${imagename}${ColorOff}"
     fi
