@@ -16,4 +16,4 @@ docker run --rm --name astra --network host \
    -v /var/run/docker.sock:/var/run/docker.sock \
    -v /tmp/astra:/home/work/astra \
    -v $(pwd):/home/polaris -v ${HOME}/.kube:/home/.kube \
-   ghrc.io/netapp-polaris/polaris/astra/astradt:v0.1.0 astra $@
+   ghcr.io/netapp-polaris/polaris/astra/astradt:v0.1.0 astra $@
