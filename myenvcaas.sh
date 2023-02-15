@@ -16,5 +16,5 @@ export CREDS_IMAGE_USERNAME="Your image repo username from vault kv"
 export CREDS_IMAGE_PASSWORD="Your image repo password from vault kv"
 
 export PCLOUD_AUTH2=${HOME}/work/auth2.json
-export IMAGE_HOST=localhost:5001
-export CLUSTER_ENDPOINT=integration.astra.netapp.io
+export IMAGE_HOST=docker.repo.eng.netapp.com
+export CLUSTER_ENDPOINT=10.193.218.22

@@ -11,6 +11,7 @@ WORKDIR=${WORKDIR:-/tmp/astra}
 COMPONENT="all"
 NAMESPACE="${NAMESPACE:-pcloud}"
 IMAGE_REPOSITORY=${IMAGE_REPOSITORY:-docker.repo.eng.netapp.com}
+CLUSTER_ENDPOINT=${CLUSTER_ENDPOINT:-integration.astra.netapp.io}
 IMAGENAME=""
 
 POLARIS_BASE_COMPONENTS=()
@@ -155,7 +156,7 @@ function validateContext() {
 function checkEnvironmentVariables() {
   envs=(DEPLOY_TYPE VAULT_ADDR GITHUB_USERNAME \
         GITHUB_TOKEN GITHUB_ID CREDS_AUTH_CLIENT_ID \
-        CREDS_AUTH_DOMAIN CREDS_ISSUER_URL)
+        CREDS_AUTH_DOMAIN CREDS_ISSUER_URL IMAGE_HOST CLUSTER_ENDPOINT)
   for value in ${envs[@]}; do
     if [[ -z ${!value} ]]; then
       echo -e "${Red}${value}${ColorOff} was not set, quiting..."
@@ -211,19 +212,22 @@ function deployAC() {
     echo -e "${Green}Ready to deploy traefik${ColorOff}"
     KUBE_CONTEXT=${CONTEXT} SKIP_KUBE_CONTEXT_CHECK=true \
     make traefikinstall DEPLOY_TARGET=local \
-    CLUSTER_ENDPOINT=integration.astra.netapp.io \
-    TRAEFIK_ENDPOINT=integration.astra.netapp.io NAMESPACE=${NAMESPACE}
+    CLUSTER_ENDPOINT=${CLUSTER_ENDPOINT} \
+    TRAEFIK_ENDPOINT=${CLUSTER_ENDPOINT} NAMESPACE=${NAMESPACE}
 
-    echo -e "${Green}Setting up proxy...${ColorOff}"
-    ${SCRIPTDIR}/k8stool proxy --targetports "traefik 80 443" --workdir "${WORKDIR}" --context ${CONTEXT}
+    # Only setup proxy when doing things locally.
+    if [[ ${CLUSTER_ENDPOINT} == "integration.astra.netapp.io" ]]; then
+      echo -e "${Green}Setting up proxy...${ColorOff}"
+      ${SCRIPTDIR}/k8stool proxy --targetports "traefik 80 443" --workdir "${WORKDIR}" --context ${CONTEXT}
+    fi
   fi
 
   if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "main" ]]; then
     echo -e "${Green}Ready to deploy Astra${ColorOff}"
-    KUBE_CONTEXT=${CONTEXT} SKIP_KUBE_CONTEXT_CHECK=true IMAGE_HOST=localhost:5001 \
+    KUBE_CONTEXT=${CONTEXT} SKIP_KUBE_CONTEXT_CHECK=true IMAGE_HOST=${IMAGE_HOST} \
     make helminstall DEPLOY_TARGET=cicd \
-    CLUSTER_ENDPOINT=integration.astra.netapp.io \
-    TRAEFIK_ENDPOINT=integration.astra.netapp.io \
+    CLUSTER_ENDPOINT=${CLUSTER_ENDPOINT} \
+    TRAEFIK_ENDPOINT=${CLUSTER_ENDPOINT} \
     HELMOVERRIDE='--set mongodb.image.repository=zcube/bitnami-compat-mongodb --set mongodb.image.tag=5.0.14'
   fi
 
