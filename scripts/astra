@@ -156,7 +156,7 @@ function validateContext() {
 function checkEnvironmentVariables() {
   envs=(DEPLOY_TYPE VAULT_ADDR GITHUB_USERNAME \
         GITHUB_TOKEN GITHUB_ID CREDS_AUTH_CLIENT_ID \
-        CREDS_AUTH_DOMAIN CREDS_ISSUER_URL IMAGE_HOST CLUSTER_ENDPOINT)
+        CREDS_AUTH_DOMAIN CREDS_ISSUER_URL CLUSTER_ENDPOINT)
   for value in ${envs[@]}; do
     if [[ -z ${!value} ]]; then
       echo -e "${Red}${value}${ColorOff} was not set, quiting..."
