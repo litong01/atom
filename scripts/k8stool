@@ -479,7 +479,7 @@ function deleteMCS() {
 }
 
 function getTopology() {
-  allthings=$(echo ${TOPOLOGYCONTENT} | docker run --rm -i imega/jq:1.6 -c \
+  allthings=$(echo ${TOPOLOGYCONTENT} | jq -c \
     '.[] | .clusterName, .network, .podSubnet,.svcSubnet,.meta.kubeconfig')
 
   # Replace special characters with space
@@ -540,7 +540,7 @@ function addRoutes() {
     # Get clusters which share same network for a given cluster and network name
     cn=$(echo ${cInfo[i]}|xargs)
     nn=$(echo ${cInfo[i+1]}|xargs)
-    allthings=$(echo ${TOPOLOGYCONTENT} | docker run --rm -i imega/jq:1.6 --arg cn "${cn}" \
+    allthings=$(echo ${TOPOLOGYCONTENT} | jq --arg cn "${cn}" \
       --arg nn "${nn}" -c \
       '[ .[] | select( .network == $nn and .clusterName != $cn )] |.[]| .clusterName,.podSubnet,.svcSubnet')
 

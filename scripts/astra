@@ -309,6 +309,10 @@ function pushAstraComponentImage() {
     tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh support --release-versioning false||true)
     echo -e "${Green}Ready to push ${imagename}:${tag}${ColorOff}"
     ${SCRIPTDIR}/k8stool image --source-tag "${imagename}:${tag}"
+  elif [[ "${imagename}" == "task-service_task_purge" ]]; then
+    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh task-service --release-versioning false||true)
+    echo -e "${Green}Ready to push ${imagename}:${tag}${ColorOff}"
+    ${SCRIPTDIR}/k8stool image --source-tag "${imagename}:${tag}"
   else
     tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh "${imagename}" --release-versioning false||true)
     if [[ "${tag}" != "" ]] && [[ "${tag}" != *"no chart found"* ]]; then
