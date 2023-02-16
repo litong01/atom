@@ -212,8 +212,8 @@ function deployAC() {
     echo -e "${Green}Ready to deploy traefik${ColorOff}"
     KUBE_CONTEXT=${CONTEXT} SKIP_KUBE_CONTEXT_CHECK=true \
     make traefikinstall DEPLOY_TARGET=local \
-    CLUSTER_ENDPOINT=${CLUSTER_ENDPOINT} \
-    TRAEFIK_ENDPOINT=${CLUSTER_ENDPOINT} NAMESPACE=${NAMESPACE}
+    CLUSTER_ENDPOINT=integration.astra.netapp.io \
+    TRAEFIK_ENDPOINT=integration.astra.netapp.io NAMESPACE=${NAMESPACE}
 
     # Only setup proxy when doing things locally.
     if [[ ${CLUSTER_ENDPOINT} == "integration.astra.netapp.io" ]]; then
@@ -226,8 +226,8 @@ function deployAC() {
     echo -e "${Green}Ready to deploy Astra${ColorOff}"
     KUBE_CONTEXT=${CONTEXT} SKIP_KUBE_CONTEXT_CHECK=true IMAGE_HOST=${IMAGE_HOST} \
     make helminstall DEPLOY_TARGET=cicd \
-    CLUSTER_ENDPOINT=${CLUSTER_ENDPOINT} \
-    TRAEFIK_ENDPOINT=${CLUSTER_ENDPOINT} \
+    CLUSTER_ENDPOINT=integration.astra.netapp.io \
+    TRAEFIK_ENDPOINT=integration.astra.netapp.io \
     HELMOVERRIDE='--set mongodb.image.repository=zcube/bitnami-compat-mongodb --set mongodb.image.tag=5.0.14'
   fi
 
