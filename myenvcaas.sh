@@ -17,4 +17,4 @@ export CREDS_IMAGE_PASSWORD="Your image repo password from vault kv"
 
 export PCLOUD_AUTH2=${HOME}/work/auth2.json
 export IMAGE_HOST=docker.repo.eng.netapp.com
-export CLUSTER_ENDPOINT=10.193.218.22
+export CLUSTER_ENDPOINT=xx.xx.xx.xx
