@@ -7,7 +7,7 @@ IF EXIST "%PCLOUD_AUTH2%" (
   SET "_pcloud2env=-e %PCLOUD_AUTH2%=/home/work/auth2.json"
 )
 REM run the tool
-docker run --rm --name astra --network host %_pcloud2env% ^
+docker run -it --rm --name astra --network host %_pcloud2env% ^
    -e "SKIP_KUBE_CONTEXT_CHECK=true" ^
    -e "DEPLOY_TYPE=dev" ^
    -e "WORKDIR=/home/work/astra" ^
