@@ -56,6 +56,7 @@ function printHelp() {
   echo "     clean    - Remove all astra including k8s cluster"
   echo "     cleanall - Remove all astra including k8s cluster, proxy, local registry"
   echo "     pull     - pull tagged commit image from repo"
+  echo "     update   - update this tool"
   echo "     refresh  - restart a deployment and its image"
   echo "     make     - run polaris make command"
   echo ""
@@ -81,7 +82,7 @@ function printHelp() {
 
 function validateCMD() {
   cmd=$1
-  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "pull" "refresh" "make")
+  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "pull" "refresh" "make" "update")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -151,6 +152,18 @@ function validateContext() {
   fi
 
   CONTEXT="${ctx}"
+}
+
+function doADTUpdate() {
+  adtimage=$(docker inspect astra --format "{{.Config.Image}}" 2>/dev/null || true)
+  if [[ ! -z "${adtimage}" ]]; then
+    # Using the github token and id to login
+    echo $GITHUB_TOKEN | docker login -u ${GITHUB_TOKEN} --password-stdin ghcr.io >/dev/null 2>&1
+    # Pull the image
+    docker pull "${adtimage}"
+    # Try to clean up dangling images
+    docker rmi -f $(docker images -f "dangling=true") >/dev/null 2>&1
+  fi
 }
 
 function checkEnvironmentVariables() {
@@ -453,7 +466,9 @@ elif [[ "${CMD}" == "refresh" ]]; then
   checkEnvironmentVariables
   validateContext
   refreshDeployment
-
+elif [[ "${CMD}" == "update" ]]; then
+  checkEnvironmentVariables
+  doADTUpdate
 elif [[ "${CMD}" == "make" ]]; then
   make "${REST}"
 fi
