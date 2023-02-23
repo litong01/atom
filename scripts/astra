@@ -40,7 +40,7 @@ POLARIS_BASE_COMPONENTS+=("support_weekly")
 POLARIS_BASE_COMPONENTS+=("task-service")
 POLARIS_BASE_COMPONENTS+=("task-service_task_purge")
 POLARIS_BASE_COMPONENTS+=("tenancy")
-POLARIS_BASE_COMPONENTS+=("tenancy-account-purge")
+POLARIS_BASE_COMPONENTS+=("tenancy_account_purge")
 POLARIS_BASE_COMPONENTS+=("trident-svc")
 
 function printHelp() {
@@ -284,6 +284,10 @@ function pullAstraComponentImage() {
     tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh task-service --release-versioning false||true)
     echo -e "${Green}Ready to pull ${imagename}:${tag}${ColorOff}"
     pullAndTag ${imagerepo} ${imagename} ${tag}
+  elif [[ "${imagename}" == "tenancy_account_purge" ]]; then
+    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh tenancy --release-versioning false||true)
+    echo -e "${Green}Ready to pull ${imagename}:${tag}${ColorOff}"
+    pullAndTag ${imagerepo} ${imagename} ${tag}
   else
     tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh "${imagename}" --release-versioning false||true)
     if [[ "${tag}" != "" ]] && [[ "${tag}" != *"no chart found"* ]]; then
@@ -325,6 +329,10 @@ function pushAstraComponentImage() {
     ${SCRIPTDIR}/k8stool image --source-tag "${imagename}:${tag}"
   elif [[ "${imagename}" == "task-service_task_purge" ]]; then
     tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh task-service --release-versioning false||true)
+    echo -e "${Green}Ready to push ${imagename}:${tag}${ColorOff}"
+    ${SCRIPTDIR}/k8stool image --source-tag "${imagename}:${tag}"
+  elif [[ "${imagename}" == "tenancy_account_purge" ]]; then
+    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh tenancy --release-versioning false||true)
     echo -e "${Green}Ready to push ${imagename}:${tag}${ColorOff}"
     ${SCRIPTDIR}/k8stool image --source-tag "${imagename}:${tag}"
   else
