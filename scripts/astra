@@ -352,7 +352,7 @@ function pushACImages() {
 
 function refreshDeployment() {
   if [[ "${DEPLOYMENT}" == "" ]]; then
-    echo -e "${Red}Use -d parameter to specify a deployment to be refreshed"
+    echo -e "${Red}Use -d parameter to specify a deployment to be refreshed${ColorOff}"
     exit 1
   else
     OLDIFS=$IFS

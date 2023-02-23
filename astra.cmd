@@ -24,4 +24,4 @@ docker run -it --rm --name astra --network host %_pcloud2env% ^
    -v /var/run/docker.sock:/var/run/docker.sock %_pcloud2mount% ^
    -v %TEMP%/astra:/home/work/astra ^
    -v %CD%:/home/polaris -v %USERPROFILE%/.kube:/home/.kube ^
-   ghcr.io/netapp-polaris/polaris/astra/astradt:v0.1.0 astra %*
+   ghcr.io/netapp-polaris/polaris/astra/astradt:v0.1.0 time astra %*
