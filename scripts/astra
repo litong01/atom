@@ -151,11 +151,17 @@ function doADTUpdate() {
   adtimage=$(docker inspect astra --format "{{.Config.Image}}" 2>/dev/null || true)
   if [[ ! -z "${adtimage}" ]]; then
     # Using the github token and id to login
-    echo $GITHUB_TOKEN | docker login -u ${GITHUB_TOKEN} --password-stdin ghcr.io >/dev/null 2>&1
+    echo $GITHUB_TOKEN | docker login -u ${GITHUB_ID} --password-stdin ghcr.io >/dev/null 2>&1
     # Pull the image
     docker pull "${adtimage}"
     # Try to clean up dangling images
     docker rmi -f $(docker images -f "dangling=true") >/dev/null 2>&1 || true
+  fi
+}
+
+function loginToDockerHub() {
+  if [[ ! -z "${DH_ID}" ]] && [[ ! -z "${DH_TOKEN}" ]]; then
+    echo $DH_TOKEN | docker login -u $DH_ID --password-stdin docker.io >/dev/null 2>&1
   fi
 }
 
@@ -291,6 +297,7 @@ function pullAstraComponentImage() {
 function pullACImages() {
   # repologin="https://${IMAGE_REPOSITORY}/v2/"
   # response=$(docker login -u ${CREDS_IMAGE_USERNAME} -p ${CREDS_IMAGE_PASSWORD} ${IMAGE_REPOSITORY})
+  loginToDockerHub
   imagerepo="${IMAGE_REPOSITORY}/globalcicd/astra/"
   if [[ "${IMAGENAME}" == "" ]]; then
     size=$(echo ${#allimages[@]})

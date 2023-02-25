@@ -16,6 +16,8 @@ docker run -it --rm --name astra --network host %_pcloud2env% ^
    -e "GITHUB_USERNAME=%GITHUB_USERNAME%" ^
    -e "GITHUB_TOKEN=%GITHUB_TOKEN%" ^
    -e "GITHUB_ID=%GITHUB_ID%" ^
+   -e "DH_ID=%DH_LOGIN%" ^
+   -e "DH_TOKEN=%DH_TOKEN%" ^
    -e "CREDS_AUTH_CLIENT_ID=%CREDS_AUTH_CLIENT_ID%" ^
    -e "CREDS_AUTH_DOMAIN=%CREDS_AUTH_DOMAIN%" ^
    -e "CREDS_ISSUER_URL=%CREDS_ISSUER_URL%" ^
