@@ -88,10 +88,12 @@ function validateCMD() {
     if [[ "${cmd}" != "-h" ]] && [[ "${cmd}" != "--help" ]] && [[ "${cmd}" != "" ]]; then
       echo ""
       echo -e "ERROR: ${Red}${cmd}${ColorOff} is not a supported command!"
+      printHelp "${isValidCMD}"
+      exit 1
+    else
+      printHelp "${isValidCMD}"
+      exit 0
     fi
-    CMD=""
-    printHelp "${isValidCMD}"
-    exit 1
   fi
 }
 
