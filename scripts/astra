@@ -254,6 +254,25 @@ function pullAndTag() {
 
 declare -A allimages
 allimages=(['zcube/bitnami-compat-mongodb:5.0.14']='d')
+function saveAllImageTags() {
+  cid=$(git rev-parse --short HEAD)
+  echo -e "${Green}Current commit ${cid}${ColorOff}"
+  content="allimages=("
+  for imagename in "${!allimages[@]}"; do
+    content="${content} ['"${imagename}"']='"${allimages[$imagename]}"'"
+  done
+  content="${content})"
+  echo ${content} > /home/work/astra/${cid}.sh
+}
+
+function loadAllImageTags() {
+  cid=$(git rev-parse --short HEAD)
+  echo -e "${Green}Current commit ${cid}${ColorOff}"
+  if [ -f /home/work/astra/${cid}.sh ]; then
+    echo -e "${Green}Commit level did not change, loading the saved the image tags...${ColorOff}"
+    source /home/work/astra/${cid}.sh
+  fi
+}
 function getAllImages() {
   echo -e "${Green}Calculating image tags based on current commit level...${ColorOff}"
   for key in "${!ACSIMAGES[@]}"; do
@@ -280,6 +299,7 @@ function getAllImages() {
       allimages[$imagename]=''
     fi
   done
+  saveAllImageTags
 }
 
 function pullAstraComponentImage() {
@@ -307,6 +327,7 @@ function pullACImages() {
   loginToDockerHub
   imagerepo="${IMAGE_REPOSITORY}/globalcicd/astra/"
   if [[ "${IMAGENAME}" == "" ]]; then
+    loadAllImageTags
     size=$(echo ${#allimages[@]})
     if [ "$size" -lt "2" ]; then
       getAllImages
