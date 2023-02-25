@@ -154,8 +154,8 @@ function doADTUpdate() {
     echo $GITHUB_TOKEN | docker login -u ${GITHUB_ID} --password-stdin ghcr.io >/dev/null 2>&1
     # Pull the image
     docker pull "${adtimage}"
-    # Try to clean up dangling images
-    docker rmi -f $(docker images -f "dangling=true") >/dev/null 2>&1 || true
+    # Try to clean up dangling images, use a variable to avoid none 0 return
+    notuseval=$(docker rmi -f $(docker images -f "dangling=true") >/dev/null 2>&1 || true)
   fi
 }
 
