@@ -28,7 +28,7 @@ ACSIMAGES=(['activity']='' ['astra-py-k8s']='' ['billing']='' ['bucketservice']=
 declare -A TAGPATH
 TAGPATH=(['astra-py-k8s']='.initContainer.image.tag' ['theotw/natssync-server']='.image.tag' \
   ['theotw/httpproxy-server']='.httpproxy-server.image.tag' ['traefik']='.traefik.image.tag' \
-  ['nats']='.appVersion' ['hashicorp/vault']='.server.image.tag')
+  ['nats']='.appVersion' ['hashicorp/vault']='.vault.server.image.tag')
 
 declare -A TAGYAML
 TAGYAML=(['astra-py-k8s']='activity/values.yaml' ['theotw/natssync-server']='natssync-server/values.yaml' \
