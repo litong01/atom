@@ -76,13 +76,13 @@ environment variables were set as [described above](#one-time-environment-setup)
   astra make docker-identity
 ```
 
-- Pull all images from netapp Astra image repo:
+- Pull all necessary images:
 ```
   astra pull
 ```
-- Pull just one image from netapp Astra image repo:
+- Pull a specific image:
 ```
-  astra pull -i identity
+  astra pull -i identity:xxx-integration
 ```
 - Push or load local images to k8s cluster image repo:
 ```
@@ -91,7 +91,7 @@ environment variables were set as [described above](#one-time-environment-setup)
 
 - Push or load just one local image to k8s cluster image repo:
 ```
-  astra image -s identity:xxx-integration
+  astra image -i identity:xxx-integration
 ```
 
 - Bounce a deployment after you produced a newer image, for example, identity
