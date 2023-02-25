@@ -467,7 +467,7 @@ elif [[ "${CMD}" == "cleanall" ]]; then
   ${SCRIPTDIR}/k8stool cluster -d
   # Remove the proxy and the local registry as well
   docker rm -f kubeproxy &> /dev/null || true
-  docker rm -f kind-registry &> /dev/null || true  
+  docker rm -f kind-registry &> /dev/null || true
 
 elif [[ "${CMD}" == "image" ]]; then
   validateContext
