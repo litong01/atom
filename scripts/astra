@@ -27,7 +27,7 @@ ACSIMAGES=(['activity']='' ['astra-py-k8s']='' ['billing']='' ['bucketservice']=
 
 declare -A TAGPATH
 TAGPATH=(['astra-py-k8s']='.initContainer.image.tag' ['theotw/natssync-server']='.image.tag' \
-  ['theotw/httpproxy-server']='.httpproxy-server.image.tag' ['traefik']='.traefik.image.tag' \
+  ['theotw/httpproxy-server']='.image.tag' ['traefik']='.traefik.image.tag' \
   ['nats']='.appVersion' ['hashicorp/vault']='.vault.server.image.tag')
 
 declare -A TAGYAML
@@ -261,6 +261,10 @@ function getAllImages() {
     if [[ ! -z "${TAGPATH[$key]}" ]]; then
       # The image need to be specially processed
       tag=$(yq ${TAGPATH[$key]} /home/polaris/pcloud/charts/${TAGYAML[$key]})
+      if [[ -z "${tag}" ]]; then
+        echo -e "${Red}Image ${key} tag path cannot be found, this is a fatal error${ColorOff}"
+        exit 1
+      fi
       imagename="${key}:${tag}"
       echo "   ${imagename}"
       allimages[$imagename]=${val}
@@ -292,6 +296,7 @@ function pullAstraComponentImage() {
     echo -e "${Green}Pulling public image ${imagename}${ColorOff}"
     docker pull ${imagename}
   else
+    echo -e "${Green}Pulling Astra Control image ${imagename}${ColorOff}"
     pullAndTag ${imagerepo} ${name} ${tag}
   fi
 }
