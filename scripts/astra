@@ -239,14 +239,14 @@ function pullAndTag() {
   irepo=$1
   iname=$2
   itag=$3
-  echo -e "     Processing ${irepo}${iname}:${itag}"
+  echo -e "   Processing ${irepo}${iname}:${itag}"
   anImage=$(docker images "${iname}:${itag}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
   # The image already exists locally, do not need to pull
   if [[ -z "${anImage}" ]]; then
     docker pull "${irepo}${iname}:${itag}"
     docker tag "${irepo}${iname}:${itag}" "${iname}:${itag}"
   else
-    echo -e "     ${Green}Already exists locally, skipping${ColorOff}"
+    echo -e "   ${Green}Already exists locally, skipping${ColorOff}"
   fi
 }
 
