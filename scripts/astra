@@ -253,14 +253,14 @@ function pullAndTag() {
 declare -A allimages
 allimages=(['zcube/bitnami-compat-mongodb:5.0.14']='d')
 function getAllImages() {
-  echo -e "${Green}Calculating image tags...${ColorOff}"
+  echo -e "${Green}Calculating image tags based on current commit level...${ColorOff}"
   for key in "${!ACSIMAGES[@]}"; do
     val="${ACSIMAGES[$key]}"
     if [[ ! -z "${TAGPATH[$key]}" ]]; then
       # The image need to be specially processed
       tag=$(yq ${TAGPATH[$key]} /home/polaris/pcloud/charts/${TAGYAML[$key]})
       imagename="${key}:${tag}"
-      echo "${imagename}"
+      echo "   ${imagename}"
       allimages[$imagename]=${val}
     else
       # The image tag should be retrieved from the git level
@@ -270,7 +270,7 @@ function getAllImages() {
       fi
       tag=$(/home/polaris/cicd/scripts/calculate_service_version.sh ${comp} --release-versioning false||true)
       imagename="${key}:${tag}"
-      echo "${imagename}"
+      echo "   ${imagename}"
       allimages[$imagename]=''
     fi
   done
