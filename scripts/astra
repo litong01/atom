@@ -14,34 +14,26 @@ IMAGE_REPOSITORY=${IMAGE_REPOSITORY:-docker.repo.eng.netapp.com}
 CLUSTER_ENDPOINT=${CLUSTER_ENDPOINT:-integration.astra.netapp.io}
 IMAGENAME=""
 
-POLARIS_BASE_COMPONENTS=()
-POLARIS_BASE_COMPONENTS+=("activity")
-POLARIS_BASE_COMPONENTS+=("astra-py-k8s")
-POLARIS_BASE_COMPONENTS+=("billing")
-POLARIS_BASE_COMPONENTS+=("bucketservice")
-POLARIS_BASE_COMPONENTS+=("cloud-extension")
-POLARIS_BASE_COMPONENTS+=("composite-compute")
-POLARIS_BASE_COMPONENTS+=("composite-volume")
-POLARIS_BASE_COMPONENTS+=("credentials")
-POLARIS_BASE_COMPONENTS+=("entitlement")
-POLARIS_BASE_COMPONENTS+=("features")
-POLARIS_BASE_COMPONENTS+=("features_init")
-POLARIS_BASE_COMPONENTS+=("features_upgrade")
-POLARIS_BASE_COMPONENTS+=("graphql-server")
-POLARIS_BASE_COMPONENTS+=("hybridauth")
-POLARIS_BASE_COMPONENTS+=("identity")
-POLARIS_BASE_COMPONENTS+=("krakend")
-POLARIS_BASE_COMPONENTS+=("nautilus")
-POLARIS_BASE_COMPONENTS+=("openapi")
-POLARIS_BASE_COMPONENTS+=("polaris-ui")
-POLARIS_BASE_COMPONENTS+=("support")
-POLARIS_BASE_COMPONENTS+=("support_hourly")
-POLARIS_BASE_COMPONENTS+=("support_weekly")
-POLARIS_BASE_COMPONENTS+=("task-service")
-POLARIS_BASE_COMPONENTS+=("task-service_task_purge")
-POLARIS_BASE_COMPONENTS+=("tenancy")
-POLARIS_BASE_COMPONENTS+=("tenancy_account_purge")
-POLARIS_BASE_COMPONENTS+=("trident-svc")
+
+declare -A ACSIMAGES
+ACSIMAGES=(['activity']='' ['astra-py-k8s']='' ['billing']='' ['bucketservice']='' \
+  ['cloud-extension']='' ['composite-compute']='' ['composite-volume']='' ['credentials']='' \
+  ['entitlement']='' ['features_init']='features' ['features']='' ['features_upgrade']='features' \
+  ['graphql-server']='' ['hybridauth']='' ['identity']='' ['krakend']='' ['nautilus']='' ['openapi']='' ['polaris-ui']='' \
+  ['support']='' ['support_hourly']='support' ['support_weekly']='support' ['task-service']='' \
+  ['task-service_task_purge']='task-service' ['tenancy']='' ['tenancy_account_purge']='tenancy' \
+  ['trident-svc']='' ['nats']='d' ['theotw/natssync-server']='d' ['theotw/httpproxy-server']='d' \
+  ['traefik']='d' ['hashicorp/vault']='d')
+
+declare -A TAGPATH
+TAGPATH=(['astra-py-k8s']='.initContainer.image.tag' ['theotw/natssync-server']='.image.tag' \
+  ['theotw/httpproxy-server']='.httpproxy-server.image.tag' ['traefik']='.traefik.image.tag' \
+  ['nats']='.appVersion' ['hashicorp/vault']='.server.image.tag')
+
+declare -A TAGYAML
+TAGYAML=(['astra-py-k8s']='activity/values.yaml' ['theotw/natssync-server']='natssync-server/values.yaml' \
+  ['theotw/httpproxy-server']='httpproxy-server/values.yaml' ['traefik']='traefik/values.yaml' \
+  ['nats']='nats/Chart.yaml' ['hashicorp/vault']='polaris-vault/values.yaml')
 
 function printHelp() {
   echo ""
@@ -198,20 +190,6 @@ function checkAuth2File() {
   fi
 }
 
-# The images retrieved from public
-function loadPublicImage() {
-  images=("zcube/bitnami-compat-mongodb:5.0.14" \
-    "theotw/httpproxy-server:0.9.202202170408" \
-    "theotw/natssync-server:1.0.202203111920" \
-    "nats:2.8.4-alpine3.15" \
-    "traefik:2.9.1"
-  )
-  for value in ${images[@]}; do
-    docker pull "${value}"
-    ${SCRIPTDIR}/k8stool image --load-or-push true --source-tag "${value}" --context ${CONTEXT}
-  done
-}
-
 function checkInPolaris() {
     # check that the Makefile and pcloud directory exists
     if [[ ! -f "${CURDIR}/Makefile" ]] || [[ ! -d "${CURDIR}/pcloud" ]]; then
@@ -266,36 +244,47 @@ function pullAndTag() {
   fi
 }
 
+declare -A allimages
+allimages=(['zcube/bitnami-compat-mongodb:5.0.14']='d')
+function getAllImages() {
+  echo -e "${Green}Calculating image tags...${ColorOff}"
+  for key in "${!ACSIMAGES[@]}"; do
+    val="${ACSIMAGES[$key]}"
+    if [[ ! -z "${TAGPATH[$key]}" ]]; then
+      # The image need to be specially processed
+      tag=$(yq ${TAGPATH[$key]} /home/polaris/pcloud/charts/${TAGYAML[$key]})
+      imagename="${key}:${tag}"
+      echo "${imagename}"
+      allimages[$imagename]=${val}
+    else
+      # The image tag should be retrieved from the git level
+      comp="${key}"
+      if [[ ! -z "${val}" ]]; then
+        comp="${val}"
+      fi
+      tag=$(/home/polaris/cicd/scripts/calculate_service_version.sh ${comp} --release-versioning false||true)
+      imagename="${key}:${tag}"
+      echo "${imagename}"
+      allimages[$imagename]=''
+    fi
+  done
+}
+
 function pullAstraComponentImage() {
   imagerepo=$1
   imagename=$2
-  if [[ "${imagename}" == "astra-py-k8s" ]]; then
-    echo -e "${Green}Ready to pull ${imagename}:v0.0.6${ColorOff}"
-    pullAndTag ${imagerepo} ${imagename} "v0.0.6"
-  elif [[ "${imagename}" == "features_upgrade" ]] || [[ "${imagename}" == "features_init" ]]; then
-    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh features --release-versioning false||true)
-    echo -e "${Green}Ready to pull ${imagename}:${tag}${ColorOff}"
-    pullAndTag ${imagerepo} ${imagename} ${tag}
-  elif [[ "${imagename}" == "support_hourly" ]] || [[ "${imagename}" == "support_weekly" ]]; then
-    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh support --release-versioning false||true)
-    echo -e "${Green}Ready to pull ${imagename}:${tag}${ColorOff}"
-    pullAndTag ${imagerepo} ${imagename} ${tag}
-  elif [[ "${imagename}" == "task-service_task_purge" ]]; then
-    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh task-service --release-versioning false||true)
-    echo -e "${Green}Ready to pull ${imagename}:${tag}${ColorOff}"
-    pullAndTag ${imagerepo} ${imagename} ${tag}
-  elif [[ "${imagename}" == "tenancy_account_purge" ]]; then
-    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh tenancy --release-versioning false||true)
-    echo -e "${Green}Ready to pull ${imagename}:${tag}${ColorOff}"
-    pullAndTag ${imagerepo} ${imagename} ${tag}
+  imageparts=(${imagename//:/ })
+  name=${imageparts[0]}
+  tag=${imageparts[1]}
+  flag=${allimages[$imagename]}
+  if [[ -z "${flag}" ]]; then
+    flag=${ACSIMAGES[${name}]}
+  fi
+  if [[ "${flag}" == 'd' ]]; then
+    echo -e "${Green}Pulling public image ${imagename}${ColorOff}"
+    docker pull ${imagename}
   else
-    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh "${imagename}" --release-versioning false||true)
-    if [[ "${tag}" != "" ]] && [[ "${tag}" != *"no chart found"* ]]; then
-      echo -e "${Green}Ready to pull ${imagename}:${tag}${ColorOff}"
-      pullAndTag ${imagerepo} ${imagename} ${tag}
-    else
-      echo -e "${Red}Astra tool does not know how to handle ${imagename}${ColorOff}"
-    fi
+    pullAndTag ${imagerepo} ${name} ${tag}
   fi
 }
 
@@ -304,7 +293,12 @@ function pullACImages() {
   # response=$(docker login -u ${CREDS_IMAGE_USERNAME} -p ${CREDS_IMAGE_PASSWORD} ${IMAGE_REPOSITORY})
   imagerepo="${IMAGE_REPOSITORY}/globalcicd/astra/"
   if [[ "${IMAGENAME}" == "" ]]; then
-    for imagename in "${POLARIS_BASE_COMPONENTS[@]}"; do
+    size=$(echo ${#allimages[@]})
+    if [ "$size" -lt "2" ]; then
+      getAllImages
+    fi
+    echo -e "${Green}Start pulling Astra images...${ColorOff}"
+    for imagename in "${!allimages[@]}"; do
       pullAstraComponentImage "${imagerepo}" "${imagename}"
     done
   else
@@ -316,33 +310,19 @@ function pullACImages() {
 # image repository.
 function pushAstraComponentImage() {
   imagename=$1
-  if [[ "${imagename}" == "astra-py-k8s" ]]; then
-    echo -e "${Green}Ready to push ${imagename}:v0.0.6${ColorOff}"
-    ${SCRIPTDIR}/k8stool image --source-tag "${imagename}:v0.0.6"
-  elif [[ "${imagename}" == "features_upgrade" ]] || [[ "${imagename}" == "features_init" ]]; then
-    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh features --release-versioning false||true)
-    echo -e "${Green}Ready to push ${imagename}:${tag}${ColorOff}"
-    ${SCRIPTDIR}/k8stool image --source-tag "${imagename}:${tag}"
-  elif [[ "${imagename}" == "support_hourly" ]] || [[ "${imagename}" == "support_weekly" ]]; then
-    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh support --release-versioning false||true)
-    echo -e "${Green}Ready to push ${imagename}:${tag}${ColorOff}"
-    ${SCRIPTDIR}/k8stool image --source-tag "${imagename}:${tag}"
-  elif [[ "${imagename}" == "task-service_task_purge" ]]; then
-    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh task-service --release-versioning false||true)
-    echo -e "${Green}Ready to push ${imagename}:${tag}${ColorOff}"
-    ${SCRIPTDIR}/k8stool image --source-tag "${imagename}:${tag}"
-  elif [[ "${imagename}" == "tenancy_account_purge" ]]; then
-    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh tenancy --release-versioning false||true)
-    echo -e "${Green}Ready to push ${imagename}:${tag}${ColorOff}"
-    ${SCRIPTDIR}/k8stool image --source-tag "${imagename}:${tag}"
+  imageparts=(${imagename//:/ })
+  name=${imageparts[0]}
+  tag=${imageparts[1]}
+  flag=${allimages[$imagename]}
+  if [[ -z "${flag}" ]]; then
+    flag=${ACSIMAGES[${name}]}
+  fi
+  if [[ "${flag}" == 'd' ]]; then
+    echo -e "${Green}Ready to push public image ${imagename}${ColorOff}"
+    ${SCRIPTDIR}/k8stool image --load-or-push true --source-tag "${imagename}" --context ${CONTEXT}
   else
-    tag=$(${CURDIR}/cicd/scripts/calculate_service_version.sh "${imagename}" --release-versioning false||true)
-    if [[ "${tag}" != "" ]] && [[ "${tag}" != *"no chart found"* ]]; then
-      echo -e "${Green}Ready to push ${imagename}:${tag}${ColorOff}"
-      ${SCRIPTDIR}/k8stool image --source-tag "${imagename}:${tag}"
-    else
-      echo -e "${Red}Astra tool does not know how to handle ${imagename}${ColorOff}"
-    fi
+    echo -e "${Green}Ready to push ${imagename}${ColorOff}"
+    ${SCRIPTDIR}/k8stool image --source-tag "${imagename}"
   fi
 }
 
@@ -350,7 +330,12 @@ function pushACImages() {
   # repologin="https://${IMAGE_REPOSITORY}/v2/"
   # response=$(docker login -u ${CREDS_IMAGE_USERNAME} -p ${CREDS_IMAGE_PASSWORD} ${IMAGE_REPOSITORY})
   if [[ "${IMAGENAME}" == "" ]]; then
-    for imagename in "${POLARIS_BASE_COMPONENTS[@]}"; do
+    size=$(echo ${#allimages[@]})
+    if [ "$size" -lt "2" ]; then
+      getAllImages
+    fi
+    echo -e "${Green}Pushing images...${ColorOff}"
+    for imagename in "${!allimages[@]}"; do
       pushAstraComponentImage "${imagename}"
     done
   else
@@ -402,7 +387,6 @@ if [[ "${CMD}" == "up" ]]; then
   checkAuth2File
 
   echo ""
-  echo -e "${Green}Start pulling Astra images...${ColorOff}"
   pullACImages
   echo ""  
   echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
@@ -410,7 +394,6 @@ if [[ "${CMD}" == "up" ]]; then
   echo -e "${Green}Upload Astra images to image repostiory"
   validateContext
   pushACImages
-  loadPublicImage
   echo -e "${Green}Create traefik certificate${ColorOff}"
   ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
 
@@ -427,7 +410,6 @@ elif [[ "${CMD}" == "prepare" ]]; then
   echo -e "${Green}Upload Astra images to image repostiory"
   validateContext
   pushACImages
-  loadPublicImage
   echo -e "${Green}Create traefik certificate${ColorOff}"
   ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
   echo -e "${Green}Ready to deploy Astra, please run deploy command${ColorOff}"
@@ -453,7 +435,7 @@ elif [[ "${CMD}" == "cleanall" ]]; then
   docker rm -f kind-registry &> /dev/null || true  
 
 elif [[ "${CMD}" == "image" ]]; then
-  echo -e "${Green}Updating image...${ColorOff}"
+  validateContext
   pushACImages
 
 elif [[ "${CMD}" == "deploy" ]]; then
