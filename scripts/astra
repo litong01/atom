@@ -155,7 +155,7 @@ function doADTUpdate() {
     # Pull the image
     docker pull "${adtimage}"
     # Try to clean up dangling images
-    docker rmi -f $(docker images -f "dangling=true") >/dev/null 2>&1
+    docker rmi -f $(docker images -f "dangling=true") >/dev/null 2>&1 || true
   fi
 }
 
