@@ -184,12 +184,7 @@ function checkEnvironmentVariables() {
 }
 
 function checkAuth2File() {
-  auth2json="${CURDIR}/scripts/beta/auth2.json"
-  if [[ ! -z "${PCLOUD_AUTH2}" ]]; then
-    auth2json="${PCLOUD_AUTH2}"
-    cp ${PCLOUD_AUTH2} ${CURDIR}/scripts/beta/auth2.json
-  fi
-
+  auth2json=${PCLOUD_AUTH2:-${CURDIR}/scripts/beta/auth2.json}
   if [[ -f "${auth2json}" ]]; then
     echo -e "${Green}auth2.json${ColorOff}=${auth2json}"
   else
