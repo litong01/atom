@@ -20,5 +20,5 @@ export IMAGE_HOST=docker.repo.eng.netapp.com
 export CLUSTER_ENDPOINT=xx.xx.xx.xx
 
 # Optional variables for very frequent docker hub access
-export DH_LOGIN="Your docker hub id"
+export DH_ID="Your docker hub id"
 export DH_TOKEN="your docker hub access token"

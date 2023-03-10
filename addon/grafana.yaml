@@ -119,6 +119,8 @@ data:
       jsonData:
         httpMethod: POST
         timeInterval: 5s
+        prometheusType: Prometheus
+        prometheusVersion: 2.40.1
       name: Prometheus
       type: prometheus
       url: http://prometheus:9090/

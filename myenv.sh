@@ -20,5 +20,5 @@ export IMAGE_HOST=localhost:5001
 export CLUSTER_ENDPOINT=integration.astra.netapp.io
 
 # Optional variables for very frequent docker hub access
-export DH_LOGIN="Your docker hub id"
+export DH_ID="Your docker hub id"
 export DH_TOKEN="your docker hub access token"

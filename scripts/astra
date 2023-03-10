@@ -163,6 +163,7 @@ function doADTUpdate() {
 
 function loginToDockerHub() {
   if [[ ! -z "${DH_ID}" ]] && [[ ! -z "${DH_TOKEN}" ]]; then
+    echo -e "${Green}Logging into docker hub...${ColorOff}"
     echo $DH_TOKEN | docker login -u $DH_ID --password-stdin docker.io >/dev/null 2>&1
   fi
 }
@@ -201,7 +202,15 @@ function checkInPolaris() {
     fi
 }
 
-function deplayDashboard() {
+function deployDashboard() {
+  # Get needed prometheus and grafana docker image
+  loginToDockerHub
+  dashImages=("jimmidyson/configmap-reload:v0.8.0" "prom/prometheus:v2.42.0" "grafana/grafana:9.4.3")
+  for item in "${dashImages[@]}"; do
+    echo -e "${Green}Pulling image ${item}...${ColorOff}"
+    docker pull ${item}
+    ${SCRIPTDIR}/k8stool image --load-or-push true --source-tag "${item}" --context ${CONTEXT}
+  done
   kubectl --context ${CONTEXT} apply -f ${HOME}/addon/prometheus.yaml
   kubectl --context ${CONTEXT} apply -f ${HOME}/addon/acs-grafana-dashboards.yaml
   kubectl --context ${CONTEXT} apply -f ${HOME}/addon/grafana.yaml
@@ -238,7 +247,7 @@ function deployAC() {
   fi
   if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "dash" ]]; then
     echo -e "${Green}Deploy dashboard...${ColorOff}"
-    deplayDashboard
+    deployDashboard
   fi
 }
 
