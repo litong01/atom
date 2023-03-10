@@ -3,6 +3,7 @@ LABEL maintainer="litong01"
 
 COPY ./scripts/astra /home/bin
 COPY ./scripts/k8stool /home/bin
+COPY ./addon /home/addon
 RUN mkdir -p /home/polaris
 ENV PATH $PATH:/home/bin
 ENV HOME=/home

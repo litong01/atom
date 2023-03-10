@@ -61,7 +61,7 @@ function printHelp() {
   echo ""
   echo -e "Parameters for ${Green}deploy${ColorOff} command:"
   echo "     -a|--astra-name) - a name of astra component to be deployed. Valid option"
-  echo "                        are all, main, traefik, post, default is all"
+  echo "                        are all, main, traefik, post, dash default is all"
   echo "        --context)    - a kubernetes context to use, if not specified, the"
   echo "                        current kubernetes context will be used"
   echo ""
@@ -201,6 +201,12 @@ function checkInPolaris() {
     fi
 }
 
+function deplayDashboard() {
+  kubectl --context ${CONTEXT} apply -f ${HOME}/addon/prometheus.yaml
+  kubectl --context ${CONTEXT} apply -f ${HOME}/addon/acs-grafana-dashboards.yaml
+  kubectl --context ${CONTEXT} apply -f ${HOME}/addon/grafana.yaml
+}
+
 function deployAC() {
   CNAME=$1
   if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "traefik" ]]; then
@@ -229,6 +235,10 @@ function deployAC() {
   if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "post" ]]; then
     echo -e "${Green}Run post_install script${ColorOff}"
     ${CURDIR}/scripts/beta/post_install.sh
+  fi
+  if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "dash" ]]; then
+    echo -e "${Green}Deploy dashboard...${ColorOff}"
+    deplayDashboard
   fi
 }
 

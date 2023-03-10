@@ -1,0 +1,4033 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: acs-grafana-dashboards
+  namespace: pcloud
+data:
+  acs-performance-dashboard.json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "datasource",
+              "uid": "grafana"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "target": {
+              "limit": 100,
+              "matchAny": false,
+              "tags": [],
+              "type": "dashboard"
+            },
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": 216,
+      "links": [],
+      "liveNow": false,
+      "panels": [
+        {
+          "collapsed": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "id": 43,
+          "panels": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green"
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 0,
+                "y": 1
+              },
+              "id": 45,
+              "links": [],
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "mean"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "count(count by (account_name) (count_over_time(astra_billing_account_total_minutes{}[1h])))",
+                  "format": "table",
+                  "instant": true,
+                  "interval": "",
+                  "intervalFactor": 1,
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Total Accounts",
+              "type": "stat"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [],
+                  "noValue": "0",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 6,
+                "y": 1
+              },
+              "id": 47,
+              "links": [],
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "mean"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "count(count by (account_name) (count_over_time(astra_billing_account_total_minutes{terms=\"paid\"}[1h])))",
+                  "format": "table",
+                  "instant": true,
+                  "interval": "",
+                  "intervalFactor": 1,
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Total Premium Accounts",
+              "type": "stat"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [],
+                  "noValue": "0",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 12,
+                "y": 1
+              },
+              "id": 46,
+              "links": [],
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "mean"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (terms) (max_over_time(astra_billing_account_total_minutes{terms=\"paid\"}[1h]))",
+                  "format": "table",
+                  "instant": true,
+                  "interval": "",
+                  "intervalFactor": 1,
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Total Paid Minutes",
+              "type": "stat"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green"
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 18,
+                "y": 1
+              },
+              "id": 44,
+              "links": [],
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "mean"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum (max_over_time(user_total{measurement=\"activated\",accountName=~\"$AccountName\"}[1h]))",
+                  "format": "table",
+                  "instant": true,
+                  "interval": "",
+                  "intervalFactor": 1,
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Total Activated Users ($AccountName)",
+              "type": "stat"
+            }
+          ],
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "refId": "A"
+            }
+          ],
+          "title": "Accounts Summary",
+          "type": "row"
+        },
+        {
+          "collapsed": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 1
+          },
+          "id": 10,
+          "panels": [
+            {
+              "columns": [],
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fontSize": "100%",
+              "gridPos": {
+                "h": 9,
+                "w": 17,
+                "x": 0,
+                "y": 2
+              },
+              "id": 2,
+              "links": [],
+              "scroll": true,
+              "showHeader": true,
+              "sort": {
+                "col": 3,
+                "desc": false
+              },
+              "styles": [
+                {
+                  "$$hashKey": "object:314",
+                  "alias": "Count",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 0,
+                  "mappingType": 1,
+                  "pattern": "Value",
+                  "thresholds": [],
+                  "type": "number",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:315",
+                  "alias": "User Status",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 2,
+                  "mappingType": 1,
+                  "pattern": "measurement",
+                  "thresholds": [],
+                  "type": "string",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:316",
+                  "alias": "Account ID",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "decimals": 2,
+                  "pattern": "accountID",
+                  "thresholds": [],
+                  "type": "string",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:141",
+                  "alias": "Account Name",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 2,
+                  "mappingType": 1,
+                  "pattern": "accountName",
+                  "thresholds": [],
+                  "type": "string",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:162",
+                  "alias": "",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 2,
+                  "mappingType": 1,
+                  "pattern": "Time",
+                  "thresholds": [],
+                  "type": "hidden",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:219",
+                  "alias": "Company Name",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 2,
+                  "mappingType": 1,
+                  "pattern": "accountCompanyName",
+                  "thresholds": [],
+                  "type": "string",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:436",
+                  "alias": "Account Creation Time",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 2,
+                  "mappingType": 1,
+                  "pattern": "accountCreationTime",
+                  "thresholds": [],
+                  "type": "date",
+                  "unit": "short"
+                }
+              ],
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (accountID,accountCreationTime,accountCompanyName,accountName,measurement) (max_over_time(user_total{accountName=~\"$AccountName\"}[1h]))",
+                  "format": "table",
+                  "instant": true,
+                  "interval": "",
+                  "intervalFactor": 1,
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "User Counts for accounts ($AccountName)",
+              "transform": "table",
+              "type": "table-old"
+            },
+            {
+              "columns": [],
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fontSize": "100%",
+              "gridPos": {
+                "h": 9,
+                "w": 7,
+                "x": 17,
+                "y": 2
+              },
+              "id": 48,
+              "links": [],
+              "scroll": true,
+              "showHeader": true,
+              "sort": {
+                "col": 3,
+                "desc": true
+              },
+              "styles": [
+                {
+                  "$$hashKey": "object:141",
+                  "alias": "Account Name",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 2,
+                  "mappingType": 1,
+                  "pattern": "accountName",
+                  "thresholds": [],
+                  "type": "string",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:162",
+                  "alias": "",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 2,
+                  "mappingType": 1,
+                  "pattern": "Time",
+                  "thresholds": [],
+                  "type": "hidden",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:352",
+                  "alias": "Minutes",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 0,
+                  "mappingType": 1,
+                  "pattern": "Value",
+                  "thresholds": [],
+                  "type": "number",
+                  "unit": "none"
+                },
+                {
+                  "$$hashKey": "object:116",
+                  "alias": "",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 2,
+                  "mappingType": 1,
+                  "pattern": "terms",
+                  "thresholds": [],
+                  "type": "string",
+                  "unit": "short",
+                  "valueMaps": [
+                    {
+                      "$$hashKey": "object:137",
+                      "text": "free",
+                      "value": "trial"
+                    }
+                  ]
+                }
+              ],
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (account_name,terms) (max_over_time (astra_billing_account_total_minutes{account_name=~\"$AccountName\"}[1h]))",
+                  "format": "table",
+                  "instant": true,
+                  "interval": "",
+                  "intervalFactor": 1,
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Billing Minutes ($AccountName)",
+              "transform": "table",
+              "transformations": [],
+              "type": "table-old"
+            }
+          ],
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "refId": "A"
+            }
+          ],
+          "title": "Accounts Details",
+          "type": "row"
+        },
+        {
+          "collapsed": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 2
+          },
+          "id": 41,
+          "panels": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "description": "",
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 5,
+                "w": 5,
+                "x": 0,
+                "y": 3
+              },
+              "id": 16,
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "last"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "value"
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "count (max by (account_id,account_name) (astra_nautilus_app_v6{account_name=~\"$AccountName\",state=\"managed\"}))",
+                  "interval": "",
+                  "legendFormat": " ",
+                  "refId": "A"
+                }
+              ],
+              "title": "Applications (managed) for accounts (\"$AccountName\")",
+              "type": "stat"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 5,
+                "w": 4,
+                "x": 5,
+                "y": 3
+              },
+              "id": 25,
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "last"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "count (max by (account_id,account_name) (astra_nautilus_app_v6{account_name=~\"$AccountName\",state=\"discovered\"}))",
+                  "interval": "",
+                  "legendFormat": " ",
+                  "refId": "A"
+                }
+              ],
+              "title": "Applications (discovered) for accounts (\"$AccountName\")",
+              "type": "stat"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 5,
+                "w": 5,
+                "x": 9,
+                "y": 3
+              },
+              "id": 18,
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "last"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum (max by (account_id,account_name) (max_over_time(astra_nautilus_backup_v6{account_name=~\"$AccountName\"}[1h])))",
+                  "interval": "",
+                  "legendFormat": " ",
+                  "refId": "A"
+                }
+              ],
+              "title": "Managed Backups for accounts ($AccountName)",
+              "type": "stat"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 5,
+                "w": 5,
+                "x": 14,
+                "y": 3
+              },
+              "id": 17,
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "last"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum(max by (account_id,account_name,healthy) (max_over_time(astra_nautilus_snapshot_v6{account_name=~\"$AccountName\"}[1h])))",
+                  "interval": "",
+                  "legendFormat": " ",
+                  "refId": "A"
+                }
+              ],
+              "title": "Managed Snapshots for accounts (\"$AccountName\")",
+              "type": "stat"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 5,
+                "w": 5,
+                "x": 19,
+                "y": 3
+              },
+              "id": 19,
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "last"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "editorMode": "code",
+                  "expr": "sum(max by (account_id,account_name,state) (max_over_time(astra_nautilus_cluster_v5{account_name=~\"$AccountName\"}[1h])))",
+                  "interval": "",
+                  "legendFormat": " ",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "title": "Cluster Count for accounts ($AccountName)",
+              "type": "stat"
+            }
+          ],
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "refId": "A"
+            }
+          ],
+          "title": "Application Summary",
+          "type": "row"
+        },
+        {
+          "collapsed": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 3
+          },
+          "id": 14,
+          "panels": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "displayMode": "auto",
+                    "filterable": false,
+                    "inspect": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Count"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 104
+                      }
+                    ]
+                  }
+                ]
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 0,
+                "y": 4
+              },
+              "id": 27,
+              "options": {
+                "footer": {
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "Count"
+                  }
+                ]
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "max by (account_name) (max_over_time(astra_nautilus_app_v6{account_name=~\"$AccountName\",state=\"managed\",healthy=\"\"}[1h]))",
+                  "format": "table",
+                  "hide": false,
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Managed Apps ($AccountName)",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true,
+                      "__name__": true,
+                      "accountID": true,
+                      "accountName": false,
+                      "account_id": true,
+                      "app_kubernetes_io_instance": true,
+                      "app_kubernetes_io_name": true,
+                      "astra_netapp_io_open_metrics": true,
+                      "hostname": false,
+                      "instance": true,
+                      "job": true,
+                      "kubernetes_namespace": true,
+                      "kubernetes_pod_name": true,
+                      "level": true,
+                      "measurementType": true,
+                      "pod_template_hash": true,
+                      "state": true
+                    },
+                    "indexByName": {},
+                    "renameByName": {
+                      "Value": "Count",
+                      "Value #A": ""
+                    }
+                  }
+                }
+              ],
+              "type": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "displayMode": "auto",
+                    "filterable": false,
+                    "inspect": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Count"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 104
+                      }
+                    ]
+                  }
+                ]
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 6,
+                "y": 4
+              },
+              "id": 50,
+              "options": {
+                "footer": {
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "Count"
+                  }
+                ]
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "max by (account_name) (max_over_time(astra_nautilus_app_v6{account_name=~\"$AccountName\",state=\"discovered\",healthy=\"\"}[1h]))",
+                  "format": "table",
+                  "hide": false,
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Discovered Apps ($AccountName)",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true,
+                      "__name__": true,
+                      "accountID": true,
+                      "accountName": false,
+                      "account_id": true,
+                      "app_kubernetes_io_instance": true,
+                      "app_kubernetes_io_name": true,
+                      "astra_netapp_io_open_metrics": true,
+                      "hostname": false,
+                      "instance": true,
+                      "job": true,
+                      "kubernetes_namespace": true,
+                      "kubernetes_pod_name": true,
+                      "level": true,
+                      "measurementType": true,
+                      "pod_template_hash": true,
+                      "state": true
+                    },
+                    "indexByName": {},
+                    "renameByName": {
+                      "Value": "Count",
+                      "Value #A": ""
+                    }
+                  }
+                }
+              ],
+              "type": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "displayMode": "auto",
+                    "filterable": false,
+                    "inspect": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 12,
+                "y": 4
+              },
+              "id": 28,
+              "options": {
+                "footer": {
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "Count"
+                  }
+                ]
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "max by (account_name) (max_over_time(astra_nautilus_app_v6{account_name=~\"$AccountName\",type=\"clone\",healthy=\"\"}[1h]))",
+                  "format": "table",
+                  "hide": false,
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Managed Clones ($AccountName)",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true,
+                      "__name__": true,
+                      "accountID": true,
+                      "accountName": false,
+                      "account_id": true,
+                      "app_kubernetes_io_instance": true,
+                      "app_kubernetes_io_name": true,
+                      "astra_netapp_io_open_metrics": true,
+                      "hostname": true,
+                      "instance": true,
+                      "job": true,
+                      "kubernetes_namespace": true,
+                      "kubernetes_pod_name": true,
+                      "level": true,
+                      "measurementType": true,
+                      "pod_template_hash": true,
+                      "state": true,
+                      "type": true
+                    },
+                    "indexByName": {},
+                    "renameByName": {
+                      "Value": "Count",
+                      "Value #A": ""
+                    }
+                  }
+                }
+              ],
+              "type": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "displayMode": "auto",
+                    "filterable": false,
+                    "inspect": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 18,
+                "y": 4
+              },
+              "id": 37,
+              "options": {
+                "footer": {
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "Count"
+                  }
+                ]
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (account_name) (max by (account_name,state) (max_over_time(astra_nautilus_cluster_v5{account_name=~\"$AccountName\"}[1h])))",
+                  "format": "table",
+                  "hide": false,
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Managed Clusters ($AccountName)",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true,
+                      "__name__": true,
+                      "accountID": true,
+                      "accountName": false,
+                      "instance": true,
+                      "job": true,
+                      "measurementType": true,
+                      "state": true,
+                      "type": true
+                    },
+                    "indexByName": {},
+                    "renameByName": {
+                      "Value": "Count",
+                      "Value #A": ""
+                    }
+                  }
+                }
+              ],
+              "type": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "displayMode": "auto",
+                    "filterable": false,
+                    "inspect": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 0,
+                "y": 12
+              },
+              "id": 36,
+              "options": {
+                "footer": {
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "Count"
+                  }
+                ]
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (account_name) (max by(account_name,healthy) (max_over_time(astra_nautilus_backup_v6{account_name=~\"$AccountName\"}[1h])))",
+                  "format": "table",
+                  "hide": false,
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Backups ($AccountName)",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true,
+                      "__name__": true,
+                      "accountID": true,
+                      "accountName": false,
+                      "instance": true,
+                      "job": true,
+                      "measurementType": true,
+                      "state": true,
+                      "type": true
+                    },
+                    "indexByName": {},
+                    "renameByName": {
+                      "Value": "Count",
+                      "Value #A": ""
+                    }
+                  }
+                }
+              ],
+              "type": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "displayMode": "auto",
+                    "filterable": false,
+                    "inspect": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "account_name"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 188
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "state"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 106
+                      }
+                    ]
+                  }
+                ]
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 6,
+                "y": 12
+              },
+              "id": 63,
+              "options": {
+                "footer": {
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": false,
+                    "displayName": "state"
+                  }
+                ]
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (account_name,state) (max_over_time(astra_nautilus_backup_v6_info{account_name=~\"$AccountName\"}[1h]))",
+                  "format": "table",
+                  "hide": false,
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Backups status count ($AccountName)",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true,
+                      "__name__": true,
+                      "accountID": true,
+                      "accountName": false,
+                      "instance": true,
+                      "job": true,
+                      "measurementType": true,
+                      "state": false,
+                      "type": true
+                    },
+                    "indexByName": {},
+                    "renameByName": {
+                      "Value": "Count",
+                      "Value #A": ""
+                    }
+                  }
+                }
+              ],
+              "type": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "displayMode": "auto",
+                    "filterable": false,
+                    "inspect": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 5,
+                "x": 12,
+                "y": 12
+              },
+              "id": 35,
+              "options": {
+                "footer": {
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "Count"
+                  }
+                ]
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (account_name) (max by (account_name,healthy) (max_over_time(astra_nautilus_snapshot_v6{account_name=~\"$AccountName\"}[1h])))",
+                  "format": "table",
+                  "hide": false,
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Snapshots ($AccountName)",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true,
+                      "__name__": true,
+                      "accountID": true,
+                      "accountName": false,
+                      "instance": true,
+                      "job": true,
+                      "measurementType": true,
+                      "state": true,
+                      "type": true
+                    },
+                    "indexByName": {},
+                    "renameByName": {
+                      "Value": "Count",
+                      "Value #A": ""
+                    }
+                  }
+                }
+              ],
+              "type": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "displayMode": "auto",
+                    "filterable": false,
+                    "inspect": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "state"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 110
+                      }
+                    ]
+                  }
+                ]
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 7,
+                "x": 17,
+                "y": 12
+              },
+              "id": 64,
+              "options": {
+                "footer": {
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "Count"
+                  }
+                ]
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (account_name,state) (max_over_time(astra_nautilus_snapshot_v6_info{account_name=~\"$AccountName\"}[1h]))",
+                  "format": "table",
+                  "hide": false,
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Snapshots status count ($AccountName)",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true,
+                      "__name__": true,
+                      "accountID": true,
+                      "accountName": false,
+                      "instance": true,
+                      "job": true,
+                      "measurementType": true,
+                      "state": false,
+                      "type": true
+                    },
+                    "indexByName": {},
+                    "renameByName": {
+                      "Value": "Count",
+                      "Value #A": ""
+                    }
+                  }
+                }
+              ],
+              "type": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "displayMode": "auto",
+                    "filterable": false,
+                    "inspect": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Count"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 100
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Account Name"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 200
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "App Name"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 312
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Images"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 563
+                      }
+                    ]
+                  }
+                ]
+              },
+              "gridPos": {
+                "h": 7,
+                "w": 16,
+                "x": 0,
+                "y": 20
+              },
+              "id": 49,
+              "options": {
+                "footer": {
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": []
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (account_name,name,images) (max_over_time(astra_nautilus_app_v6_info{}[1h]))",
+                  "format": "table",
+                  "hide": false,
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Account name and App with its images ($AccountName)",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true,
+                      "__name__": true,
+                      "accountID": true,
+                      "accountName": false,
+                      "instance": true,
+                      "job": true,
+                      "measurementType": true,
+                      "state": true
+                    },
+                    "indexByName": {
+                      "Time": 0,
+                      "Value": 4,
+                      "accountName": 1,
+                      "images": 3,
+                      "name": 2
+                    },
+                    "renameByName": {
+                      "Value": "Count",
+                      "Value #A": "",
+                      "accountName": "Account Name",
+                      "images": "Images",
+                      "name": "App Name"
+                    }
+                  }
+                }
+              ],
+              "type": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "displayMode": "auto",
+                    "filterable": false,
+                    "inspect": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Count"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 98
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "account_name"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 237
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "app_name"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 195
+                      }
+                    ]
+                  }
+                ]
+              },
+              "gridPos": {
+                "h": 7,
+                "w": 8,
+                "x": 16,
+                "y": 20
+              },
+              "id": 65,
+              "options": {
+                "footer": {
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "Count"
+                  }
+                ]
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (account_name,app_name) (max_over_time(astra_billing_app_minutes{account_name=~\"$AccountName\"}[24h]))",
+                  "format": "table",
+                  "hide": false,
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Total min each app is managed ($AccountName)",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true,
+                      "__name__": true,
+                      "accountID": true,
+                      "accountName": false,
+                      "account_id": true,
+                      "app_kubernetes_io_instance": true,
+                      "app_kubernetes_io_name": true,
+                      "astra_netapp_io_open_metrics": true,
+                      "hostname": false,
+                      "instance": true,
+                      "job": true,
+                      "kubernetes_namespace": true,
+                      "kubernetes_pod_name": true,
+                      "level": true,
+                      "measurementType": true,
+                      "pod_template_hash": true,
+                      "state": true
+                    },
+                    "indexByName": {},
+                    "renameByName": {
+                      "Value": "Minutes",
+                      "Value #A": ""
+                    }
+                  }
+                }
+              ],
+              "type": "table"
+            },
+            {
+              "aliasColors": {},
+              "bars": false,
+              "dashLength": 10,
+              "dashes": false,
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fill": 2,
+              "fillGradient": 0,
+              "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 27
+              },
+              "hiddenSeries": false,
+              "id": 31,
+              "legend": {
+                "avg": false,
+                "current": false,
+                "max": false,
+                "min": false,
+                "show": true,
+                "total": false,
+                "values": false
+              },
+              "lines": true,
+              "linewidth": 1,
+              "nullPointMode": "connected",
+              "options": {
+                "alertThreshold": true
+              },
+              "percentage": false,
+              "pluginVersion": "9.2.0",
+              "pointradius": 2,
+              "points": false,
+              "renderer": "flot",
+              "seriesOverrides": [],
+              "spaceLength": 10,
+              "stack": false,
+              "steppedLine": false,
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (account_name) (max by (account_id,account_name) (max_over_time(astra_nautilus_app_v6{state=\"managed\",healthy=\"\"}[1h])))",
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "thresholds": [],
+              "timeRegions": [],
+              "title": "Healthy Managed App Counts by Account",
+              "tooltip": {
+                "shared": true,
+                "sort": 0,
+                "value_type": "individual"
+              },
+              "type": "graph",
+              "xaxis": {
+                "mode": "time",
+                "show": true,
+                "values": []
+              },
+              "yaxes": [
+                {
+                  "$$hashKey": "object:74",
+                  "format": "short",
+                  "logBase": 1,
+                  "show": true
+                },
+                {
+                  "$$hashKey": "object:75",
+                  "format": "short",
+                  "logBase": 1,
+                  "show": true
+                }
+              ],
+              "yaxis": {
+                "align": false
+              }
+            },
+            {
+              "aliasColors": {},
+              "bars": false,
+              "dashLength": 10,
+              "dashes": false,
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "decbytes"
+                },
+                "overrides": []
+              },
+              "fill": 2,
+              "fillGradient": 0,
+              "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 27
+              },
+              "hiddenSeries": false,
+              "id": 32,
+              "legend": {
+                "alignAsTable": false,
+                "avg": false,
+                "current": false,
+                "max": false,
+                "min": false,
+                "rightSide": false,
+                "show": true,
+                "total": false,
+                "values": false
+              },
+              "lines": true,
+              "linewidth": 1,
+              "nullPointMode": "connected",
+              "options": {
+                "alertThreshold": false
+              },
+              "percentage": false,
+              "pluginVersion": "9.2.0",
+              "pointradius": 2,
+              "points": false,
+              "renderer": "flot",
+              "seriesOverrides": [],
+              "spaceLength": 10,
+              "stack": true,
+              "steppedLine": false,
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (account_id,account_name,app) (max by (account_id,account_name,app) (max_over_time(astra_composite_volume_managed_app_avg_used_capacity_bytes{account_name=~\"$AccountName\"}[1h])))",
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "thresholds": [],
+              "timeRegions": [],
+              "title": "Average Used Volume Capacity by Account",
+              "tooltip": {
+                "shared": true,
+                "sort": 0,
+                "value_type": "individual"
+              },
+              "type": "graph",
+              "xaxis": {
+                "mode": "time",
+                "show": true,
+                "values": []
+              },
+              "yaxes": [
+                {
+                  "$$hashKey": "object:261",
+                  "format": "decbytes",
+                  "logBase": 1,
+                  "show": true
+                },
+                {
+                  "$$hashKey": "object:262",
+                  "format": "short",
+                  "logBase": 1,
+                  "show": true
+                }
+              ],
+              "yaxis": {
+                "align": false
+              }
+            }
+          ],
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "refId": "A"
+            }
+          ],
+          "title": "Application Details",
+          "type": "row"
+        },
+        {
+          "collapsed": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 4
+          },
+          "id": 58,
+          "panels": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [],
+                  "noValue": "0",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 5,
+                "w": 7,
+                "x": 0,
+                "y": 5
+              },
+              "id": 52,
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "last"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by () (max by (id) (max_over_time(astra_composite_compute_cluster_info{account_name=~\"$AccountName\",managed_state=\"managed\",cloud_name=\"GCP\"}[1h])))",
+                  "interval": "",
+                  "legendFormat": " ",
+                  "refId": "A"
+                }
+              ],
+              "title": "Managed Cluster Count for GCP ($AccountName)",
+              "type": "stat"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [],
+                  "noValue": "0",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 5,
+                "w": 6,
+                "x": 7,
+                "y": 5
+              },
+              "id": 54,
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "last"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by () (max by (id) (max_over_time(astra_composite_compute_cluster_info{account_name=~\"$AccountName\",managed_state=\"unmanaged\",cloud_name=\"GCP\"}[1h])))",
+                  "interval": "",
+                  "legendFormat": " ",
+                  "refId": "A"
+                }
+              ],
+              "title": "Unmanaged Cluster Count for GCP ($AccountName)",
+              "type": "stat"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [],
+                  "noValue": "0",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 5,
+                "w": 6,
+                "x": 13,
+                "y": 5
+              },
+              "id": 53,
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "last"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by () (max by (id) (max_over_time(astra_composite_compute_cluster_info{account_name=~\"$AccountName\",managed_state=\"managed\",cloud_name=\"Azure\"}[1h])))",
+                  "interval": "",
+                  "legendFormat": " ",
+                  "refId": "A"
+                }
+              ],
+              "title": "Managed Cluster Count for Azure ($AccountName)",
+              "type": "stat"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [],
+                  "noValue": "0",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 5,
+                "w": 5,
+                "x": 19,
+                "y": 5
+              },
+              "id": 55,
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "last"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by () (max by (id) (max_over_time(astra_composite_compute_cluster_info{account_name=~\"$AccountName\",managed_state=\"unmanaged\",cloud_name=\"Azure\"}[1h])))",
+                  "interval": "",
+                  "legendFormat": " ",
+                  "refId": "A"
+                }
+              ],
+              "title": "Unmanaged Cluster Count for Azure ($AccountName)",
+              "type": "stat"
+            }
+          ],
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "refId": "A"
+            }
+          ],
+          "title": "Cloud Cluster Summary",
+          "type": "row"
+        },
+        {
+          "collapsed": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 5
+          },
+          "id": 60,
+          "panels": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "displayMode": "auto",
+                    "filterable": false,
+                    "inspect": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "cloud_name"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 113
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "account_name"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 180
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Count"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 84
+                      }
+                    ]
+                  }
+                ]
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 5,
+                "x": 0,
+                "y": 6
+              },
+              "id": 56,
+              "options": {
+                "footer": {
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "cloud_name"
+                  }
+                ]
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (cloud_name,account_name) (max by (id,cloud_name,account_name) (max_over_time(astra_composite_compute_cluster_info{account_name=~\"$AccountName\",managed_state=\"managed\"}[1h])))",
+                  "format": "table",
+                  "hide": false,
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Account's managed Cluster Count For given Cloud ($AccountName)",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true,
+                      "__name__": true,
+                      "accountID": true,
+                      "accountName": false,
+                      "instance": true,
+                      "job": true,
+                      "measurementType": true,
+                      "state": true,
+                      "type": true
+                    },
+                    "indexByName": {},
+                    "renameByName": {
+                      "Value": "Count",
+                      "Value #A": ""
+                    }
+                  }
+                }
+              ],
+              "type": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "displayMode": "auto",
+                    "filterable": false,
+                    "inspect": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "cloud_name"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 111
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Count"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 92
+                      }
+                    ]
+                  }
+                ]
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 5,
+                "x": 5,
+                "y": 6
+              },
+              "id": 51,
+              "options": {
+                "footer": {
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": false,
+                    "displayName": "cloud_name"
+                  }
+                ]
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (cloud_name,account_name) (max by (id, cloud_name, account_name) (max_over_time(astra_composite_compute_cluster_info{account_name=~\"$AccountName\",managed_state=\"unmanaged\"}[1h])))",
+                  "format": "table",
+                  "hide": false,
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Account's Unmanaged Cluster Count For given Cloud ($AccountName)",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true,
+                      "__name__": true,
+                      "accountID": true,
+                      "accountName": false,
+                      "instance": true,
+                      "job": true,
+                      "measurementType": true,
+                      "state": true,
+                      "type": true
+                    },
+                    "indexByName": {},
+                    "renameByName": {
+                      "Value": "Count",
+                      "Value #A": ""
+                    }
+                  }
+                }
+              ],
+              "type": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "displayMode": "auto",
+                    "filterable": false,
+                    "inspect": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "state"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 127
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "account_name"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 216
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "cloud_name"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 111
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Count"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 119
+                      }
+                    ]
+                  }
+                ]
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 5,
+                "x": 10,
+                "y": 6
+              },
+              "id": 62,
+              "options": {
+                "footer": {
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": false,
+                    "displayName": "cloud_name"
+                  }
+                ]
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (cloud_name,state) (max by (id,cloud_name,state) (max_over_time(astra_composite_compute_cluster_info{account_name=~\"$AccountName\",managed_state=\"managed\"}[1h])))",
+                  "format": "table",
+                  "hide": false,
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Managed Cluster's State Count For given Cloud ($AccountName)",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true,
+                      "__name__": true,
+                      "accountID": true,
+                      "accountName": false,
+                      "instance": true,
+                      "job": true,
+                      "measurementType": true,
+                      "state": false,
+                      "type": true
+                    },
+                    "indexByName": {},
+                    "renameByName": {
+                      "Value": "Count",
+                      "Value #A": ""
+                    }
+                  }
+                }
+              ],
+              "type": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "displayMode": "auto",
+                    "filterable": false,
+                    "inspect": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "state"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 98
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "account_name"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 255
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "cloud_name"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 185
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Count"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 136
+                      }
+                    ]
+                  }
+                ]
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 9,
+                "x": 15,
+                "y": 6
+              },
+              "id": 61,
+              "options": {
+                "footer": {
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": false,
+                    "displayName": "cloud_name"
+                  }
+                ]
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (cloud_name,state,account_name) (max by (id,cloud_name,state,account_name) (max_over_time(astra_composite_compute_cluster_info{account_name=~\".*\",managed_state=\"managed\"}[1h])))",
+                  "format": "table",
+                  "hide": false,
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Account's managed Cluster's State Count For given Cloud ($AccountName)",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true,
+                      "__name__": true,
+                      "accountID": true,
+                      "accountName": false,
+                      "instance": true,
+                      "job": true,
+                      "measurementType": true,
+                      "state": false,
+                      "type": true
+                    },
+                    "indexByName": {},
+                    "renameByName": {
+                      "Value": "Count",
+                      "Value #A": ""
+                    }
+                  }
+                }
+              ],
+              "type": "table"
+            }
+          ],
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "refId": "A"
+            }
+          ],
+          "title": "Cloud Cluster Details",
+          "type": "row"
+        },
+        {
+          "collapsed": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 6
+          },
+          "id": 39,
+          "panels": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "decimals": 1,
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "unit": "decgbytes"
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 5,
+                "w": 9,
+                "x": 0,
+                "y": 7
+              },
+              "id": 22,
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "last"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum(max by (account_id,account_name,app) (max_over_time(astra_composite_volume_total_allocated_storage_bytes{account_name=~\"$AccountName\"}[1h])))/1000000000",
+                  "interval": "",
+                  "legendFormat": " ",
+                  "refId": "A"
+                }
+              ],
+              "title": "Volume Total Allocated ($AccountName)",
+              "transformations": [],
+              "type": "stat"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "decimals": 1,
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "unit": "decbytes"
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 5,
+                "w": 8,
+                "x": 9,
+                "y": 7
+              },
+              "id": 23,
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "last"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum(max by (account_id,account_name,app) (max_over_time(astra_composite_volume_managed_app_avg_used_capacity_bytes{account_name=~\"$AccountName\"}[1h])))",
+                  "interval": "",
+                  "legendFormat": " ",
+                  "refId": "A"
+                }
+              ],
+              "title": "Sum of Average Used PV Capacity ($AccountName)",
+              "transformations": [],
+              "type": "stat"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "unit": "none"
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 5,
+                "w": 7,
+                "x": 17,
+                "y": 7
+              },
+              "id": 24,
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "last"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum(max by (account_id,account_name,app) (max_over_time(astra_composite_volume_total_volume_counts{account_name=~\"$AccountName\"}[1h])))",
+                  "interval": "",
+                  "legendFormat": " ",
+                  "refId": "A"
+                }
+              ],
+              "title": "Volume Count ($AccountName)",
+              "transformations": [],
+              "type": "stat"
+            }
+          ],
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "refId": "A"
+            }
+          ],
+          "title": "Persistent Volume Summary",
+          "type": "row"
+        },
+        {
+          "collapsed": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 7
+          },
+          "id": 21,
+          "panels": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "displayMode": "auto",
+                    "filterable": false,
+                    "inspect": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "unit": "decbytes"
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "app"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 241
+                      }
+                    ]
+                  }
+                ]
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 0,
+                "y": 8
+              },
+              "id": 29,
+              "options": {
+                "footer": {
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "Capacity (bytes)"
+                  }
+                ]
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (account_id,account_name,app) (max by (account_id,account_name,app) (max_over_time(astra_composite_volume_total_allocated_storage_bytes{account_name=~\"$AccountName\"}[1h])))",
+                  "format": "table",
+                  "hide": false,
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Total Allocated Storage ($AccountName)",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true,
+                      "__name__": true,
+                      "accountID": true,
+                      "accountName": false,
+                      "account_id": true,
+                      "instance": true,
+                      "job": true,
+                      "measurementType": true,
+                      "state": true,
+                      "type": true
+                    },
+                    "indexByName": {},
+                    "renameByName": {
+                      "Value": "Capacity (bytes)",
+                      "Value #A": ""
+                    }
+                  }
+                }
+              ],
+              "type": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "displayMode": "auto",
+                    "filterable": false,
+                    "inspect": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "unit": "decbytes"
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "app"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 241
+                      }
+                    ]
+                  }
+                ]
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 9,
+                "x": 8,
+                "y": 8
+              },
+              "id": 34,
+              "options": {
+                "footer": {
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "Capacity (bytes)"
+                  }
+                ]
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (account_id,account_name,app) (max by (account_id,account_name,app) (max_over_time(astra_composite_volume_managed_app_avg_used_capacity_bytes{account_name=~\".+\"}[1h])))",
+                  "format": "table",
+                  "hide": false,
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Average Used PV Capacity (\"$AccountName\")",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true,
+                      "__name__": true,
+                      "accountID": true,
+                      "accountName": false,
+                      "account_id": true,
+                      "instance": true,
+                      "job": true,
+                      "measurementType": true,
+                      "state": true,
+                      "type": true
+                    },
+                    "indexByName": {},
+                    "renameByName": {
+                      "Value": "Capacity (bytes)",
+                      "Value #A": ""
+                    }
+                  }
+                }
+              ],
+              "type": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "displayMode": "auto",
+                    "filterable": false,
+                    "inspect": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "unit": "short"
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "app"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 218
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "accountName"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 117
+                      }
+                    ]
+                  }
+                ]
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 7,
+                "x": 17,
+                "y": 8
+              },
+              "id": 33,
+              "options": {
+                "footer": {
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "Count"
+                  }
+                ]
+              },
+              "pluginVersion": "9.2.0",
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (account_id,account_name,app) (max by (account_id,account_name,app) (max_over_time(astra_composite_volume_total_volume_counts{account_name=~\".+\"}[1h])))",
+                  "format": "table",
+                  "hide": false,
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Volume Counts ($AccountName)",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true,
+                      "__name__": true,
+                      "accountID": true,
+                      "accountName": false,
+                      "account_id": true,
+                      "instance": true,
+                      "job": true,
+                      "measurementType": true,
+                      "state": true,
+                      "type": true
+                    },
+                    "indexByName": {},
+                    "renameByName": {
+                      "Value": "Count",
+                      "Value #A": ""
+                    }
+                  }
+                }
+              ],
+              "type": "table"
+            }
+          ],
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "refId": "A"
+            }
+          ],
+          "title": "Persistent Volume Details",
+          "type": "row"
+        },
+        {
+          "collapsed": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 8
+          },
+          "id": 12,
+          "panels": [
+            {
+              "columns": [],
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
+              "fontSize": "100%",
+              "gridPos": {
+                "h": 10,
+                "w": 10,
+                "x": 0,
+                "y": 29
+              },
+              "id": 3,
+              "links": [],
+              "scroll": true,
+              "showHeader": true,
+              "sort": {
+                "desc": false
+              },
+              "styles": [
+                {
+                  "$$hashKey": "object:218",
+                  "alias": "Count",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 0,
+                  "mappingType": 1,
+                  "pattern": "Value",
+                  "thresholds": [],
+                  "type": "number",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:220",
+                  "alias": "Valid",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "decimals": 2,
+                  "pattern": "valid",
+                  "thresholds": [],
+                  "type": "string",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:255",
+                  "alias": "Creation Timestamp",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 2,
+                  "mappingType": 1,
+                  "pattern": "creationTimestamp",
+                  "thresholds": [],
+                  "type": "date",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:268",
+                  "alias": "Account Name",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 2,
+                  "mappingType": 1,
+                  "pattern": "accountName",
+                  "thresholds": [],
+                  "type": "string",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:289",
+                  "alias": "Account ID",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 2,
+                  "mappingType": 1,
+                  "pattern": "accountID",
+                  "thresholds": [],
+                  "type": "string",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:310",
+                  "alias": "",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 2,
+                  "mappingType": 1,
+                  "pattern": "Time",
+                  "thresholds": [],
+                  "type": "hidden",
+                  "unit": "short"
+                }
+              ],
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (accountID,accountName, valid) (max_over_time(credential_count[1h]))",
+                  "format": "table",
+                  "instant": true,
+                  "interval": "",
+                  "intervalFactor": 1,
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Credential Counts for every account",
+              "transform": "table",
+              "type": "table-old"
+            },
+            {
+              "columns": [],
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
+              "fontSize": "100%",
+              "gridPos": {
+                "h": 10,
+                "w": 14,
+                "x": 10,
+                "y": 29
+              },
+              "id": 4,
+              "links": [],
+              "scroll": true,
+              "showHeader": true,
+              "sort": {
+                "col": 3,
+                "desc": true
+              },
+              "styles": [
+                {
+                  "$$hashKey": "object:218",
+                  "alias": "Count",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 0,
+                  "mappingType": 1,
+                  "pattern": "Value",
+                  "thresholds": [],
+                  "type": "number",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:220",
+                  "alias": "Valid",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "decimals": 2,
+                  "pattern": "valid",
+                  "thresholds": [],
+                  "type": "string",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:255",
+                  "alias": "Creation Timestamp",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 2,
+                  "mappingType": 1,
+                  "pattern": "creationTimestamp",
+                  "thresholds": [],
+                  "type": "date",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:268",
+                  "alias": "Account Name",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 2,
+                  "mappingType": 1,
+                  "pattern": "accountName",
+                  "thresholds": [],
+                  "type": "string",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:289",
+                  "alias": "Account ID",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 2,
+                  "mappingType": 1,
+                  "pattern": "accountID",
+                  "thresholds": [],
+                  "type": "string",
+                  "unit": "short"
+                },
+                {
+                  "$$hashKey": "object:310",
+                  "alias": "",
+                  "align": "auto",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "decimals": 2,
+                  "mappingType": 1,
+                  "pattern": "Time",
+                  "thresholds": [],
+                  "type": "hidden",
+                  "unit": "short"
+                }
+              ],
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (accountID,accountName, valid,creationTimestamp) (max_over_time(credential_count[1h]))",
+                  "format": "table",
+                  "instant": true,
+                  "interval": "",
+                  "intervalFactor": 1,
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Credential Counts for every account at a given creation timestamp",
+              "transform": "table",
+              "type": "table-old"
+            }
+          ],
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "refId": "A"
+            }
+          ],
+          "title": "Credentials Details",
+          "type": "row"
+        }
+      ],
+      "refresh": false,
+      "schemaVersion": 37,
+      "style": "dark",
+      "tags": [],
+      "templating": {
+        "list": [
+          {
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "definition": "label_values(account_name)",
+            "hide": 0,
+            "includeAll": true,
+            "label": "Account Name",
+            "multi": true,
+            "name": "AccountName",
+            "options": [],
+            "query": {
+              "query": "label_values(account_name)",
+              "refId": "Prometheus-AccountName-Variable-Query"
+            },
+            "refresh": 1,
+            "regex": "",
+            "skipUrlSync": false,
+            "sort": 0,
+            "tagValuesQuery": "",
+            "tagsQuery": "",
+            "type": "query",
+            "useTags": false
+          }
+        ]
+      },
+      "time": {
+        "from": "now-3h",
+        "to": "now"
+      },
+      "timepicker": {
+        "refresh_intervals": [
+          "5s",
+          "10s",
+          "30s",
+          "1m",
+          "5m",
+          "15m",
+          "30m",
+          "1h",
+          "2h",
+          "1d"
+        ],
+        "time_options": [
+          "5m",
+          "15m",
+          "1h",
+          "6h",
+          "12h",
+          "24h",
+          "2d",
+          "7d",
+          "30d"
+        ]
+      },
+      "timezone": "",
+      "title": "Astra Adoption Metrics [INTERNAL]",
+      "uid": "gHJolohGk",
+      "version": 5,
+      "weekStart": ""
+    }
