@@ -106,6 +106,7 @@ data:
     root_url = https://integration.astra.netapp.io/grafana/
     serve_from_sub_path = true
     [database]
+    max_open_conn = 7
     locking_attempt_timeout_sec = 3
     query_retries = 3
 

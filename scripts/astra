@@ -205,7 +205,7 @@ function checkInPolaris() {
 function deployDashboard() {
   # Get needed prometheus and grafana docker image
   loginToDockerHub
-  dashImages=("jimmidyson/configmap-reload:v0.8.0" "prom/prometheus:v2.42.0" "grafana/grafana:9.4.3")
+  dashImages=("prom/prometheus:v2.42.0" "grafana/grafana:9.4.3")
   for item in "${dashImages[@]}"; do
     echo -e "${Green}Pulling image ${item}...${ColorOff}"
     docker pull ${item}
