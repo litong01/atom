@@ -228,6 +228,17 @@ forward_port() {
   echo "Port-forward for $service complete." 2>&1
 }
 
+function wait_for_pod() {
+  while : ; do
+    if kubectl wait pod --context ${CONTEXT} -n ${NAMESPACE} --for=condition=ready \
+      -l app.kubernetes.io/name="billing" --timeout=120s 2>&1; then
+       break
+    fi
+    sleep 5
+    echo -e "${Green}Waiting for pods to be ready...${ColorOff}"
+  done
+}
+
 ACCOUNTINDEX=0
 function saveAccountIndex() {
   content="ACCOUNTINDEX=${ACCOUNTINDEX}"
@@ -249,13 +260,14 @@ function loadAccountIndex() {
 
 function deployMultipleAccounts() {
   # Get sre token
+  wait_for_pod
   loadAccountIndex
   forward_port identity
   forward_port krakend
 
   python ${CURDIR}/scripts/production/prod_sre.py \
     --token-output-file /tmp/sre_token.txt \
-    --first-name=Super --last-name=Man --email="superman@netapp.com"
+    --first-name=Super --last-name=Man --email="tli@netapp.com"
   # Get the sre token
   token=$(cat /tmp/sre_token.txt)
   if [[ -z "${token}" ]]; then
@@ -273,14 +285,14 @@ function deployMultipleAccounts() {
       --sre-token "${token}" \
       --account-name "Astra${suffix}" \
       --first-name "Astra${suffix}" \
-      --last-name 'NetApp' \
+      --last-name "NetApp" \
       --email "netapp-test-astra${suffix}@mailinator.com" \
-      --company-name 'Ocean Great' \
-      --user-country 'US' \
-      --user-locality 'Durham' \
-      --user-region 'North Carolina' \
-      --user-street-address '7301 Kit Creek Road' \
-      --user-postal-code '27709'
+      --company-name "Ocean Great" \
+      --user-country "US" \
+      --user-locality "Durham" \
+      --user-region "North Carolina" \
+      --user-street-address "7301 Kit Creek Road" \
+      --user-postal-code "27709"
     startX=$(( $startX + 1 ))
     echo -e "${Green}User netapp-test-astra${suffix}@mailinator.com created${ColorOff}"
   done
