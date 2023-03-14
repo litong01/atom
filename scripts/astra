@@ -328,15 +328,15 @@ function deployAC() {
     HELMOVERRIDE='--set mongodb.image.repository=zcube/bitnami-compat-mongodb --set mongodb.image.tag=5.0.14'
   fi
 
+  if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "dash" ]]; then
+    echo -e "${Green}Deploy dashboard...${ColorOff}"
+    deployDashboard
+  fi
+
   if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "post" ]]; then
     echo -e "${Green}Run post_install script${ColorOff}"
     deployMultipleAccounts
     # ${CURDIR}/scripts/beta/post_install.sh
-  fi
-
-  if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "dash" ]]; then
-    echo -e "${Green}Deploy dashboard...${ColorOff}"
-    deployDashboard
   fi
 }
 
