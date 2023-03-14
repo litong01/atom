@@ -216,6 +216,81 @@ function deployDashboard() {
   kubectl --context ${CONTEXT} apply -f ${HOME}/addon/grafana.yaml
 }
 
+kill_port_forward() {
+  ${CURDIR}/scripts/beta/kill_port_forward.sh "$1" 2>&1
+}
+
+forward_port() {
+  service=$1
+  ${SCRIPTDIR}/pcloud-port-forward -s "${service}" 2>&1 &
+  sleep 5 # takes a few seconds to get started (especially with remote clusters)
+
+  echo "Port-forward for $service complete." 2>&1
+}
+
+ACCOUNTINDEX=0
+function saveAccountIndex() {
+  content="ACCOUNTINDEX=${ACCOUNTINDEX}"
+  echo -e "${Green}Saving account index...${ColorOff}"
+  echo ${content} > /home/work/astra/accountIndex.sh
+}
+
+function loadAccountIndex() {
+  echo -e "${Green}Load account index${ColorOff}"
+  if [ -f /home/work/astra/accountIndex.sh ]; then
+    echo -e "${Green}Loading the accountIndex...${ColorOff}"
+    source /home/work/astra/accountIndex.sh
+  fi
+  # If we have used up all the numbers, we should reset
+  if [[ ${ACCOUNTINDEX} -ge 100 ]]; then
+    ACCOUNTINDEX=0
+  fi
+}
+
+function deployMultipleAccounts() {
+  # Get sre token
+  loadAccountIndex
+  forward_port identity
+  forward_port krakend
+
+  python ${CURDIR}/scripts/production/prod_sre.py \
+    --token-output-file /tmp/sre_token.txt \
+    --first-name=Super --last-name=Man --email="superman@netapp.com"
+  # Get the sre token
+  token=$(cat /tmp/sre_token.txt)
+  if [[ -z "${token}" ]]; then
+    echo -e "${Red}Could not get sre token, quitting...{ColorOff}"
+    exit 1
+  fi
+
+  # We will create 5 account in one go
+  startX=${ACCOUNTINDEX}
+  endX=$(( $ACCOUNTINDEX + 5 ))
+  while [ $startX -lt $endX ]; do
+    suffix=$(printf "%02d" ${startX})
+    echo -e "${Green}Ready to create account Astra${suffix}${ColorOff}"
+    python ${CURDIR}/scripts/production/prod_account2.py \
+      --sre-token "${token}" \
+      --account-name "Astra${suffix}" \
+      --first-name "Astra${suffix}" \
+      --last-name 'NetApp' \
+      --email "netapp-test-astra${suffix}@mailinator.com" \
+      --company-name 'Ocean Great' \
+      --user-country 'US' \
+      --user-locality 'Durham' \
+      --user-region 'North Carolina' \
+      --user-street-address '7301 Kit Creek Road' \
+      --user-postal-code '27709'
+    startX=$(( $startX + 1 ))
+    echo -e "${Green}User netapp-test-astra${suffix}@mailinator.com created${ColorOff}"
+  done
+  ACCOUNTINDEX=${startX}
+  saveAccountIndex
+  # Now stop the port forwarding
+  kill_port_forward krakend
+  kill_port_forward identity
+}
+
 function deployAC() {
   CNAME=$1
   if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "traefik" ]]; then
@@ -243,8 +318,10 @@ function deployAC() {
 
   if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "post" ]]; then
     echo -e "${Green}Run post_install script${ColorOff}"
-    ${CURDIR}/scripts/beta/post_install.sh
+    deployMultipleAccounts
+    # ${CURDIR}/scripts/beta/post_install.sh
   fi
+
   if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "dash" ]]; then
     echo -e "${Green}Deploy dashboard...${ColorOff}"
     deployDashboard
@@ -287,6 +364,7 @@ function loadAllImageTags() {
     source /home/work/astra/${cid}.sh
   fi
 }
+
 function getAllImages() {
   echo -e "${Green}Calculating image tags based on current commit level...${ColorOff}"
   for key in "${!ACSIMAGES[@]}"; do

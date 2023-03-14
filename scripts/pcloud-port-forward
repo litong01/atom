@@ -1,0 +1,86 @@
+#!/bin/bash
+
+NAMESPACE=pcloud
+KUBECTL=kubectl
+PROGRAMNAME='pcloud-port-forward'
+
+# Setup default port mappings for each service, the pattern is
+# servicename=(serviceport localport)
+SERVICEPORTMAP=('nats=(4222 4223)' 'activity=(5000 9080)' \
+    'nautilus=(10191 9080)' 'billing=(5000 5000)' \
+    'features=(5000 9080)' 'composite_compute=(10192 9080)' \
+    'composite_volume=(10192 9080)' 'cloud_extension=(10192 9080)' \
+    'tenancy=(5000 9080)' 'identity=(5000 5000)' \
+    'trident_svc=(5000 9080)' 'task_service=(10192 9080)' \
+    'polaris_mongodb=(27017 27017)' 'credentials=(8080 9080)' \
+    'asup=(5000 9080)' 'support=(8092 8092)' \
+    'entitlement=(5000 9080)' 'license=(10192 9080)' \
+    'storage_provider=(10192 9080)' 'storage_backend_metrics=(10192 9080)' \
+    'krakend=(8080 30000)' 'certificates=(5000 9080)' \
+    'keycloak_operator=(8000 9080)')
+
+# Create service maps for easy access
+for elt in "${SERVICEPORTMAP[@]}"; do eval $elt; done
+
+# Function to get default port for a given service and port type
+function getDefaultPort() {
+  # The dash in a service name needs to be replaced with underscore
+  smapname=$(echo $1 | sed 's/-/_/g')
+  porttype=$2
+  if [[ $porttype = "port" ]]; then
+    thecmd='${'"${smapname}"'[0]}'
+  elif [[ $porttype = "localport" ]]; then
+    thecmd='${'"${smapname}"'[1]}'
+  else
+    echo "not supported port"
+    exit 1
+  fi
+  lport=$(eval echo ${thecmd})
+  if [[ -z "${lport}" ]]; then
+    echo "The port was not defined"
+    exit 1
+  fi
+  echo $lport
+}
+
+function forward() {
+  sname=$1
+  localport=$2
+  if [[ -z "${sname}" ]]; then
+    echo "Service name was not specified"
+    exit 1
+  fi
+  # mongo was not using the service name, do this map
+  if [[ "${sname}" = "mongo" ]]; then
+      sname="polaris-mongodb"
+  fi
+  serviceport=$(${KUBECTL} get service -n $NAMESPACE $sname -o=jsonpath='{.spec.ports[0].port}' 2>/dev/null || true)
+  if [[ -z $serviceport ]]; then
+    serviceport=$(getDefaultPort $sname 'port')
+    exit 1    
+  fi
+  # if the local port was not given, use the default local port
+  if [[ -z "${localport}" ]]; then
+    localport=$(getDefaultPort $sname 'localport')
+  fi
+  echo "Forwarding service $sname on port $localport:$serviceport.."
+  ${KUBECTL} -n $NAMESPACE port-forward service/${sname} $localport:$serviceport
+}
+
+SERVICE=""
+PORT=""
+while [[ $# -gt 0 ]]; do
+  optkey="$1"
+  case $optkey in
+    -h|--help)
+      printHelp "true"; exit 0;;
+    -p)
+      PORT="$2";shift 2;;
+    -n|-s)
+      SERVICE="$2";shift 2;;
+    *) # unknown option
+      echo "parameter $1 is not supported"; exit 1;;
+  esac
+done
+
+forward $SERVICE $PORT
