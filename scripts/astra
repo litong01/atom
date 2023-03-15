@@ -207,14 +207,20 @@ function deployDashboard() {
 }
 
 kill_port_forward() {
-  ${CURDIR}/scripts/beta/kill_port_forward.sh "$1" 2>&1 > /dev/null &
-  echo -e "${Green}Port-forward for ${service} is off. ${ColorOff}"
+  processes=$(ps -a | grep 'kubectl' | grep 'port-forward' | grep "${1}")
+  process_ids=$(echo "${processes}" | awk '{print $1}')
+  if [ -n "${process_ids}" ]; then
+    echo -e "${Green}Stopping port-forward for ${1}${ColorOff}"
+    echo "${process_ids}" | xargs kill 2>&1 > /dev/null
+  fi
+
+  echo -e "${Green}Port-forward for ${1} is off. ${ColorOff}"
 }
 
 forward_port() {
   service=$1
   ${SCRIPTDIR}/pcloud-port-forward -s "${service}" 2>&1 > /dev/null &
-  sleep 5 # takes a few seconds to get started (especially with remote clusters)
+  sleep 3 # takes a few seconds to get started (especially with remote clusters)
 
   echo -e "${Green}Port-forward for ${service} is on. ${ColorOff}"
 }
@@ -250,6 +256,7 @@ function loadAccountIndex() {
   if [[ ${ACCOUNTINDEX} -ge 100 ]]; then
     ACCOUNTINDEX=1
   fi
+  echo -e "${Green}Account index loaded current value ${ACCOUNTINDEX}${ColorOff}"
 }
 
 function initACS() {
