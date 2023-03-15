@@ -218,6 +218,7 @@ function deployDashboard() {
 
 kill_port_forward() {
   ${CURDIR}/scripts/beta/kill_port_forward.sh "$1" 2>&1 > /dev/null &
+  echo -e "${Green}Port-forward for ${service} is off. ${ColorOff}"
 }
 
 forward_port() {
@@ -225,7 +226,7 @@ forward_port() {
   ${SCRIPTDIR}/pcloud-port-forward -s "${service}" 2>&1 > /dev/null &
   sleep 5 # takes a few seconds to get started (especially with remote clusters)
 
-  echo -e "${Green}Port-forward for $service complete. ${ColorOff}"
+  echo -e "${Green}Port-forward for ${service} is on. ${ColorOff}"
 }
 
 function wait_for_pod() {
@@ -254,30 +255,20 @@ function loadAccountIndex() {
   fi
   # If we have used up all the numbers, we should reset
   if [[ ${ACCOUNTINDEX} -ge 100 ]]; then
-    ACCOUNTINDEX=0
+    ACCOUNTINDEX=1
   fi
 }
 
 function initACS() {
   # Get sre token
   wait_for_pod
-  forward_port krakend
+  forward_port credentials
 
-  cd ${CURDIR}/scripts/beta
-  if ! python3 ./get_service_credentials.py /tmp/secret_stage_credentials.json 2>&1; then
-    echo -e "${Red}Could not get service credentials${ColorOff}"
-    exit 1
-  fi
-
-  if ! python3 ./add_service_credentials.py /tmp/secret_stage_credentials.json 2>&1; then
-    echo -e "${Red}Could not add service credentials${ColorOff}"
-    exit 1
-  fi
-
-  cd ${CURDIR}
+  # Run setting service accounts
+  python3 ${SCRIPTDIR}/serviceaccount.py
 
   # Now stop the port forwarding
-  kill_port_forward krakend
+  kill_port_forward credentials
 }
 
 function deployAccounts() {
@@ -331,14 +322,13 @@ function deployAC() {
   fi
 
   # This has to be done always, no need to run again if successful
-  if [[ "${CNAME}" == "all" ]]; then
-    echo -e "${Green}Run post_install script${ColorOff}"
+  if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "service" ]]; then
+    echo -e "${Green}Setting up service accounts...${ColorOff}"
     initACS
-    # ${CURDIR}/scripts/beta/post_install.sh
   fi
 
   if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "post" ]]; then
-    echo -e "${Green}Run post_install script${ColorOff}"
+    echo -e "${Green}Setting up user accounts...${ColorOff}"
     deployAccounts
   fi
 

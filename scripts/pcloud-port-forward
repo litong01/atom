@@ -64,7 +64,7 @@ function forward() {
     localport=$(getDefaultPort $sname 'localport')
   fi
   echo "Forwarding service $sname on port $localport:$serviceport.."
-  ${KUBECTL} -n $NAMESPACE port-forward service/${sname} $localport:$serviceport
+  ${KUBECTL} -n $NAMESPACE port-forward service/${sname} $localport:$serviceport 2>&1 >/dev/null
 }
 
 SERVICE=""
