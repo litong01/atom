@@ -217,15 +217,15 @@ function deployDashboard() {
 }
 
 kill_port_forward() {
-  ${CURDIR}/scripts/beta/kill_port_forward.sh "$1" 2>&1
+  ${CURDIR}/scripts/beta/kill_port_forward.sh "$1" 2>&1 > /dev/null &
 }
 
 forward_port() {
   service=$1
-  ${SCRIPTDIR}/pcloud-port-forward -s "${service}" 2>&1 &
+  ${SCRIPTDIR}/pcloud-port-forward -s "${service}" 2>&1 > /dev/null &
   sleep 5 # takes a few seconds to get started (especially with remote clusters)
 
-  echo "Port-forward for $service complete." 2>&1
+  echo -e "${Green}Port-forward for $service complete. ${ColorOff}"
 }
 
 function wait_for_pod() {
@@ -239,7 +239,7 @@ function wait_for_pod() {
   done
 }
 
-ACCOUNTINDEX=0
+ACCOUNTINDEX=1
 function saveAccountIndex() {
   content="ACCOUNTINDEX=${ACCOUNTINDEX}"
   echo -e "${Green}Saving account index...${ColorOff}"
@@ -258,46 +258,43 @@ function loadAccountIndex() {
   fi
 }
 
-function deployMultipleAccounts() {
+function initACS() {
   # Get sre token
   wait_for_pod
-  loadAccountIndex
-  forward_port identity
   forward_port krakend
 
-  python ${CURDIR}/scripts/production/prod_sre.py \
-    --token-output-file /tmp/sre_token.txt \
-    --first-name=Super --last-name=Man --email="tli@netapp.com"
-  # Get the sre token
-  token=$(cat /tmp/sre_token.txt)
-  if [[ -z "${token}" ]]; then
-    echo -e "${Red}Could not get sre token, quitting...{ColorOff}"
+  cd ${CURDIR}/scripts/beta
+  if ! python3 ./get_service_credentials.py /tmp/secret_stage_credentials.json 2>&1; then
+    echo -e "${Red}Could not get service credentials${ColorOff}"
     exit 1
   fi
 
-  # We will create 5 account in one go
-  startX=${ACCOUNTINDEX}
-  endX=$(( $ACCOUNTINDEX + 5 ))
-  while [ $startX -lt $endX ]; do
-    suffix=$(printf "%02d" ${startX})
-    echo -e "${Green}Ready to create account Astra${suffix}${ColorOff}"
-    python ${CURDIR}/scripts/production/prod_account2.py \
-      --sre-token "${token}" \
-      --account-name "Astra${suffix}" \
-      --first-name "Astra${suffix}" \
-      --last-name "NetApp" \
-      --email "netapp-test-astra${suffix}@mailinator.com" \
-      --company-name "Ocean Great" \
-      --user-country "US" \
-      --user-locality "Durham" \
-      --user-region "North Carolina" \
-      --user-street-address "7301 Kit Creek Road" \
-      --user-postal-code "27709"
-    startX=$(( $startX + 1 ))
-    echo -e "${Green}User netapp-test-astra${suffix}@mailinator.com created${ColorOff}"
-  done
-  ACCOUNTINDEX=${startX}
+  if ! python3 ./add_service_credentials.py /tmp/secret_stage_credentials.json 2>&1; then
+    echo -e "${Red}Could not add service credentials${ColorOff}"
+    exit 1
+  fi
+
+  cd ${CURDIR}
+
+  # Now stop the port forwarding
+  kill_port_forward krakend
+}
+
+function deployAccounts() {
+  loadAccountIndex
+  forward_port krakend
+  forward_port identity
+
+  # Create 3 accounts each time
+  python3 ${SCRIPTDIR}/postsetup.py ${ACCOUNTINDEX}
+  ACCOUNTINDEX=$(( $ACCOUNTINDEX + 1 ))
+  python3 ${SCRIPTDIR}/postsetup.py ${ACCOUNTINDEX}
+  ACCOUNTINDEX=$(( $ACCOUNTINDEX + 1 ))
+  python3 ${SCRIPTDIR}/postsetup.py ${ACCOUNTINDEX}
+  ACCOUNTINDEX=$(( $ACCOUNTINDEX + 1 ))
+
   saveAccountIndex
+
   # Now stop the port forwarding
   kill_port_forward krakend
   kill_port_forward identity
@@ -333,11 +330,18 @@ function deployAC() {
     deployDashboard
   fi
 
-  if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "post" ]]; then
+  # This has to be done always, no need to run again if successful
+  if [[ "${CNAME}" == "all" ]]; then
     echo -e "${Green}Run post_install script${ColorOff}"
-    deployMultipleAccounts
+    initACS
     # ${CURDIR}/scripts/beta/post_install.sh
   fi
+
+  if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "post" ]]; then
+    echo -e "${Green}Run post_install script${ColorOff}"
+    deployAccounts
+  fi
+
 }
 
 function pullAndTag() {
