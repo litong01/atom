@@ -220,14 +220,17 @@ forward_port() {
 }
 
 function wait_for_pod() {
+  # Since the billing, trident-svc and bucketservice are the ones become available latest
+  # We will just watch them.
+  echo -e "${Green}Waiting for pods to be ready...${ColorOff}"
   while : ; do
     if kubectl wait pod --context ${CONTEXT} -n ${NAMESPACE} --for=condition=ready \
-      -l app.kubernetes.io/name="billing" --timeout=120s 2>&1; then
+      -l 'app.kubernetes.io/name in (billing, trident-svc, bucketservice)' --timeout=120s 2>&1; then
        break
     fi
     sleep 5
-    echo -e "${Green}Waiting for pods to be ready...${ColorOff}"
   done
+  echo -e "${Green}ACS pods are ready now${ColorOff}"
 }
 
 ACCOUNTINDEX=1
@@ -303,7 +306,7 @@ function deployAC() {
     make helminstall DEPLOY_TARGET=cicd \
     CLUSTER_ENDPOINT=integration.astra.netapp.io \
     TRAEFIK_ENDPOINT=integration.astra.netapp.io \
-    HELMOVERRIDE='--set mongodb.image.repository=zcube/bitnami-compat-mongodb --set mongodb.image.tag=5.0.14'
+    HELMOVERRIDE='--set mongodb.image.repository=zcube/bitnami-compat-mongodb --set mongodb.image.tag=5.0.14 --set mongodb.replicaCount=1'
   fi
 
   if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "dash" ]]; then
@@ -555,6 +558,8 @@ elif [[ "${CMD}" == "cleanall" ]]; then
   # Remove the proxy and the local registry as well
   docker rm -f kubeproxy &> /dev/null || true
   docker rm -f kind-registry &> /dev/null || true
+  # Need to clean up docker volumes
+  docker volume prune -f &> /dev/null || true
 
 elif [[ "${CMD}" == "image" ]]; then
   validateContext
