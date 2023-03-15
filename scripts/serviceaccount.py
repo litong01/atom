@@ -11,7 +11,7 @@ from typing import Any
 
 import requests
 
-openlab_uri = "http://vault.openenglab.netapp.com"
+openlab_uri = os.getenv("VAULT_ADDR", default=None)
 correlationid = "b90cd7e9-6095-4755-be2e-88614b1245b3"
 userid = "06ea14a1-dce8-11ea-8f1c-2eda23b24bb8"
 # This is the credential host, do port forward first.

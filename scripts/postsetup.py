@@ -2,11 +2,13 @@
 
 import requests
 import logging
+import os
 import sys
 import time
 import json
 
 target_host = "http://localhost:30000"
+issuer_uri = os.getenv("CREDS_ISSUER_URL", default=None).strip("/")
 created_accounts = []
 firstCred = """
 {
@@ -29,7 +31,10 @@ def get_token():
     headers = {}
     headers["authorization"] = "Bearer"
     headers["content-type"] = "application/json"
-    r = requests.post("https://staging-netapp-cloud-account.auth0.com/oauth/token", json=auth_data, headers=headers)
+
+    uri = "{}/oauth/token".format(issuer_uri)
+
+    r = requests.post(uri, json=auth_data, headers=headers)
     if r.status_code >= 400:
         logger.info("accounts_api - could not retrieve the access token")
         logger.info(r.text)
@@ -183,14 +188,32 @@ if __name__ == '__main__':
     x = int(sys.argv[1]) # The sequence number
     useremail = f'netapp-test-astra{x:02d}@mailinator.com'
     account_name = f'JohnDoe{x:02d}'
-    print("account name:", account_name, "useremail:", useremail)
+    print("Ready to add account: {} with email: {}".format(account_name, useremail))
     account_id = create_account(account_name, headers)
     if account_id != None:
+        print("Account {} created successfully".format(account_name))
         add_billing_subscription(account_id, headers)
     else:
         account_id = get_account(account_name, headers)
+        if account_id != None:
+            print("Account {} retrieved successfully".format(account_name))
+        else:
+            print("Account {} creation failed".format(account_name))
+            sys.exit(1)
+
     user_id = create_user(account_id, useremail, headers)
-    if user_id == None:
-        user_id = get_user(account_id, useremail, headers)
     if user_id != None:
-        manage_user(account_id, user_id, headers)
+        print("User: {} created successfully".format(useremail))
+    else:
+        user_id = get_user(account_id, useremail, headers)
+        if user_id != None:
+            print("User: {} retrieved successfully".format(useremail))
+        else:
+            print("User: {} creation failed".format(useremail))
+            sys.exit(1)
+
+    managed_user_id = manage_user(account_id, user_id, headers)
+    if managed_user_id != None:
+        print("User: {} subscription done successfully".format(useremail))
+    else:
+        print("User: {} subscription failed".format(useremail))

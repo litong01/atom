@@ -4,7 +4,6 @@ Astra developer tool(ADT) is to setup Astra Control Services(ACS) on OS X, WSL, 
 ## One time environment setup
 
    * Pull Astra [polaris](https://github.com/NetApp-Polaris/polaris) source code if you have not.
-   * Use your NetApp BlueXP user id and password create a file like [this](/scripts/beta/auth2.json), save it in a secure place. If you do not have BlueXP id, go to [NetApp BlueXP](https://cloudmanager.netapp.com/working-environments) to sign up.
    * Set up environment variables. Use this [example](myenv.sh) script to create your own and save it in a secure place so that you can easily run `source myenv.sh` when you need to.
    * Ensure `/etc/hosts` file has entry `127.0.0.1 integration.astra.netapp.io`
 
@@ -46,13 +45,14 @@ Note: This step will deploy traefik first, a proxy, then all other ACS component
 ```
    astra deploy -a traefik   # traefik and proxy
    astra deploy -a main      # all Astra components except traefik
-   astra deploy -a post      # post install script
    astra deploy -a dash      # astra product grafana/prometheus dashboard
+   astra deploy -a service   # deploy astra service account
+   astra deploy -a user      # create astra accounts, users, subscription
 ```
 4. ### Access ACS at [https://integration.astra.netapp.io/](https://integration.astra.netapp.io/)
 5. ### Cleanup everything after use
 ```
-   astra clean
+   astra cleanall
 ```
 6. ### Learn more
 ```

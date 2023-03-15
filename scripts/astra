@@ -184,16 +184,6 @@ function checkEnvironmentVariables() {
   done
 }
 
-function checkAuth2File() {
-  auth2json=${PCLOUD_AUTH2:-${CURDIR}/scripts/beta/auth2.json}
-  if [[ -f "${auth2json}" ]]; then
-    echo -e "${Green}auth2.json${ColorOff}=${auth2json}"
-  else
-    echo -e "${Red}auth2.json file was not present, quiting...${ColorOff}"
-    exit 1
-  fi
-}
-
 function checkInPolaris() {
     # check that the Makefile and pcloud directory exists
     if [[ ! -f "${CURDIR}/Makefile" ]] || [[ ! -d "${CURDIR}/pcloud" ]]; then
@@ -327,7 +317,7 @@ function deployAC() {
     initACS
   fi
 
-  if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "post" ]]; then
+  if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "user" ]]; then
     echo -e "${Green}Setting up user accounts...${ColorOff}"
     deployAccounts
   fi
@@ -517,7 +507,6 @@ if [[ "${CMD}" == "up" ]]; then
   echo ""
   checkInPolaris
   checkEnvironmentVariables
-  checkAuth2File
 
   echo ""
   pullACImages
@@ -536,7 +525,7 @@ elif [[ "${CMD}" == "prepare" ]]; then
   echo ""
   checkInPolaris
   checkEnvironmentVariables
-  checkAuth2File
+
   echo ""
   echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
   ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}"
@@ -574,7 +563,6 @@ elif [[ "${CMD}" == "image" ]]; then
 elif [[ "${CMD}" == "deploy" ]]; then
   checkInPolaris
   checkEnvironmentVariables
-  checkAuth2File
   validateContext
   # Always check and recreate namespace and the cert in case it was removed
   ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
