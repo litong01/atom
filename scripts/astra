@@ -207,14 +207,14 @@ function deployDashboard() {
 }
 
 kill_port_forward() {
-  processes=$(ps -a | grep 'kubectl' | grep 'port-forward' | grep "${1}")
-  process_ids=$(echo "${processes}" | awk '{print $1}')
+  service=$1
+  processes=$(ps -a | grep 'kubectl' | grep 'port-forward' | grep "${service}")
+  process_ids=$(echo "${processes}" | cut -d ' ' -f1)
   if [ -n "${process_ids}" ]; then
-    echo -e "${Green}Stopping port-forward for ${1}${ColorOff}"
-    echo "${process_ids}" | xargs kill 2>&1 > /dev/null
+    echo "${process_ids}" | xargs kill -2 2>&1 > /dev/null
+    sleep 3
   fi
-
-  echo -e "${Green}Port-forward for ${1} is off. ${ColorOff}"
+  echo -e "${Green}Port-forward for ${service} has stopped. ${ColorOff}"
 }
 
 forward_port() {
@@ -222,7 +222,7 @@ forward_port() {
   ${SCRIPTDIR}/pcloud-port-forward -s "${service}" 2>&1 > /dev/null &
   sleep 3 # takes a few seconds to get started (especially with remote clusters)
 
-  echo -e "${Green}Port-forward for ${service} is on. ${ColorOff}"
+  echo -e "${Green}Port-forward for ${service} has started. ${ColorOff}"
 }
 
 function wait_for_pod() {
@@ -242,21 +242,17 @@ function wait_for_pod() {
 ACCOUNTINDEX=1
 function saveAccountIndex() {
   content="ACCOUNTINDEX=${ACCOUNTINDEX}"
-  echo -e "${Green}Saving account index...${ColorOff}"
   echo ${content} > /home/work/astra/accountIndex.sh
 }
 
 function loadAccountIndex() {
-  echo -e "${Green}Load account index${ColorOff}"
   if [ -f /home/work/astra/accountIndex.sh ]; then
-    echo -e "${Green}Loading the accountIndex...${ColorOff}"
     source /home/work/astra/accountIndex.sh
   fi
   # If we have used up all the numbers, we should reset
   if [[ ${ACCOUNTINDEX} -ge 100 ]]; then
     ACCOUNTINDEX=1
   fi
-  echo -e "${Green}Account index loaded current value ${ACCOUNTINDEX}${ColorOff}"
 }
 
 function initACS() {

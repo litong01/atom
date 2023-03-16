@@ -188,7 +188,7 @@ if __name__ == '__main__':
     x = int(sys.argv[1]) # The sequence number
     useremail = f'netapp-test-astra{x:02d}@mailinator.com'
     account_name = f'JohnDoe{x:02d}'
-    print("Ready to create account: {}".format(account_name))
+    print("")
     account_id = create_account(account_name, headers)
     if account_id != None:
         print("Account {} created successfully".format(account_name))
@@ -217,5 +217,3 @@ if __name__ == '__main__':
         print("User: {} subscription done successfully".format(useremail))
     else:
         print("User: {} subscription failed".format(useremail))
-
-    print("")
