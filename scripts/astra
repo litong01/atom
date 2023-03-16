@@ -566,6 +566,7 @@ elif [[ "${CMD}" == "cleanall" ]]; then
   docker rm -f kind-registry &> /dev/null || true
   # Need to clean up docker volumes
   docker volume prune -f &> /dev/null || true
+  rm -rf /home/work/astra/*.sh
 
 elif [[ "${CMD}" == "image" ]]; then
   validateContext
