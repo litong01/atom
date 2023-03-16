@@ -268,9 +268,9 @@ function initACS() {
 }
 
 function deployAccounts() {
-  loadAccountIndex
+
   forward_port krakend
-  forward_port identity
+  loadAccountIndex
 
   # Create 3 accounts each time
   python3 ${SCRIPTDIR}/postsetup.py ${ACCOUNTINDEX}
@@ -284,7 +284,6 @@ function deployAccounts() {
 
   # Now stop the port forwarding
   kill_port_forward krakend
-  kill_port_forward identity
 }
 
 function deployAC() {
