@@ -309,6 +309,10 @@ function deployAC() {
     CLUSTER_ENDPOINT=integration.astra.netapp.io \
     TRAEFIK_ENDPOINT=integration.astra.netapp.io \
     HELMOVERRIDE='--set mongodb.image.repository=zcube/bitnami-compat-mongodb --set mongodb.image.tag=5.0.14 --set mongodb.replicaCount=1'
+
+    # For now remove the services/deployments that not needed
+    kubectl delete --context ${CONTEXT} -n ${NAMESPACE} deployment natssync-server httpproxy-server hybridauth 2>/dev/null||true
+    kubectl delete --context ${CONTEXT} -n ${NAMESPACE} service natssync-server httpproxy-server hybridauth 2>/dev/null||true
   fi
 
   if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "dash" ]]; then
