@@ -36,7 +36,7 @@ data:
       "liveNow": false,
       "panels": [
         {
-          "collapsed": true,
+          "collapsed": false,
           "datasource": {
             "type": "prometheus"
           },
@@ -47,254 +47,7 @@ data:
             "y": 0
           },
           "id": 43,
-          "panels": [
-            {
-              "datasource": {
-                "type": "prometheus"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "mappings": [],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      },
-                      {
-                        "color": "red",
-                        "value": 80
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 6,
-                "w": 6,
-                "x": 0,
-                "y": 17
-              },
-              "id": 45,
-              "links": [],
-              "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "reduceOptions": {
-                  "calcs": [
-                    "mean"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "textMode": "auto"
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "expr": "count(count by (account_name) (count_over_time(astra_billing_account_total_minutes{}[1h])))",
-                  "format": "table",
-                  "instant": true,
-                  "interval": "",
-                  "intervalFactor": 1,
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Total Accounts",
-              "type": "stat"
-            },
-            {
-              "datasource": {
-                "type": "prometheus"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "mappings": [],
-                  "noValue": "0",
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 6,
-                "w": 6,
-                "x": 6,
-                "y": 17
-              },
-              "id": 47,
-              "links": [],
-              "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "reduceOptions": {
-                  "calcs": [
-                    "mean"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "textMode": "auto"
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "expr": "count(count by (account_name) (count_over_time(astra_billing_account_total_minutes{terms=\"paid\"}[1h])))",
-                  "format": "table",
-                  "instant": true,
-                  "interval": "",
-                  "intervalFactor": 1,
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Total Premium Accounts",
-              "type": "stat"
-            },
-            {
-              "datasource": {
-                "type": "prometheus"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "mappings": [],
-                  "noValue": "0",
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 6,
-                "w": 6,
-                "x": 12,
-                "y": 17
-              },
-              "id": 46,
-              "links": [],
-              "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "reduceOptions": {
-                  "calcs": [
-                    "mean"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "textMode": "auto"
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "expr": "sum by (terms) (max_over_time(astra_billing_account_total_minutes{terms=\"paid\"}[1h]))",
-                  "format": "table",
-                  "instant": true,
-                  "interval": "",
-                  "intervalFactor": 1,
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Total Paid Minutes",
-              "type": "stat"
-            },
-            {
-              "datasource": {
-                "type": "prometheus"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "mappings": [],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      },
-                      {
-                        "color": "red",
-                        "value": 80
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 6,
-                "w": 6,
-                "x": 18,
-                "y": 17
-              },
-              "id": 44,
-              "links": [],
-              "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "reduceOptions": {
-                  "calcs": [
-                    "mean"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "textMode": "auto"
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "expr": "sum (max_over_time(user_total{measurement=\"activated\",accountName=~\"$AccountName\"}[1h]))",
-                  "format": "table",
-                  "instant": true,
-                  "interval": "",
-                  "intervalFactor": 1,
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Total Activated Users ($AccountName)",
-              "type": "stat"
-            }
-          ],
+          "panels": [],
           "targets": [
             {
               "datasource": {
@@ -307,6 +60,254 @@ data:
           "type": "row"
         },
         {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 1
+          },
+          "id": 45,
+          "links": [],
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "mean"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "expr": "count(count by (account_name) (count_over_time(astra_billing_account_total_minutes{}[1h])))",
+              "format": "table",
+              "instant": true,
+              "interval": "",
+              "intervalFactor": 1,
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Total Accounts",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [],
+              "noValue": "0",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 6,
+            "y": 1
+          },
+          "id": 47,
+          "links": [],
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "mean"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "expr": "count(count by (account_name) (count_over_time(astra_billing_account_total_minutes{terms=\"paid\"}[1h])))",
+              "format": "table",
+              "instant": true,
+              "interval": "",
+              "intervalFactor": 1,
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Total Premium Accounts",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [],
+              "noValue": "0",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 12,
+            "y": 1
+          },
+          "id": 46,
+          "links": [],
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "mean"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "expr": "sum by (terms) (max_over_time(astra_billing_account_total_minutes{terms=\"paid\"}[1h]))",
+              "format": "table",
+              "instant": true,
+              "interval": "",
+              "intervalFactor": 1,
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Total Paid Minutes",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 18,
+            "y": 1
+          },
+          "id": 44,
+          "links": [],
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "mean"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "sum (max_over_time(user_total{measurement=\"activated\",service=\"identity\", accountName=~\"$AccountName\"}[1h]))",
+              "format": "table",
+              "instant": true,
+              "interval": "",
+              "intervalFactor": 1,
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Total Activated Users ($AccountName)",
+          "type": "stat"
+        },
+        {
           "collapsed": true,
           "datasource": {
             "type": "prometheus"
@@ -315,7 +316,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 1
+            "y": 7
           },
           "id": 10,
           "panels": [
@@ -341,8 +342,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       },
                       {
                         "color": "red",
@@ -613,8 +613,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       },
                       {
                         "color": "red",
@@ -812,7 +811,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 2
+            "y": 8
           },
           "id": 41,
           "panels": [],
@@ -852,7 +851,7 @@ data:
             "h": 5,
             "w": 6,
             "x": 0,
-            "y": 3
+            "y": 9
           },
           "id": 69,
           "options": {
@@ -911,7 +910,7 @@ data:
             "h": 5,
             "w": 6,
             "x": 6,
-            "y": 3
+            "y": 9
           },
           "id": 16,
           "options": {
@@ -970,7 +969,7 @@ data:
             "h": 5,
             "w": 6,
             "x": 12,
-            "y": 3
+            "y": 9
           },
           "id": 25,
           "options": {
@@ -1029,7 +1028,7 @@ data:
             "h": 5,
             "w": 6,
             "x": 18,
-            "y": 3
+            "y": 9
           },
           "id": 68,
           "options": {
@@ -1088,7 +1087,7 @@ data:
             "h": 5,
             "w": 6,
             "x": 0,
-            "y": 8
+            "y": 14
           },
           "id": 67,
           "options": {
@@ -1147,7 +1146,7 @@ data:
             "h": 5,
             "w": 6,
             "x": 6,
-            "y": 8
+            "y": 14
           },
           "id": 66,
           "options": {
@@ -1205,7 +1204,7 @@ data:
             "h": 5,
             "w": 6,
             "x": 12,
-            "y": 8
+            "y": 14
           },
           "id": 18,
           "options": {
@@ -1261,7 +1260,7 @@ data:
             "h": 5,
             "w": 6,
             "x": 18,
-            "y": 8
+            "y": 14
           },
           "id": 17,
           "options": {
@@ -1302,7 +1301,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 13
+            "y": 19
           },
           "id": 14,
           "panels": [
@@ -1327,8 +1326,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -1444,8 +1442,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -1561,8 +1558,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -1666,8 +1662,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -1762,8 +1757,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -1858,8 +1852,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -1952,8 +1945,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -2045,8 +2037,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -2151,8 +2142,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -2244,8 +2234,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -2454,7 +2443,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 14
+            "y": 20
           },
           "id": 73,
           "panels": [
@@ -2474,8 +2463,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       },
                       {
                         "color": "red",
@@ -2545,8 +2533,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -2670,8 +2657,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       },
                       {
                         "color": "red",
@@ -2741,8 +2727,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -2860,7 +2845,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 15
+            "y": 21
           },
           "id": 86,
           "panels": [],
@@ -2929,7 +2914,7 @@ data:
             "h": 7,
             "w": 8,
             "x": 0,
-            "y": 16
+            "y": 22
           },
           "id": 88,
           "options": {
@@ -3022,7 +3007,7 @@ data:
             "h": 7,
             "w": 8,
             "x": 8,
-            "y": 16
+            "y": 22
           },
           "id": 89,
           "options": {
@@ -3062,7 +3047,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 23
+            "y": 29
           },
           "id": 58,
           "panels": [
@@ -3307,7 +3292,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 24
+            "y": 30
           },
           "id": 60,
           "panels": [
@@ -3856,7 +3841,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 25
+            "y": 31
           },
           "id": 39,
           "panels": [
@@ -4051,7 +4036,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 26
+            "y": 32
           },
           "id": 21,
           "panels": [
@@ -4406,7 +4391,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 27
+            "y": 33
           },
           "id": 12,
           "panels": [
@@ -4725,10 +4710,10 @@ data:
             "current": {
               "selected": true,
               "text": [
-                "All"
+                "JohnDoe01"
               ],
               "value": [
-                "$__all"
+                "JohnDoe01"
               ]
             },
             "datasource": {
@@ -4789,6 +4774,6 @@ data:
       "timezone": "",
       "title": "Astra Adoption Metrics [INTERNAL]",
       "uid": "gHJolohGk",
-      "version": 3,
+      "version": 4,
       "weekStart": ""
     }
