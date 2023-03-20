@@ -52,6 +52,7 @@ function printHelp() {
   echo "     update   - update this tool"
   echo "     refresh  - restart a deployment and its image"
   echo "     make     - run polaris make command"
+  echo "     k8s      - run k8s tool command with parameters"
   echo ""
   echo -e "Parameters for ${Green}image${ColorOff} command:"
   echo "     -i|--imagename  - an astra image name. default is all images"
@@ -75,7 +76,7 @@ function printHelp() {
 
 function validateCMD() {
   cmd=$1
-  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "pull" "refresh" "make" "update")
+  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "pull" "refresh" "make" "update" "k8stool")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -104,8 +105,8 @@ REST="$@"
 # Validate the command
 validateCMD "${CMD}"
 
-# We will only handle command parameters if command was not make
-if [[ "${CMD}" != "make" ]]; then
+# We will only handle command parameters if command was not make and not k8stool
+if [[ "${CMD}" != "make" ]] && [[ "${CMD}" != "k8stool" ]]; then
   # Handling parameters
   while [[ $# -gt 0 ]]; do
     optkey="$1"
@@ -594,6 +595,12 @@ elif [[ "${CMD}" == "update" ]]; then
   checkEnvironmentVariables
   doADTUpdate
 elif [[ "${CMD}" == "make" ]]; then
-  make "${REST}"
+  make ${REST}
+
+elif [[ "${CMD}" == "k8stool" ]]; then
+  echo ""
+  echo -e "${Green}Running k8stool commands...${ColorOff}"
+  ${SCRIPTDIR}/k8stool ${REST}
+
 fi
 #=================End main process=========================
