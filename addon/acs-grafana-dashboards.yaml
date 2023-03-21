@@ -36,7 +36,7 @@ data:
       "liveNow": false,
       "panels": [
         {
-          "collapsed": true,
+          "collapsed": false,
           "datasource": {
             "type": "prometheus"
           },
@@ -47,324 +47,7 @@ data:
             "y": 0
           },
           "id": 43,
-          "panels": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "mappings": [],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      },
-                      {
-                        "color": "red",
-                        "value": 80
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 5,
-                "w": 4,
-                "x": 0,
-                "y": 1
-              },
-              "id": 45,
-              "links": [],
-              "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "reduceOptions": {
-                  "calcs": [
-                    "mean"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "textMode": "auto"
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "editorMode": "code",
-                  "expr": "count(max by (account_id,account_name) (max_over_time(astra_nautilus_app_v6{}[1d])))",
-                  "format": "table",
-                  "instant": true,
-                  "interval": "",
-                  "intervalFactor": 1,
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Total Accounts",
-              "type": "stat"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
-              },
-              "description": "The accounts with at least one application",
-              "fieldConfig": {
-                "defaults": {
-                  "mappings": [],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      },
-                      {
-                        "color": "red",
-                        "value": 80
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 5,
-                "w": 4,
-                "x": 5,
-                "y": 1
-              },
-              "id": 90,
-              "links": [],
-              "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "reduceOptions": {
-                  "calcs": [
-                    "mean"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "textMode": "auto"
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "editorMode": "code",
-                  "expr": "count(max by (account_id,account_name) (max_over_time(astra_nautilus_app_v6{}[1d])) > 0)",
-                  "format": "table",
-                  "instant": true,
-                  "interval": "",
-                  "intervalFactor": 1,
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Total Active Accounts",
-              "type": "stat"
-            },
-            {
-              "datasource": {
-                "type": "prometheus"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "mappings": [],
-                  "noValue": "0",
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 5,
-                "w": 4,
-                "x": 10,
-                "y": 1
-              },
-              "id": 47,
-              "links": [],
-              "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "reduceOptions": {
-                  "calcs": [
-                    "mean"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "textMode": "auto"
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "expr": "count(count by (account_name) (count_over_time(astra_billing_account_total_minutes{terms=\"paid\"}[1h])))",
-                  "format": "table",
-                  "instant": true,
-                  "interval": "",
-                  "intervalFactor": 1,
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Total Premium Accounts",
-              "type": "stat"
-            },
-            {
-              "datasource": {
-                "type": "prometheus"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "mappings": [],
-                  "noValue": "0",
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 5,
-                "w": 4,
-                "x": 15,
-                "y": 1
-              },
-              "id": 46,
-              "links": [],
-              "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "reduceOptions": {
-                  "calcs": [
-                    "mean"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "textMode": "auto"
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "expr": "sum by (terms) (max_over_time(astra_billing_account_total_minutes{terms=\"paid\"}[1h]))",
-                  "format": "table",
-                  "instant": true,
-                  "interval": "",
-                  "intervalFactor": 1,
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Total Paid Minutes",
-              "type": "stat"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "mappings": [],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      },
-                      {
-                        "color": "red",
-                        "value": 80
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 5,
-                "w": 4,
-                "x": 20,
-                "y": 1
-              },
-              "id": 44,
-              "links": [],
-              "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "reduceOptions": {
-                  "calcs": [
-                    "mean"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "textMode": "auto"
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "editorMode": "code",
-                  "expr": "sum (max_over_time(user_total{measurement=\"activated\",service=\"identity\", accountName=~\"$AccountName\"}[1h]))",
-                  "format": "table",
-                  "instant": true,
-                  "interval": "",
-                  "intervalFactor": 1,
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Total Activated Users ($AccountName)",
-              "type": "stat"
-            }
-          ],
+          "panels": [],
           "targets": [
             {
               "datasource": {
@@ -377,6 +60,322 @@ data:
           "type": "row"
         },
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 0,
+            "y": 1
+          },
+          "id": 45,
+          "links": [],
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "mean"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "count(max by (account_id,account_name) (max_over_time(astra_nautilus_app_v6{}[1d])))",
+              "format": "table",
+              "instant": true,
+              "interval": "",
+              "intervalFactor": 1,
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Total Accounts",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "The accounts with at least one application",
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 5,
+            "y": 1
+          },
+          "id": 90,
+          "links": [],
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "mean"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "count(max by (account_id,account_name) (max_over_time(astra_nautilus_app_v6{}[1d])) > 0)",
+              "format": "table",
+              "instant": true,
+              "interval": "",
+              "intervalFactor": 1,
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Total Active Accounts",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [],
+              "noValue": "0",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 10,
+            "y": 1
+          },
+          "id": 47,
+          "links": [],
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "mean"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "expr": "count(count by (account_name) (count_over_time(astra_billing_account_total_minutes{terms=\"paid\"}[1h])))",
+              "format": "table",
+              "instant": true,
+              "interval": "",
+              "intervalFactor": 1,
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Total Premium Accounts",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [],
+              "noValue": "0",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 15,
+            "y": 1
+          },
+          "id": 46,
+          "links": [],
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "mean"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "expr": "sum by (terms) (max_over_time(astra_billing_account_total_minutes{terms=\"paid\"}[1h]))",
+              "format": "table",
+              "instant": true,
+              "interval": "",
+              "intervalFactor": 1,
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Total Paid Minutes",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 20,
+            "y": 1
+          },
+          "id": 44,
+          "links": [],
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "mean"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "sum (max_over_time(user_total{measurement=\"activated\",service=\"identity\", accountName=~\"$AccountName\"}[1h]))",
+              "format": "table",
+              "instant": true,
+              "interval": "",
+              "intervalFactor": 1,
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Total Activated Users ($AccountName)",
+          "type": "stat"
+        },
+        {
           "collapsed": true,
           "datasource": {
             "type": "prometheus"
@@ -385,7 +384,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 1
+            "y": 6
           },
           "id": 10,
           "panels": [
@@ -767,7 +766,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 2
+            "y": 7
           },
           "id": 41,
           "panels": [
@@ -1250,7 +1249,270 @@ data:
           "type": "row"
         },
         {
-          "collapsed": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Number of applications defined",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": false,
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "account_name"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Account Name"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #A"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Total Applications"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #B"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Fully Protected"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #C"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Partially Protected"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #D"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "At Risk"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #E"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Not Protected"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #F"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Cloned"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 8
+          },
+          "id": 27,
+          "options": {
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "frameIndex": 1,
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": false,
+                "displayName": "Account Name"
+              }
+            ]
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "sum by (account_id, account_name)(max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=~\"protected|partial|atRisk|none\"}))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "sum by (account_id, account_name) (max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=\"protected\"}))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "B"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "sum by (account_id, account_name) (max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=\"partial\"}))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "C"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "sum by (account_id, account_name) (max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=\"atRisk\"}))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "D"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "sum by (account_id, account_name) (max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=\"none\"}))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "E"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "sum by (account_id, account_name) (max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=\"clone\"}))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "F"
+            }
+          ],
+          "title": "All applications",
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "account_id",
+                "mode": "outer"
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time 1": true,
+                  "Time 2": true,
+                  "Time 3": true,
+                  "Time 4": true,
+                  "Time 5": true,
+                  "Time 6": true,
+                  "account_id": true,
+                  "account_name 2": true,
+                  "account_name 3": true,
+                  "account_name 4": true,
+                  "account_name 5": true,
+                  "account_name 6": true
+                },
+                "indexByName": {},
+                "renameByName": {}
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "collapsed": false,
           "datasource": {
             "type": "prometheus"
           },
@@ -1258,1141 +1520,10 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 3
+            "y": 16
           },
           "id": 14,
-          "panels": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
-              },
-              "description": "Number of applications defined",
-              "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "align": "auto",
-                    "cellOptions": {
-                      "type": "auto"
-                    },
-                    "filterable": false,
-                    "inspect": false
-                  },
-                  "mappings": [],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      }
-                    ]
-                  }
-                },
-                "overrides": [
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "Count"
-                    },
-                    "properties": [
-                      {
-                        "id": "custom.width",
-                        "value": 104
-                      }
-                    ]
-                  }
-                ]
-              },
-              "gridPos": {
-                "h": 8,
-                "w": 6,
-                "x": 0,
-                "y": 28
-              },
-              "id": 27,
-              "options": {
-                "footer": {
-                  "countRows": false,
-                  "fields": "",
-                  "reducer": [
-                    "sum"
-                  ],
-                  "show": false
-                },
-                "frameIndex": 1,
-                "showHeader": true,
-                "sortBy": [
-                  {
-                    "desc": true,
-                    "displayName": "Count"
-                  }
-                ]
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "editorMode": "code",
-                  "expr": "sum by (account_id, account_name)(max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=~\"protected|partial|atRisk|none\"}))",
-                  "format": "table",
-                  "hide": false,
-                  "instant": true,
-                  "interval": "",
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "All applications",
-              "transformations": [
-                {
-                  "id": "organize",
-                  "options": {
-                    "excludeByName": {
-                      "Time": true,
-                      "__name__": true,
-                      "accountID": true,
-                      "accountName": false,
-                      "account_id": true,
-                      "app_kubernetes_io_instance": true,
-                      "app_kubernetes_io_name": true,
-                      "astra_netapp_io_open_metrics": true,
-                      "hostname": false,
-                      "instance": true,
-                      "job": true,
-                      "kubernetes_namespace": true,
-                      "kubernetes_pod_name": true,
-                      "level": true,
-                      "measurementType": true,
-                      "pod_template_hash": true,
-                      "state": true
-                    },
-                    "indexByName": {},
-                    "renameByName": {
-                      "Value": "Count",
-                      "Value #A": ""
-                    }
-                  }
-                }
-              ],
-              "type": "table"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
-              },
-              "description": "Fully protected applications",
-              "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "align": "auto",
-                    "cellOptions": {
-                      "type": "auto"
-                    },
-                    "filterable": false,
-                    "inspect": false
-                  },
-                  "mappings": [],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      }
-                    ]
-                  }
-                },
-                "overrides": [
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "Count"
-                    },
-                    "properties": [
-                      {
-                        "id": "custom.width",
-                        "value": 104
-                      }
-                    ]
-                  }
-                ]
-              },
-              "gridPos": {
-                "h": 8,
-                "w": 6,
-                "x": 6,
-                "y": 28
-              },
-              "id": 50,
-              "options": {
-                "footer": {
-                  "countRows": false,
-                  "fields": "",
-                  "reducer": [
-                    "sum"
-                  ],
-                  "show": false
-                },
-                "frameIndex": 1,
-                "showHeader": true,
-                "sortBy": [
-                  {
-                    "desc": true,
-                    "displayName": "Count"
-                  }
-                ]
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "editorMode": "code",
-                  "expr": "sum by (account_name) (max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=~\"protected\"}))",
-                  "format": "table",
-                  "hide": false,
-                  "instant": true,
-                  "interval": "",
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Fully protected",
-              "transformations": [
-                {
-                  "id": "organize",
-                  "options": {
-                    "excludeByName": {
-                      "Time": true,
-                      "__name__": true,
-                      "accountID": true,
-                      "accountName": false,
-                      "account_id": true,
-                      "app_kubernetes_io_instance": true,
-                      "app_kubernetes_io_name": true,
-                      "astra_netapp_io_open_metrics": true,
-                      "hostname": false,
-                      "instance": true,
-                      "job": true,
-                      "kubernetes_namespace": true,
-                      "kubernetes_pod_name": true,
-                      "level": true,
-                      "measurementType": true,
-                      "pod_template_hash": true,
-                      "state": true
-                    },
-                    "indexByName": {},
-                    "renameByName": {
-                      "Value": "Count",
-                      "Value #A": ""
-                    }
-                  }
-                }
-              ],
-              "type": "table"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
-              },
-              "description": "Number of partially protected applications",
-              "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "align": "auto",
-                    "cellOptions": {
-                      "type": "auto"
-                    },
-                    "filterable": false,
-                    "inspect": false
-                  },
-                  "mappings": [],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 8,
-                "w": 6,
-                "x": 12,
-                "y": 28
-              },
-              "id": 28,
-              "options": {
-                "footer": {
-                  "countRows": false,
-                  "fields": "",
-                  "reducer": [
-                    "sum"
-                  ],
-                  "show": false
-                },
-                "frameIndex": 1,
-                "showHeader": true,
-                "sortBy": [
-                  {
-                    "desc": true,
-                    "displayName": "Count"
-                  }
-                ]
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "editorMode": "code",
-                  "expr": "sum by (account_name) (max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=\"partial\"}))",
-                  "format": "table",
-                  "hide": false,
-                  "instant": true,
-                  "interval": "",
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Partially protected",
-              "transformations": [
-                {
-                  "id": "organize",
-                  "options": {
-                    "excludeByName": {
-                      "Time": true,
-                      "__name__": true,
-                      "accountID": true,
-                      "accountName": false,
-                      "account_id": true,
-                      "app_kubernetes_io_instance": true,
-                      "app_kubernetes_io_name": true,
-                      "astra_netapp_io_open_metrics": true,
-                      "hostname": true,
-                      "instance": true,
-                      "job": true,
-                      "kubernetes_namespace": true,
-                      "kubernetes_pod_name": true,
-                      "level": true,
-                      "measurementType": true,
-                      "pod_template_hash": true,
-                      "state": true,
-                      "type": true
-                    },
-                    "indexByName": {},
-                    "renameByName": {
-                      "Value": "Count",
-                      "Value #A": ""
-                    }
-                  }
-                }
-              ],
-              "type": "table"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
-              },
-              "description": "Number of not protected applications",
-              "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "align": "auto",
-                    "cellOptions": {
-                      "type": "auto"
-                    },
-                    "filterable": false,
-                    "inspect": false
-                  },
-                  "mappings": [],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 8,
-                "w": 6,
-                "x": 18,
-                "y": 28
-              },
-              "id": 71,
-              "options": {
-                "footer": {
-                  "countRows": false,
-                  "fields": "",
-                  "reducer": [
-                    "sum"
-                  ],
-                  "show": false
-                },
-                "frameIndex": 1,
-                "showHeader": true,
-                "sortBy": [
-                  {
-                    "desc": true,
-                    "displayName": "Count"
-                  }
-                ]
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "editorMode": "code",
-                  "expr": "sum by (account_name) (max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=\"none\"}))",
-                  "format": "table",
-                  "hide": false,
-                  "instant": true,
-                  "interval": "",
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Not protected",
-              "transformations": [
-                {
-                  "id": "organize",
-                  "options": {
-                    "excludeByName": {
-                      "Time": true,
-                      "__name__": true,
-                      "accountID": true,
-                      "accountName": false,
-                      "instance": true,
-                      "job": true,
-                      "measurementType": true,
-                      "state": true,
-                      "type": true
-                    },
-                    "indexByName": {},
-                    "renameByName": {
-                      "Value": "Count",
-                      "Value #A": ""
-                    }
-                  }
-                }
-              ],
-              "type": "table"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
-              },
-              "description": "Number of cloned applications",
-              "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "align": "auto",
-                    "cellOptions": {
-                      "type": "auto"
-                    },
-                    "filterable": false,
-                    "inspect": false
-                  },
-                  "mappings": [],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 8,
-                "w": 6,
-                "x": 0,
-                "y": 36
-              },
-              "id": 37,
-              "options": {
-                "footer": {
-                  "countRows": false,
-                  "fields": "",
-                  "reducer": [
-                    "sum"
-                  ],
-                  "show": false
-                },
-                "frameIndex": 1,
-                "showHeader": true,
-                "sortBy": [
-                  {
-                    "desc": true,
-                    "displayName": "Count"
-                  }
-                ]
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "editorMode": "code",
-                  "expr": "sum by (account_name) (max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=\"clone\"}))",
-                  "format": "table",
-                  "hide": false,
-                  "instant": true,
-                  "interval": "",
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Cloned",
-              "transformations": [
-                {
-                  "id": "organize",
-                  "options": {
-                    "excludeByName": {
-                      "Time": true,
-                      "__name__": true,
-                      "accountID": true,
-                      "accountName": false,
-                      "instance": true,
-                      "job": true,
-                      "measurementType": true,
-                      "state": true,
-                      "type": true
-                    },
-                    "indexByName": {},
-                    "renameByName": {
-                      "Value": "Count",
-                      "Value #A": ""
-                    }
-                  }
-                }
-              ],
-              "type": "table"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
-              },
-              "description": "Number of applications at risk",
-              "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "align": "auto",
-                    "cellOptions": {
-                      "type": "auto"
-                    },
-                    "filterable": false,
-                    "inspect": false
-                  },
-                  "mappings": [],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 8,
-                "w": 6,
-                "x": 6,
-                "y": 36
-              },
-              "id": 70,
-              "options": {
-                "footer": {
-                  "countRows": false,
-                  "fields": "",
-                  "reducer": [
-                    "sum"
-                  ],
-                  "show": false
-                },
-                "frameIndex": 1,
-                "showHeader": true,
-                "sortBy": [
-                  {
-                    "desc": true,
-                    "displayName": "Count"
-                  }
-                ]
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "editorMode": "code",
-                  "expr": "sum by (account_name) (max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=\"atRisk\"}))",
-                  "format": "table",
-                  "hide": false,
-                  "instant": true,
-                  "interval": "",
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "At risk",
-              "transformations": [
-                {
-                  "id": "organize",
-                  "options": {
-                    "excludeByName": {
-                      "Time": true,
-                      "__name__": true,
-                      "accountID": true,
-                      "accountName": false,
-                      "instance": true,
-                      "job": true,
-                      "measurementType": true,
-                      "state": true,
-                      "type": true
-                    },
-                    "indexByName": {},
-                    "renameByName": {
-                      "Value": "Count",
-                      "Value #A": ""
-                    }
-                  }
-                }
-              ],
-              "type": "table"
-            },
-            {
-              "datasource": {
-                "type": "prometheus"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "align": "auto",
-                    "cellOptions": {
-                      "type": "auto"
-                    },
-                    "filterable": false,
-                    "inspect": false
-                  },
-                  "mappings": [],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 8,
-                "w": 6,
-                "x": 12,
-                "y": 36
-              },
-              "id": 35,
-              "options": {
-                "footer": {
-                  "countRows": false,
-                  "fields": "",
-                  "reducer": [
-                    "sum"
-                  ],
-                  "show": false
-                },
-                "frameIndex": 1,
-                "showHeader": true,
-                "sortBy": [
-                  {
-                    "desc": true,
-                    "displayName": "Count"
-                  }
-                ]
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "expr": "sum by (account_name) (max by (account_name,healthy) (max_over_time(astra_nautilus_snapshot_v6{account_name=~\"$AccountName\"}[1h])))",
-                  "format": "table",
-                  "hide": false,
-                  "instant": true,
-                  "interval": "",
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Snapshots ($AccountName)",
-              "transformations": [
-                {
-                  "id": "organize",
-                  "options": {
-                    "excludeByName": {
-                      "Time": true,
-                      "__name__": true,
-                      "accountID": true,
-                      "accountName": false,
-                      "instance": true,
-                      "job": true,
-                      "measurementType": true,
-                      "state": true,
-                      "type": true
-                    },
-                    "indexByName": {},
-                    "renameByName": {
-                      "Value": "Count",
-                      "Value #A": ""
-                    }
-                  }
-                }
-              ],
-              "type": "table"
-            },
-            {
-              "datasource": {
-                "type": "prometheus"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "align": "auto",
-                    "cellOptions": {
-                      "type": "auto"
-                    },
-                    "filterable": false,
-                    "inspect": false
-                  },
-                  "mappings": [],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      }
-                    ]
-                  }
-                },
-                "overrides": [
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "state"
-                    },
-                    "properties": [
-                      {
-                        "id": "custom.width",
-                        "value": 110
-                      }
-                    ]
-                  }
-                ]
-              },
-              "gridPos": {
-                "h": 8,
-                "w": 6,
-                "x": 18,
-                "y": 36
-              },
-              "id": 64,
-              "options": {
-                "footer": {
-                  "countRows": false,
-                  "fields": "",
-                  "reducer": [
-                    "sum"
-                  ],
-                  "show": false
-                },
-                "frameIndex": 1,
-                "showHeader": true,
-                "sortBy": [
-                  {
-                    "desc": true,
-                    "displayName": "Count"
-                  }
-                ]
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "expr": "sum by (account_name,state) (max_over_time(astra_nautilus_snapshot_v6_info{account_name=~\"$AccountName\"}[1h]))",
-                  "format": "table",
-                  "hide": false,
-                  "instant": true,
-                  "interval": "",
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Snapshots status count ($AccountName)",
-              "transformations": [
-                {
-                  "id": "organize",
-                  "options": {
-                    "excludeByName": {
-                      "Time": true,
-                      "__name__": true,
-                      "accountID": true,
-                      "accountName": false,
-                      "instance": true,
-                      "job": true,
-                      "measurementType": true,
-                      "state": false,
-                      "type": true
-                    },
-                    "indexByName": {},
-                    "renameByName": {
-                      "Value": "Count",
-                      "Value #A": ""
-                    }
-                  }
-                }
-              ],
-              "type": "table"
-            },
-            {
-              "datasource": {
-                "type": "prometheus"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "align": "auto",
-                    "cellOptions": {
-                      "type": "auto"
-                    },
-                    "filterable": false,
-                    "inspect": false
-                  },
-                  "mappings": [],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 8,
-                "w": 6,
-                "x": 0,
-                "y": 44
-              },
-              "id": 36,
-              "options": {
-                "footer": {
-                  "countRows": false,
-                  "fields": "",
-                  "reducer": [
-                    "sum"
-                  ],
-                  "show": false
-                },
-                "frameIndex": 1,
-                "showHeader": true,
-                "sortBy": [
-                  {
-                    "desc": true,
-                    "displayName": "Count"
-                  }
-                ]
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "expr": "sum by (account_name) (max by(account_name,healthy) (max_over_time(astra_nautilus_backup_v6{account_name=~\"$AccountName\"}[1h])))",
-                  "format": "table",
-                  "hide": false,
-                  "instant": true,
-                  "interval": "",
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Backups ($AccountName)",
-              "transformations": [
-                {
-                  "id": "organize",
-                  "options": {
-                    "excludeByName": {
-                      "Time": true,
-                      "__name__": true,
-                      "accountID": true,
-                      "accountName": false,
-                      "instance": true,
-                      "job": true,
-                      "measurementType": true,
-                      "state": true,
-                      "type": true
-                    },
-                    "indexByName": {},
-                    "renameByName": {
-                      "Value": "Count",
-                      "Value #A": ""
-                    }
-                  }
-                }
-              ],
-              "type": "table"
-            },
-            {
-              "datasource": {
-                "type": "prometheus"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "align": "auto",
-                    "cellOptions": {
-                      "type": "auto"
-                    },
-                    "filterable": false,
-                    "inspect": false
-                  },
-                  "mappings": [],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      }
-                    ]
-                  }
-                },
-                "overrides": [
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "account_name"
-                    },
-                    "properties": [
-                      {
-                        "id": "custom.width",
-                        "value": 188
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "state"
-                    },
-                    "properties": [
-                      {
-                        "id": "custom.width",
-                        "value": 106
-                      }
-                    ]
-                  }
-                ]
-              },
-              "gridPos": {
-                "h": 8,
-                "w": 6,
-                "x": 6,
-                "y": 44
-              },
-              "id": 63,
-              "options": {
-                "footer": {
-                  "countRows": false,
-                  "fields": "",
-                  "reducer": [
-                    "sum"
-                  ],
-                  "show": false
-                },
-                "frameIndex": 1,
-                "showHeader": true,
-                "sortBy": [
-                  {
-                    "desc": false,
-                    "displayName": "state"
-                  }
-                ]
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "expr": "sum by (account_name,state) (max_over_time(astra_nautilus_backup_v6_info{account_name=~\"$AccountName\"}[1h]))",
-                  "format": "table",
-                  "hide": false,
-                  "instant": true,
-                  "interval": "",
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Backups status count ($AccountName)",
-              "transformations": [
-                {
-                  "id": "organize",
-                  "options": {
-                    "excludeByName": {
-                      "Time": true,
-                      "__name__": true,
-                      "accountID": true,
-                      "accountName": false,
-                      "instance": true,
-                      "job": true,
-                      "measurementType": true,
-                      "state": false,
-                      "type": true
-                    },
-                    "indexByName": {},
-                    "renameByName": {
-                      "Value": "Count",
-                      "Value #A": ""
-                    }
-                  }
-                }
-              ],
-              "type": "table"
-            },
-            {
-              "aliasColors": {},
-              "bars": false,
-              "dashLength": 10,
-              "dashes": false,
-              "datasource": {
-                "type": "prometheus"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "unit": "decbytes"
-                },
-                "overrides": []
-              },
-              "fill": 2,
-              "fillGradient": 0,
-              "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 12,
-                "y": 44
-              },
-              "hiddenSeries": false,
-              "id": 32,
-              "legend": {
-                "alignAsTable": false,
-                "avg": false,
-                "current": false,
-                "max": false,
-                "min": false,
-                "rightSide": false,
-                "show": true,
-                "total": false,
-                "values": false
-              },
-              "lines": true,
-              "linewidth": 1,
-              "nullPointMode": "connected",
-              "options": {
-                "alertThreshold": false
-              },
-              "percentage": false,
-              "pluginVersion": "9.4.3",
-              "pointradius": 2,
-              "points": false,
-              "renderer": "flot",
-              "seriesOverrides": [],
-              "spaceLength": 10,
-              "stack": true,
-              "steppedLine": false,
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "expr": "sum by (account_id,account_name,app) (max by (account_id,account_name,app) (max_over_time(astra_composite_volume_managed_app_avg_used_capacity_bytes{account_name=~\"$AccountName\"}[1h])))",
-                  "interval": "",
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "thresholds": [],
-              "timeRegions": [],
-              "title": "Average Used Volume Capacity by Account",
-              "tooltip": {
-                "shared": true,
-                "sort": 0,
-                "value_type": "individual"
-              },
-              "type": "graph",
-              "xaxis": {
-                "mode": "time",
-                "show": true,
-                "values": []
-              },
-              "yaxes": [
-                {
-                  "$$hashKey": "object:261",
-                  "format": "decbytes",
-                  "logBase": 1,
-                  "show": true
-                },
-                {
-                  "$$hashKey": "object:262",
-                  "format": "short",
-                  "logBase": 1,
-                  "show": true
-                }
-              ],
-              "yaxis": {
-                "align": false
-              }
-            }
-          ],
+          "panels": [],
           "targets": [
             {
               "datasource": {
@@ -2405,12 +1536,1142 @@ data:
           "type": "row"
         },
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Number of applications defined",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": false,
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Count"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 104
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 6,
+            "x": 0,
+            "y": 17
+          },
+          "id": 93,
+          "options": {
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "frameIndex": 1,
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Count"
+              }
+            ]
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "sum by (account_id, account_name)(max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=~\"protected|partial|atRisk|none\"}))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "All applications",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "__name__": true,
+                  "accountID": true,
+                  "accountName": false,
+                  "account_id": true,
+                  "app_kubernetes_io_instance": true,
+                  "app_kubernetes_io_name": true,
+                  "astra_netapp_io_open_metrics": true,
+                  "hostname": false,
+                  "instance": true,
+                  "job": true,
+                  "kubernetes_namespace": true,
+                  "kubernetes_pod_name": true,
+                  "level": true,
+                  "measurementType": true,
+                  "pod_template_hash": true,
+                  "state": true
+                },
+                "indexByName": {},
+                "renameByName": {
+                  "Value": "Count",
+                  "Value #A": ""
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Fully protected applications",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": false,
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Count"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 104
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 6,
+            "x": 6,
+            "y": 17
+          },
+          "id": 50,
+          "options": {
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "frameIndex": 1,
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Count"
+              }
+            ]
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "sum by (account_name) (max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=~\"protected\"}))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Fully protected",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "__name__": true,
+                  "accountID": true,
+                  "accountName": false,
+                  "account_id": true,
+                  "app_kubernetes_io_instance": true,
+                  "app_kubernetes_io_name": true,
+                  "astra_netapp_io_open_metrics": true,
+                  "hostname": false,
+                  "instance": true,
+                  "job": true,
+                  "kubernetes_namespace": true,
+                  "kubernetes_pod_name": true,
+                  "level": true,
+                  "measurementType": true,
+                  "pod_template_hash": true,
+                  "state": true
+                },
+                "indexByName": {},
+                "renameByName": {
+                  "Value": "Count",
+                  "Value #A": ""
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Number of partially protected applications",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": false,
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 6,
+            "x": 12,
+            "y": 17
+          },
+          "id": 28,
+          "options": {
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "frameIndex": 1,
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Count"
+              }
+            ]
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "sum by (account_name) (max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=\"partial\"}))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Partially protected",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "__name__": true,
+                  "accountID": true,
+                  "accountName": false,
+                  "account_id": true,
+                  "app_kubernetes_io_instance": true,
+                  "app_kubernetes_io_name": true,
+                  "astra_netapp_io_open_metrics": true,
+                  "hostname": true,
+                  "instance": true,
+                  "job": true,
+                  "kubernetes_namespace": true,
+                  "kubernetes_pod_name": true,
+                  "level": true,
+                  "measurementType": true,
+                  "pod_template_hash": true,
+                  "state": true,
+                  "type": true
+                },
+                "indexByName": {},
+                "renameByName": {
+                  "Value": "Count",
+                  "Value #A": ""
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Number of not protected applications",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": false,
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 6,
+            "x": 18,
+            "y": 17
+          },
+          "id": 71,
+          "options": {
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "frameIndex": 1,
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Count"
+              }
+            ]
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "sum by (account_name) (max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=\"none\"}))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Not protected",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "__name__": true,
+                  "accountID": true,
+                  "accountName": false,
+                  "instance": true,
+                  "job": true,
+                  "measurementType": true,
+                  "state": true,
+                  "type": true
+                },
+                "indexByName": {},
+                "renameByName": {
+                  "Value": "Count",
+                  "Value #A": ""
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Number of cloned applications",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": false,
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 6,
+            "x": 0,
+            "y": 25
+          },
+          "id": 37,
+          "options": {
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "frameIndex": 1,
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Count"
+              }
+            ]
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "sum by (account_name) (max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=\"clone\"}))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Cloned",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "__name__": true,
+                  "accountID": true,
+                  "accountName": false,
+                  "instance": true,
+                  "job": true,
+                  "measurementType": true,
+                  "state": true,
+                  "type": true
+                },
+                "indexByName": {},
+                "renameByName": {
+                  "Value": "Count",
+                  "Value #A": ""
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "description": "Number of applications at risk",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": false,
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 6,
+            "x": 6,
+            "y": 25
+          },
+          "id": 70,
+          "options": {
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "frameIndex": 1,
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Count"
+              }
+            ]
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "sum by (account_name) (max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=\"atRisk\"}))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "At risk",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "__name__": true,
+                  "accountID": true,
+                  "accountName": false,
+                  "instance": true,
+                  "job": true,
+                  "measurementType": true,
+                  "state": true,
+                  "type": true
+                },
+                "indexByName": {},
+                "renameByName": {
+                  "Value": "Count",
+                  "Value #A": ""
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": false,
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 6,
+            "x": 12,
+            "y": 25
+          },
+          "id": 35,
+          "options": {
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "frameIndex": 1,
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Count"
+              }
+            ]
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "expr": "sum by (account_name) (max by (account_name,healthy) (max_over_time(astra_nautilus_snapshot_v6{account_name=~\"$AccountName\"}[1h])))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Snapshots ($AccountName)",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "__name__": true,
+                  "accountID": true,
+                  "accountName": false,
+                  "instance": true,
+                  "job": true,
+                  "measurementType": true,
+                  "state": true,
+                  "type": true
+                },
+                "indexByName": {},
+                "renameByName": {
+                  "Value": "Count",
+                  "Value #A": ""
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": false,
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "state"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 110
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 6,
+            "x": 18,
+            "y": 25
+          },
+          "id": 64,
+          "options": {
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "frameIndex": 1,
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Count"
+              }
+            ]
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "expr": "sum by (account_name,state) (max_over_time(astra_nautilus_snapshot_v6_info{account_name=~\"$AccountName\"}[1h]))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Snapshots status count ($AccountName)",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "__name__": true,
+                  "accountID": true,
+                  "accountName": false,
+                  "instance": true,
+                  "job": true,
+                  "measurementType": true,
+                  "state": false,
+                  "type": true
+                },
+                "indexByName": {},
+                "renameByName": {
+                  "Value": "Count",
+                  "Value #A": ""
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": false,
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 6,
+            "x": 0,
+            "y": 33
+          },
+          "id": 36,
+          "options": {
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "frameIndex": 1,
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Count"
+              }
+            ]
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "expr": "sum by (account_name) (max by(account_name,healthy) (max_over_time(astra_nautilus_backup_v6{account_name=~\"$AccountName\"}[1h])))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Backups ($AccountName)",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "__name__": true,
+                  "accountID": true,
+                  "accountName": false,
+                  "instance": true,
+                  "job": true,
+                  "measurementType": true,
+                  "state": true,
+                  "type": true
+                },
+                "indexByName": {},
+                "renameByName": {
+                  "Value": "Count",
+                  "Value #A": ""
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": false,
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "account_name"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 188
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "state"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 106
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 6,
+            "x": 6,
+            "y": 33
+          },
+          "id": 63,
+          "options": {
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "frameIndex": 1,
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": false,
+                "displayName": "state"
+              }
+            ]
+          },
+          "pluginVersion": "9.4.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "expr": "sum by (account_name,state) (max_over_time(astra_nautilus_backup_v6_info{account_name=~\"$AccountName\"}[1h]))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Backups status count ($AccountName)",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "__name__": true,
+                  "accountID": true,
+                  "accountName": false,
+                  "instance": true,
+                  "job": true,
+                  "measurementType": true,
+                  "state": false,
+                  "type": true
+                },
+                "indexByName": {},
+                "renameByName": {
+                  "Value": "Count",
+                  "Value #A": ""
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "decbytes"
+            },
+            "overrides": []
+          },
+          "fill": 2,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 33
+          },
+          "hiddenSeries": false,
+          "id": 32,
+          "legend": {
+            "alignAsTable": false,
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "connected",
+          "options": {
+            "alertThreshold": false
+          },
+          "percentage": false,
+          "pluginVersion": "9.4.3",
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus"
+              },
+              "expr": "sum by (account_id,account_name,app) (max by (account_id,account_name,app) (max_over_time(astra_composite_volume_managed_app_avg_used_capacity_bytes{account_name=~\"$AccountName\"}[1h])))",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeRegions": [],
+          "title": "Average Used Volume Capacity by Account",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "$$hashKey": "object:261",
+              "format": "decbytes",
+              "logBase": 1,
+              "show": true
+            },
+            {
+              "$$hashKey": "object:262",
+              "format": "short",
+              "logBase": 1,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false
+          }
+        },
+        {
           "collapsed": true,
           "gridPos": {
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 4
+            "y": 41
           },
           "id": 73,
           "panels": [
@@ -2430,8 +2691,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       },
                       {
                         "color": "red",
@@ -2501,8 +2761,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -2626,8 +2885,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       },
                       {
                         "color": "red",
@@ -2697,8 +2955,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -2816,7 +3073,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 5
+            "y": 42
           },
           "id": 86,
           "panels": [
@@ -2866,8 +3123,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       },
                       {
                         "color": "red",
@@ -2956,8 +3212,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       },
                       {
                         "color": "red",
@@ -3050,8 +3305,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       },
                       {
                         "color": "red",
@@ -3140,8 +3394,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       },
                       {
                         "color": "red",
@@ -3197,7 +3450,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 6
+            "y": 43
           },
           "id": 58,
           "panels": [
@@ -3213,7 +3466,8 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green"
+                        "color": "green",
+                        "value": null
                       }
                     ]
                   }
@@ -3224,7 +3478,7 @@ data:
                 "h": 5,
                 "w": 7,
                 "x": 0,
-                "y": 69
+                "y": 31
               },
               "id": 52,
               "options": {
@@ -3241,7 +3495,7 @@ data:
                 },
                 "textMode": "auto"
               },
-              "pluginVersion": "9.2.0",
+              "pluginVersion": "9.4.3",
               "targets": [
                 {
                   "datasource": {
@@ -3268,7 +3522,8 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green"
+                        "color": "green",
+                        "value": null
                       }
                     ]
                   }
@@ -3279,7 +3534,7 @@ data:
                 "h": 5,
                 "w": 6,
                 "x": 7,
-                "y": 69
+                "y": 31
               },
               "id": 54,
               "options": {
@@ -3296,7 +3551,7 @@ data:
                 },
                 "textMode": "auto"
               },
-              "pluginVersion": "9.2.0",
+              "pluginVersion": "9.4.3",
               "targets": [
                 {
                   "datasource": {
@@ -3323,7 +3578,8 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green"
+                        "color": "green",
+                        "value": null
                       }
                     ]
                   }
@@ -3334,7 +3590,7 @@ data:
                 "h": 5,
                 "w": 6,
                 "x": 13,
-                "y": 69
+                "y": 31
               },
               "id": 53,
               "options": {
@@ -3351,7 +3607,7 @@ data:
                 },
                 "textMode": "auto"
               },
-              "pluginVersion": "9.2.0",
+              "pluginVersion": "9.4.3",
               "targets": [
                 {
                   "datasource": {
@@ -3378,7 +3634,8 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green"
+                        "color": "green",
+                        "value": null
                       }
                     ]
                   }
@@ -3389,7 +3646,7 @@ data:
                 "h": 5,
                 "w": 5,
                 "x": 19,
-                "y": 69
+                "y": 31
               },
               "id": 55,
               "options": {
@@ -3406,7 +3663,7 @@ data:
                 },
                 "textMode": "auto"
               },
-              "pluginVersion": "9.2.0",
+              "pluginVersion": "9.4.3",
               "targets": [
                 {
                   "datasource": {
@@ -3442,7 +3699,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 7
+            "y": 44
           },
           "id": 60,
           "panels": [
@@ -3465,7 +3722,8 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green"
+                        "color": "green",
+                        "value": null
                       }
                     ]
                   }
@@ -3513,11 +3771,12 @@ data:
                 "h": 8,
                 "w": 5,
                 "x": 0,
-                "y": 70
+                "y": 37
               },
               "id": 56,
               "options": {
                 "footer": {
+                  "countRows": false,
                   "fields": "",
                   "reducer": [
                     "sum"
@@ -3533,7 +3792,7 @@ data:
                   }
                 ]
               },
-              "pluginVersion": "9.2.0",
+              "pluginVersion": "9.4.3",
               "targets": [
                 {
                   "datasource": {
@@ -3593,7 +3852,8 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green"
+                        "color": "green",
+                        "value": null
                       }
                     ]
                   }
@@ -3629,11 +3889,12 @@ data:
                 "h": 8,
                 "w": 5,
                 "x": 5,
-                "y": 70
+                "y": 37
               },
               "id": 51,
               "options": {
                 "footer": {
+                  "countRows": false,
                   "fields": "",
                   "reducer": [
                     "sum"
@@ -3649,7 +3910,7 @@ data:
                   }
                 ]
               },
-              "pluginVersion": "9.2.0",
+              "pluginVersion": "9.4.3",
               "targets": [
                 {
                   "datasource": {
@@ -3709,7 +3970,8 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green"
+                        "color": "green",
+                        "value": null
                       }
                     ]
                   }
@@ -3769,11 +4031,12 @@ data:
                 "h": 8,
                 "w": 5,
                 "x": 10,
-                "y": 70
+                "y": 37
               },
               "id": 62,
               "options": {
                 "footer": {
+                  "countRows": false,
                   "fields": "",
                   "reducer": [
                     "sum"
@@ -3789,7 +4052,7 @@ data:
                   }
                 ]
               },
-              "pluginVersion": "9.2.0",
+              "pluginVersion": "9.4.3",
               "targets": [
                 {
                   "datasource": {
@@ -3849,7 +4112,8 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green"
+                        "color": "green",
+                        "value": null
                       }
                     ]
                   }
@@ -3909,11 +4173,12 @@ data:
                 "h": 8,
                 "w": 9,
                 "x": 15,
-                "y": 70
+                "y": 37
               },
               "id": 61,
               "options": {
                 "footer": {
+                  "countRows": false,
                   "fields": "",
                   "reducer": [
                     "sum"
@@ -3929,7 +4194,7 @@ data:
                   }
                 ]
               },
-              "pluginVersion": "9.2.0",
+              "pluginVersion": "9.4.3",
               "targets": [
                 {
                   "datasource": {
@@ -3991,7 +4256,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 8
+            "y": 45
           },
           "id": 39,
           "panels": [
@@ -4186,7 +4451,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 9
+            "y": 46
           },
           "id": 21,
           "panels": [
@@ -4541,7 +4806,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 10
+            "y": 47
           },
           "id": 12,
           "panels": [
@@ -4924,6 +5189,6 @@ data:
       "timezone": "",
       "title": "Astra Adoption Metrics [INTERNAL]",
       "uid": "gHJolohGk",
-      "version": 4,
+      "version": 5,
       "weekStart": ""
     }
