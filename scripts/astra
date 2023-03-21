@@ -371,6 +371,22 @@ function loadAllImageTags() {
   fi
 }
 
+
+function getServiceTag() {
+  release_name=$1
+  tags=$(git tag -l "release/${release_name}/*-integration" --sort=-version:refname --merged | head -n 1)
+  
+  if [ -z "${tags}" ]; then
+    echo ""
+  else
+    for tag in ${tags}; do
+      version=$(echo "${tag}" | sed 's,/,\n,g' | tail -1)
+      echo "${version}"
+    done
+  fi
+}
+
+
 function getAllImages() {
   echo -e "${Green}Calculating image tags based on current commit level...${ColorOff}"
   for key in "${!ACSIMAGES[@]}"; do
@@ -386,12 +402,12 @@ function getAllImages() {
       echo "   ${imagename}"
       allimages[$imagename]=${val}
     else
-      # The image tag should be retrieved from the git level
+      # The image tag should be retrieved from the git commit labels
       comp="${key}"
       if [[ ! -z "${val}" ]]; then
         comp="${val}"
       fi
-      tag=$(/home/polaris/cicd/scripts/calculate_service_version.sh ${comp} --release-versioning false||true)
+      tag=$(getServiceTag ${comp})
       imagename="${key}:${tag}"
       echo "   ${imagename}"
       allimages[$imagename]=''
