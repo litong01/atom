@@ -104,6 +104,7 @@ data:
     max_open_conn = 7
     locking_attempt_timeout_sec = 3
     query_retries = 3
+    wal = true
 
   datasources.yaml: |
     apiVersion: 1
@@ -260,7 +261,7 @@ spec:
             name: grafana          
         - name: dashboards-acs
           configMap:
-            name: acs-grafana-dashboards
+            name: acs-north-star-dashboards
         - name: storage
           persistentVolumeClaim:
             claimName: grafanadata

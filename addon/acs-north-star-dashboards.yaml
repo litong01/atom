@@ -1,19 +1,18 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  creationTimestamp: null
-  name: acs-grafana-dashboards
-  namespace: pcloud
+  labels:
+    grafana_dashboard: "1"
+  name: acs-north-star-dashboards
 data:
-  acs-performance-dashboard.json: |
+  acs-north-star-dashboards.json: |
     {
       "annotations": {
         "list": [
           {
             "builtIn": 1,
             "datasource": {
-              "type": "datasource",
-              "uid": "grafana"
+              "type": "prometheus"
             },
             "enable": true,
             "hide": true,
@@ -61,8 +60,7 @@ data:
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "type": "prometheus"
           },
           "fieldConfig": {
             "defaults": {
@@ -126,8 +124,7 @@ data:
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "type": "prometheus"
           },
           "description": "The accounts with at least one application",
           "fieldConfig": {
@@ -312,8 +309,7 @@ data:
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "type": "prometheus"
           },
           "fieldConfig": {
             "defaults": {
@@ -390,8 +386,7 @@ data:
           "panels": [
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "description": "Account vitals",
               "fieldConfig": {
@@ -684,8 +679,7 @@ data:
                 },
                 {
                   "datasource": {
-                    "type": "prometheus",
-                    "uid": "PBFA97CFB590B2093"
+                    "type": "prometheus"
                   },
                   "editorMode": "code",
                   "exemplar": false,
@@ -771,8 +765,7 @@ data:
           "panels": [
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "description": "Total number of applications",
               "fieldConfig": {
@@ -829,8 +822,7 @@ data:
             },
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "description": "Number of fully protected applications",
               "fieldConfig": {
@@ -887,8 +879,7 @@ data:
             },
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "description": "Number of partially protected applications",
               "fieldConfig": {
@@ -945,8 +936,7 @@ data:
             },
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "description": "Number of applications not protected",
               "fieldConfig": {
@@ -1003,8 +993,7 @@ data:
             },
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "description": "Number of cloned applications",
               "fieldConfig": {
@@ -1061,8 +1050,7 @@ data:
             },
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "description": "Number of applications at risk",
               "fieldConfig": {
@@ -1265,8 +1253,7 @@ data:
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "type": "prometheus"
           },
           "description": "Number of applications defined",
           "fieldConfig": {
@@ -1419,8 +1406,7 @@ data:
             },
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "editorMode": "code",
               "exemplar": false,
@@ -1434,8 +1420,7 @@ data:
             },
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "editorMode": "code",
               "exemplar": false,
@@ -1449,8 +1434,7 @@ data:
             },
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "editorMode": "code",
               "exemplar": false,
@@ -1464,8 +1448,7 @@ data:
             },
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "editorMode": "code",
               "exemplar": false,
@@ -1479,8 +1462,7 @@ data:
             },
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "editorMode": "code",
               "exemplar": false,
@@ -1528,8 +1510,7 @@ data:
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "type": "prometheus"
           },
           "fieldConfig": {
             "defaults": {
@@ -1588,8 +1569,7 @@ data:
           "targets": [
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "editorMode": "code",
               "exemplar": false,
@@ -1621,8 +1601,7 @@ data:
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "type": "prometheus"
           },
           "fieldConfig": {
             "defaults": {
@@ -1681,8 +1660,7 @@ data:
           "targets": [
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "editorMode": "code",
               "exemplar": false,
@@ -1715,8 +1693,7 @@ data:
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "type": "prometheus"
           },
           "fieldConfig": {
             "defaults": {
@@ -1775,8 +1752,7 @@ data:
           "targets": [
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "editorMode": "code",
               "exemplar": false,
@@ -1808,8 +1784,7 @@ data:
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "type": "prometheus"
           },
           "fieldConfig": {
             "defaults": {
@@ -1868,8 +1843,7 @@ data:
           "targets": [
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "editorMode": "code",
               "exemplar": false,
@@ -2005,8 +1979,7 @@ data:
           "panels": [
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "description": "Number of namespaces exist in user's clusters",
               "fieldConfig": {
@@ -2055,8 +2028,7 @@ data:
               "targets": [
                 {
                   "datasource": {
-                    "type": "prometheus",
-                    "uid": "PBFA97CFB590B2093"
+                    "type": "prometheus"
                   },
                   "editorMode": "code",
                   "expr": "sum(max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=\"namespace_available\"}))",
@@ -2070,8 +2042,7 @@ data:
             },
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "description": "Number of namespaces associated with namespaces",
               "fieldConfig": {
@@ -2199,8 +2170,7 @@ data:
             },
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "description": "Number of namespaces associated with applications",
               "fieldConfig": {
@@ -2249,8 +2219,7 @@ data:
               "targets": [
                 {
                   "datasource": {
-                    "type": "prometheus",
-                    "uid": "PBFA97CFB590B2093"
+                    "type": "prometheus"
                   },
                   "editorMode": "code",
                   "expr": "sum(max by (account_id, account_name, state)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=\"namespace_associated\"}))",
@@ -2264,8 +2233,7 @@ data:
             },
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "description": "Number of namespaces associated with applications",
               "fieldConfig": {
@@ -2407,8 +2375,7 @@ data:
           "panels": [
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "description": "Number of total accounts ",
               "fieldConfig": {
@@ -2484,8 +2451,7 @@ data:
               "targets": [
                 {
                   "datasource": {
-                    "type": "prometheus",
-                    "uid": "PBFA97CFB590B2093"
+                    "type": "prometheus"
                   },
                   "editorMode": "code",
                   "expr": "count(max by (account_id,account_name) (max_over_time(astra_nautilus_app_v6{}[1d])))",
@@ -2500,8 +2466,7 @@ data:
             },
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "description": "Number of active accounts which have at least one application",
               "fieldConfig": {
@@ -2577,8 +2542,7 @@ data:
               "targets": [
                 {
                   "datasource": {
-                    "type": "prometheus",
-                    "uid": "PBFA97CFB590B2093"
+                    "type": "prometheus"
                   },
                   "editorMode": "code",
                   "expr": "count(max by (account_id,account_name) (max_over_time(astra_nautilus_app_v6{}[1d])) > 0)",
@@ -2593,8 +2557,7 @@ data:
             },
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "description": "Number of namespaces available",
               "fieldConfig": {
@@ -2670,8 +2633,7 @@ data:
               "targets": [
                 {
                   "datasource": {
-                    "type": "prometheus",
-                    "uid": "PBFA97CFB590B2093"
+                    "type": "prometheus"
                   },
                   "editorMode": "code",
                   "expr": "sum(max by (account_id, account_name)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=\"namespace_available\"}))",
@@ -2686,8 +2648,7 @@ data:
             },
             {
               "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "type": "prometheus"
               },
               "description": "Number of namespaces associated with at least one application",
               "fieldConfig": {
@@ -2763,8 +2724,7 @@ data:
               "targets": [
                 {
                   "datasource": {
-                    "type": "prometheus",
-                    "uid": "PBFA97CFB590B2093"
+                    "type": "prometheus"
                   },
                   "editorMode": "code",
                   "expr": "sum(max by (account_id, account_name)(astra_nautilus_app_v6{account_name=~\"$AccountName\", state=\"namespace_associated\"}))",
@@ -4464,8 +4424,7 @@ data:
               ]
             },
             "datasource": {
-              "type": "prometheus",
-              "uid": "PBFA97CFB590B2093"
+              "type": "prometheus"
             },
             "definition": "label_values(account_name)",
             "hide": 0,
@@ -4519,8 +4478,7 @@ data:
         ]
       },
       "timezone": "",
-      "title": "Astra Adoption Metrics [INTERNAL]",
-      "uid": "gHJolohGk",
+      "title": "Astra Business Metrics [INTERNAL]",
       "version": 2,
       "weekStart": ""
     }

@@ -203,7 +203,7 @@ function deployDashboard() {
     ${SCRIPTDIR}/k8stool image --load-or-push true --source-tag "${item}" --context ${CONTEXT}
   done
   kubectl --context ${CONTEXT} apply -f ${HOME}/addon/prometheus.yaml
-  kubectl --context ${CONTEXT} apply -f ${HOME}/addon/acs-grafana-dashboards.yaml
+  kubectl --context ${CONTEXT} apply -n $NAMESPACE -f ${HOME}/addon/acs-north-star-dashboards.yaml
   kubectl --context ${CONTEXT} apply -f ${HOME}/addon/grafana.yaml
 }
 
