@@ -290,6 +290,7 @@ function deployAccounts() {
 function deployAC() {
   CNAME=$1
   if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "traefik" ]]; then
+    rm -rf /home/polaris/build
     echo -e "${Green}Ready to deploy traefik${ColorOff}"
     KUBE_CONTEXT=${CONTEXT} SKIP_KUBE_CONTEXT_CHECK=true \
     make traefikinstall DEPLOY_TARGET=local \
@@ -304,6 +305,7 @@ function deployAC() {
   fi
 
   if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "main" ]]; then
+    rm -rf /home/polaris/build
     echo -e "${Green}Ready to deploy Astra${ColorOff}"
     KUBE_CONTEXT=${CONTEXT} SKIP_KUBE_CONTEXT_CHECK=true IMAGE_HOST=${IMAGE_HOST} \
     make helminstall DEPLOY_TARGET=cicd \
