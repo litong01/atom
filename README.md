@@ -49,7 +49,14 @@ Note: This step will deploy traefik first, a proxy, then all other ACS component
    astra deploy -a service   # deploy astra service account
    astra deploy -a user      # create astra accounts, users, subscription
 ```
-4. ### Access ACS at [https://integration.astra.netapp.io/](https://integration.astra.netapp.io/)
+4. ### Access ACS using the following URLs
+
+    * ACS dashboard at [https://integration.astra.netapp.io/](https://integration.astra.netapp.io/)
+  
+    * ACS grafana dashboard at [https://integration.astra.netapp.io/grafana](https://integration.astra.netapp.io/grafana)
+  
+    * ACS prometheus dashboard at [https://integration.astra.netapp.io/prometheus/graph](https://integration.astra.netapp.io/prometheus/graph)
+ 
 5. ### Cleanup everything after use
 ```
    astra cleanall
