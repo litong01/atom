@@ -308,7 +308,7 @@ function deployAC() {
     rm -rf /home/polaris/build
     echo -e "${Green}Ready to deploy Astra${ColorOff}"
     KUBE_CONTEXT=${CONTEXT} SKIP_KUBE_CONTEXT_CHECK=true IMAGE_HOST=${IMAGE_HOST} \
-    make helminstall DEPLOY_TARGET=cicd \
+    make helminstall DEPLOY_TARGET=cicd NAUTILUS_REPLICAS=1 \
     CLUSTER_ENDPOINT=integration.astra.netapp.io \
     TRAEFIK_ENDPOINT=integration.astra.netapp.io \
     HELMOVERRIDE='--set mongodb.image.repository=zcube/bitnami-compat-mongodb --set mongodb.image.tag=5.0.14 --set mongodb.replicaCount=1'
