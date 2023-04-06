@@ -609,10 +609,13 @@ elif [[ "${CMD}" == "refresh" ]]; then
   checkEnvironmentVariables
   validateContext
   refreshDeployment
+
 elif [[ "${CMD}" == "update" ]]; then
   checkEnvironmentVariables
   doADTUpdate
+
 elif [[ "${CMD}" == "make" ]]; then
+  loginToDockerHub
   make ${REST}
 
 elif [[ "${CMD}" == "k8stool" ]]; then
