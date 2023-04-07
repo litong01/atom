@@ -18,7 +18,7 @@ IMAGENAME=""
 declare -A ACSIMAGES
 ACSIMAGES=(['activity']='' ['astra-py-k8s']='' ['billing']='' ['bucketservice']='' \
   ['cloud-extension']='' ['composite-compute']='' ['composite-volume']='' ['credentials']='' \
-  ['entitlement']='' ['features_init']='features' ['features']='' ['features_upgrade']='features' \
+  ['entitlement']='' ['features']='' ['features_upgrade']='features' \
   ['graphql-server']='' ['hybridauth']='' ['identity']='' ['krakend']='' ['nautilus']='' ['openapi']='' ['polaris-ui']='' \
   ['support']='' ['support_hourly']='support' ['support_weekly']='support' ['task-service']='' \
   ['task-service_task_purge']='task-service' ['tenancy']='' ['tenancy_account_purge']='tenancy' \
@@ -352,7 +352,7 @@ function pullAndTag() {
 }
 
 declare -A allimages
-allimages=(['zcube/bitnami-compat-mongodb:5.0.14']='d')
+allimages=(['zcube/bitnami-compat-mongodb:5.0.14']='d' ['nk:v0.1.0']='')
 function saveAllImageTags() {
   cid=$(git rev-parse --short HEAD)
   echo -e "${Green}Current commit ${cid}${ColorOff}"
@@ -445,7 +445,7 @@ function pullACImages() {
   if [[ "${IMAGENAME}" == "" ]]; then
     loadAllImageTags
     size=$(echo ${#allimages[@]})
-    if [ "$size" -lt "2" ]; then
+    if [ "$size" -lt "3" ]; then
       getAllImages
     fi
     echo -e "${Green}Start pulling Astra images...${ColorOff}"
@@ -482,7 +482,7 @@ function pushACImages() {
   # response=$(docker login -u ${CREDS_IMAGE_USERNAME} -p ${CREDS_IMAGE_PASSWORD} ${IMAGE_REPOSITORY})
   if [[ "${IMAGENAME}" == "" ]]; then
     size=$(echo ${#allimages[@]})
-    if [ "$size" -lt "2" ]; then
+    if [ "$size" -lt "3" ]; then
       getAllImages
     fi
     echo -e "${Green}Pushing images...${ColorOff}"
