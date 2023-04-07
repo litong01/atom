@@ -406,8 +406,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       },
                       {
                         "color": "red",
@@ -776,8 +775,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -834,8 +832,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -892,8 +889,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -950,8 +946,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -1008,8 +1003,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -1066,8 +1060,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -1124,8 +1117,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -1180,8 +1172,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       }
                     ]
                   }
@@ -1366,7 +1357,7 @@ data:
                 "h": 8,
                 "w": 24,
                 "x": 0,
-                "y": 18
+                "y": 9
               },
               "id": 27,
               "options": {
@@ -1510,6 +1501,7 @@ data:
               "datasource": {
                 "type": "prometheus"
               },
+              "description": "",
               "fieldConfig": {
                 "defaults": {
                   "color": {
@@ -1536,15 +1528,29 @@ data:
                         "value": 80
                       }
                     ]
-                  }
+                  },
+                  "unit": "none"
                 },
-                "overrides": []
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Value #C"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "bytes"
+                      }
+                    ]
+                  }
+                ]
               },
               "gridPos": {
-                "h": 7,
-                "w": 12,
+                "h": 6,
+                "w": 24,
                 "x": 0,
-                "y": 26
+                "y": 17
               },
               "id": 94,
               "options": {
@@ -1572,7 +1578,7 @@ data:
                   },
                   "editorMode": "code",
                   "exemplar": false,
-                  "expr": "sum by (account_id, account_name) (max by(account_id, account_name,healthy) (max_over_time(astra_nautilus_backup_v6{account_name=~\"$AccountName\"}[1h])))",
+                  "expr": "sum by (account_id, account_name) (max by(account_id, account_name) (max_over_time(astra_nautilus_backup_v6{account_name=~\"$AccountName\", healthy=\"\"}[1h])))",
                   "format": "table",
                   "instant": true,
                   "legendFormat": "__auto",
@@ -1585,21 +1591,7 @@ data:
                   },
                   "editorMode": "code",
                   "exemplar": false,
-                  "expr": "count by (account_id) (max by (account_id, id) (max_over_time(astra_nautilus_backup_v6_info{account_name=~\"$AccountName\", state=\"completed\"}[1h])))",
-                  "format": "table",
-                  "hide": false,
-                  "instant": true,
-                  "legendFormat": "__auto",
-                  "range": false,
-                  "refId": "B"
-                },
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "editorMode": "code",
-                  "exemplar": false,
-                  "expr": "count by (account_id) (max by (account_id, id) (max_over_time(astra_nautilus_backup_v6_info{account_name=~\"$AccountName\", state=\"failed\"}[1h])))",
+                  "expr": "sum by (account_id) (max by (account_id, backup_id) (max_over_time(astra_nautilus_backup_v6_total_bytes{account_name=~\"$AccountName\"}[1h])))",
                   "format": "table",
                   "hide": false,
                   "instant": true,
@@ -1613,30 +1605,16 @@ data:
                   },
                   "editorMode": "code",
                   "exemplar": false,
-                  "expr": "count by (account_id) (max by (account_id, id) (max_over_time(astra_nautilus_backup_v6_info{account_name=~\"$AccountName\", state=\"running\"}[1h])))",
+                  "expr": "sum by (account_id) (max by (account_id, account_name) (max_over_time(astra_nautilus_snapshot_v6{account_name=~\"$AccountName\", healthy=\"\"}[1h])))",
                   "format": "table",
                   "hide": false,
                   "instant": true,
                   "legendFormat": "__auto",
                   "range": false,
-                  "refId": "D"
-                },
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "editorMode": "code",
-                  "exemplar": false,
-                  "expr": "count by (account_id) (max by (account_id, id) (max_over_time(astra_nautilus_backup_v6_info{account_name=~\"$AccountName\", state=\"removed\"}[1h])))",
-                  "format": "table",
-                  "hide": false,
-                  "instant": true,
-                  "legendFormat": "__auto",
-                  "range": false,
-                  "refId": "E"
+                  "refId": "B"
                 }
               ],
-              "title": "Backups ($AccountName)",
+              "title": "Backup, Snapshot and Storage Usage ($AccountName)",
               "transformations": [
                 {
                   "id": "joinByField",
@@ -1660,9 +1638,9 @@ data:
                     "indexByName": {},
                     "renameByName": {
                       "Value": "Available",
-                      "Value #A": "Available",
-                      "Value #B": "Completed",
-                      "Value #C": "Failed",
+                      "Value #A": "Backups",
+                      "Value #B": "Snapshots",
+                      "Value #C": "Backup Storage Used",
                       "Value #D": "Running",
                       "Value #E": "Removed",
                       "account_name": "Account Name"
@@ -1671,265 +1649,6 @@ data:
                 }
               ],
               "type": "table"
-            },
-            {
-              "datasource": {
-                "type": "prometheus"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "color": {
-                    "mode": "thresholds"
-                  },
-                  "custom": {
-                    "align": "auto",
-                    "cellOptions": {
-                      "type": "auto"
-                    },
-                    "inspect": false
-                  },
-                  "mappings": [],
-                  "noValue": "0",
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": null
-                      },
-                      {
-                        "color": "red",
-                        "value": 80
-                      }
-                    ]
-                  }
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 7,
-                "w": 12,
-                "x": 12,
-                "y": 26
-              },
-              "id": 96,
-              "options": {
-                "footer": {
-                  "countRows": false,
-                  "fields": "",
-                  "reducer": [
-                    "sum"
-                  ],
-                  "show": false
-                },
-                "showHeader": true,
-                "sortBy": [
-                  {
-                    "desc": false,
-                    "displayName": "Account Name"
-                  }
-                ]
-              },
-              "pluginVersion": "9.4.3",
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "editorMode": "code",
-                  "exemplar": false,
-                  "expr": "sum by (account_id, account_name) (max by (account_id, account_name,healthy) (max_over_time(astra_nautilus_snapshot_v6{account_name=~\"$AccountName\"}[1h])))",
-                  "format": "table",
-                  "instant": true,
-                  "legendFormat": "__auto",
-                  "range": false,
-                  "refId": "A"
-                },
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "editorMode": "code",
-                  "exemplar": false,
-                  "expr": "count by (account_id) (max by (account_id, id) (max_over_time(astra_nautilus_snapshot_v6_info{account_name=~\"$AccountName\", state=\"completed\"}[1h])))",
-                  "format": "table",
-                  "hide": false,
-                  "instant": true,
-                  "legendFormat": "__auto",
-                  "range": false,
-                  "refId": "B"
-                },
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "editorMode": "code",
-                  "exemplar": false,
-                  "expr": "count by (account_id) (max by (account_id, id) (max_over_time(astra_nautilus_snapshot_v6_info{account_name=~\"$AccountName\", state=\"failed\"}[1h])))",
-                  "format": "table",
-                  "hide": false,
-                  "instant": true,
-                  "legendFormat": "__auto",
-                  "range": false,
-                  "refId": "C"
-                },
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "editorMode": "code",
-                  "exemplar": false,
-                  "expr": "count by (account_id) (max by (account_id, id) (max_over_time(astra_nautilus_snapshot_v6_info{account_name=~\"$AccountName\", state=\"running\"}[1h])))",
-                  "format": "table",
-                  "hide": false,
-                  "instant": true,
-                  "legendFormat": "__auto",
-                  "range": false,
-                  "refId": "D"
-                },
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "editorMode": "code",
-                  "exemplar": false,
-                  "expr": "count by (account_id) (max by (account_id, id) (max_over_time(astra_nautilus_snapshot_v6_info{account_name=~\"$AccountName\", state=\"removed\"}[1h])))",
-                  "format": "table",
-                  "hide": false,
-                  "instant": true,
-                  "legendFormat": "__auto",
-                  "range": false,
-                  "refId": "E"
-                }
-              ],
-              "title": "Snapshots ($AccountName)",
-              "transformations": [
-                {
-                  "id": "joinByField",
-                  "options": {
-                    "byField": "account_id",
-                    "mode": "outer"
-                  }
-                },
-                {
-                  "id": "organize",
-                  "options": {
-                    "excludeByName": {
-                      "Time": true,
-                      "Time 1": true,
-                      "Time 2": true,
-                      "Time 3": true,
-                      "Time 4": true,
-                      "Time 5": true,
-                      "account_id": true
-                    },
-                    "indexByName": {},
-                    "renameByName": {
-                      "Value": "Available",
-                      "Value #A": "Available",
-                      "Value #B": "Completed",
-                      "Value #C": "Failed",
-                      "Value #D": "Running",
-                      "Value #E": "Removed",
-                      "account_name": "Account Name"
-                    }
-                  }
-                }
-              ],
-              "type": "table"
-            },
-            {
-              "aliasColors": {},
-              "bars": false,
-              "dashLength": 10,
-              "dashes": false,
-              "datasource": {
-                "type": "prometheus"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "unit": "decbytes"
-                },
-                "overrides": []
-              },
-              "fill": 2,
-              "fillGradient": 0,
-              "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 0,
-                "y": 33
-              },
-              "hiddenSeries": false,
-              "id": 32,
-              "legend": {
-                "alignAsTable": false,
-                "avg": false,
-                "current": false,
-                "max": false,
-                "min": false,
-                "rightSide": false,
-                "show": true,
-                "total": false,
-                "values": false
-              },
-              "lines": true,
-              "linewidth": 1,
-              "nullPointMode": "connected",
-              "options": {
-                "alertThreshold": false
-              },
-              "percentage": false,
-              "pluginVersion": "9.4.3",
-              "pointradius": 2,
-              "points": false,
-              "renderer": "flot",
-              "seriesOverrides": [],
-              "spaceLength": 10,
-              "stack": true,
-              "steppedLine": false,
-              "targets": [
-                {
-                  "datasource": {
-                    "type": "prometheus"
-                  },
-                  "expr": "sum by (account_id,account_name,app) (max by (account_id,account_name,app) (max_over_time(astra_composite_volume_managed_app_avg_used_capacity_bytes{account_name=~\"$AccountName\"}[1h])))",
-                  "interval": "",
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "thresholds": [],
-              "timeRegions": [],
-              "title": "Average Used Volume Capacity by Account",
-              "tooltip": {
-                "shared": true,
-                "sort": 0,
-                "value_type": "individual"
-              },
-              "type": "graph",
-              "xaxis": {
-                "mode": "time",
-                "show": true,
-                "values": []
-              },
-              "yaxes": [
-                {
-                  "$$hashKey": "object:261",
-                  "format": "decbytes",
-                  "logBase": 1,
-                  "show": true
-                },
-                {
-                  "$$hashKey": "object:262",
-                  "format": "short",
-                  "logBase": 1,
-                  "show": true
-                }
-              ],
-              "yaxis": {
-                "align": false
-              }
             }
           ],
           "targets": [
