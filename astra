@@ -18,7 +18,7 @@ docker run -it --rm --name astra --network host \
    -e "CREDS_IMAGE_PASSWORD=${CREDS_IMAGE_PASSWORD}" \
    -e "IMAGE_HOST=${IMAGE_HOST}" \
    -e "CLUSTER_ENDPOINT=${CLUSTER_ENDPOINT}" \
-   -v /var/run/docker.sock:/var/run/docker.sock ${pcloud2mount} \
+   -v /var/run/docker.sock:/var/run/docker.sock \
    -v /tmp/astra:/home/work/astra \
    -v $(pwd):/home/polaris -v ${HOME}/.kube:/home/.kube \
    ghcr.io/netapp-polaris/polaris/astra/astradt:v0.1.0 time astra $@
