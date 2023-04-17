@@ -120,26 +120,11 @@ userpassword: {MD5}ICy5YqxZB1uWSwcVLSNLcA==
 EOF
 
 
-# Start up active directory like ldap
-# docker run -d --platform linux/amd64 --name myad --rm \
-#   -p 10389:10389 dwimberger/ldap-ad-it
-
 # Start up keycloak
 docker run -d --rm -p 8080:8080 --name keycloak \
   -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=password \
   sleighzy/keycloak:16.1.0-arm64
 
-
-# This is the open ldap, which works fine
-# docker run -d --rm --name openldap \
-#   --env LDAP_ADMIN_USERNAME=admin \
-#   --env LDAP_ADMIN_PASSWORD=adminpassword \
-#   --env LDAP_USERS=customuser \
-#   --env LDAP_PASSWORDS=custompassword \
-#   --env LDAP_BASE=dc=example,dc=org \
-#   --env LDAP_BIND_DN=cn=admin,dc=example,dc=org \
-#   --env LDAP_BIND_PASSWORD=secret \
-#   bitnami/openldap:latest
 
 docker run -d --name openldap \
   -v /tmp/users.ldif:/ldifs/users.ldif \
@@ -158,3 +143,4 @@ http://localhost:8080/auth/realms/mytest/account/
 # See all the users
 ldapsearch -x -D "cn=admin,dc=example,dc=org" -w adminpassword \
   -H ldap://localhost:1389 -b "ou=users,dc=example,dc=org" -s sub '(cn=*)'
+
