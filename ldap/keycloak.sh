@@ -19,14 +19,14 @@ version: 1
 ## Entry 1: dc=example,dc=org
 dn: dc=example,dc=org
 dc: example
-o: "MyCompany Inc."
+o: "MyExample Inc."
 objectclass: top
 objectclass: dcObject
 objectclass: organization
 
-## Entry 2: cn=admin,dc=example,dc=org
-dn: cn=admin,dc=example,dc=org
-cn: admin
+## Entry 2: cn=admint,dc=example,dc=org
+dn: cn=admint,dc=example,dc=org
+cn: admint
 description: LDAP administrator
 objectclass: simpleSecurityObject
 objectclass: organizationalRole
@@ -125,11 +125,12 @@ docker run -d --rm -p 8080:8080 --name keycloak \
   -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=password \
   sleighzy/keycloak:16.1.0-arm64
 
+# BIND_DN and BIND_PASSWORD seem to be hard coded.
+#  -e LDAP_BIND_DN="cn=admin,dc=example,dc=org" \
+#  -e LDAP_BIND_PASSWORD=adminpassword \
 
 docker run -d --name openldap \
   -v /tmp/users.ldif:/ldifs/users.ldif \
-  -e LDAP_BIND_DN="cn=admin,dc=example,dc=org" \
-  -e LDAP_BIND_PASSWORD=adminpassword \
   bitnami/openldap:latest
 
 exit 0
@@ -144,3 +145,8 @@ http://localhost:8080/auth/realms/mytest/account/
 ldapsearch -x -D "cn=admin,dc=example,dc=org" -w adminpassword \
   -H ldap://localhost:1389 -b "ou=users,dc=example,dc=org" -s sub '(cn=*)'
 
+ldapsearch -x -D "cn=admin,dc=example,dc=org" -w adminpassword \
+  -H ldap://localhost:1389 -b "ou=groups,dc=example,dc=org" -s sub '(cn=*)'
+
+ldapsearch -x -D "cn=admin,dc=example,dc=org" -w adminpassword \
+  -H ldap://localhost:1389 -b "dc=example,dc=org" -s sub '(cn=admin*)'
