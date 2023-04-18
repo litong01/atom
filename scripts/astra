@@ -52,7 +52,7 @@ function printHelp() {
   echo "     update   - update this tool"
   echo "     refresh  - restart a deployment and its image"
   echo "     make     - run polaris make command"
-  echo "     k8s      - run k8s tool command with parameters"
+  echo "     k8stool  - run k8stool command with parameters"
   echo ""
   echo -e "Parameters for ${Green}image${ColorOff} command:"
   echo "     -i|--imagename  - an astra image name. default is all images"
