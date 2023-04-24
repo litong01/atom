@@ -23,7 +23,7 @@ ACSIMAGES=(['activity']='' ['billing']='' ['bucketservice']='' \
   ['graphql-server']='' ['hybridauth']='' ['identity']='' ['krakend']='' ['nautilus']='' ['openapi']='' ['polaris-ui']='' \
   ['support']='' ['support_hourly']='support' ['support_weekly']='support' ['task-service']='' \
   ['task-service_task_purge']='task-service' ['tenancy']='' ['tenancy_account_purge']='tenancy' \
-  ['trident-svc']='' ['acc-operator']='' ['vault-controller']='' ['certificates']='' \
+  ['trident-svc']='' ['acc-operator']='' ['vault-controller']='' ['certificates']='' ['certificates_upgrade']='certificates' \
   ['api-token-authentication']='')
 
 function printHelp() {
@@ -458,6 +458,9 @@ function getACExternalImages() {
   # We try to login to docker hub for images not available on netapp repo
   loginToDockerHub
 
+  # Since the mongodb is special, we have to add it here
+  accExtImages+=("ghcr.io/zcube/bitnami-compat/mongodb:5.0.14")
+
   for anItem in ${accExtImages[@]}; do
     # Strip the quotes if there are any
     anItem="${anItem%\"}"; anItem="${anItem#\"}"
@@ -467,18 +470,19 @@ function getACExternalImages() {
     theImage=$(docker images "localhost:5001/${anImage}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
     # The image already exists locally, do not need to pull
     if [[ -z "${theImage}" ]]; then
-      # Pulling the image from global cicd (or configured repo)
-      pullok=$(docker pull "${IMAGE_REPOSITORY}/${anImage}" 2>/dev/null || true)
+      # Pulling the image from its defined location)
+      pullok=$(docker pull "${anItem}" 2>/dev/null || true)
       if [[ -z ${pullok} ]]; then
         # The repo does not have the image, try the public one
-        docker pull "${anItem}"
+        docker pull "${IMAGE_REPOSITORY}/${anImage}"
+        docker tag "${IMAGE_REPOSITORY}/${anImage}" "localhost:5001/${anImage}"
+        docker tag "${IMAGE_REPOSITORY}/${anImage}" "${anItem}"
+      else
+        # Tag the image with no registry for development purpose, probably do not need to do this
+        docker tag "${anItem}" "${anImage}"
+        # Tag the image with localhost
+        docker tag "${anItem}" "localhost:5001/${anImage}"
       fi
-      # Tag the image with no registry for development purpose, probably do not need to do this
-      docker tag "${IMAGE_REPOSITORY}/${anImage}" "${anImage}"
-      # Tag the image with localhost
-      docker tag "${IMAGE_REPOSITORY}/${anImage}" "localhost:5001/${anImage}"
-      # Tag the image to its original state
-      docker tag "${IMAGE_REPOSITORY}/${anImage}" "${anItem}"
     else
       echo -e "   ${Green}Already exists locally, skipping${ColorOff}"
     fi
@@ -530,7 +534,7 @@ function pullACImages() {
   if [[ "${IMAGENAME}" == "" ]]; then
     loadAllImageTags
     size=$(echo ${#allimages[@]})
-    if [ "$size" -lt "4" ]; then
+    if [ "$size" -lt "1" ]; then
       getAllImages
     fi
     echo -e "${Green}Start pulling Astra images...${ColorOff}"
@@ -558,7 +562,7 @@ function pushACImages() {
   # response=$(docker login -u ${CREDS_IMAGE_USERNAME} -p ${CREDS_IMAGE_PASSWORD} ${IMAGE_REPOSITORY})
   if [[ "${IMAGENAME}" == "" ]]; then
     size=$(echo ${#allimages[@]})
-    if [ "$size" -lt "4" ]; then
+    if [ "$size" -lt "1" ]; then
       getAllImages
     fi
     echo -e "${Green}Pushing images...${ColorOff}"
