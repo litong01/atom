@@ -14,7 +14,7 @@ export CREDS_ISSUER_URL=https://staging-netapp-cloud-account.auth0.com/
 export CREDS_IMAGE_USERNAME="Your image repo username from vault kv"
 export CREDS_IMAGE_PASSWORD="Your image repo password from vault kv"
 
-export IMAGE_HOST=localhost:5001
+export IMAGE_HOST=kind-registry:5001
 export CLUSTER_ENDPOINT=integration.astra.netapp.io
 
 # Optional variables for very frequent docker hub access

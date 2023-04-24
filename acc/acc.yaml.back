@@ -1,0 +1,159 @@
+apiVersion: astra.netapp.io/v1
+kind: AstraControlCenter
+metadata:
+  name: astra
+spec:
+  accountName: "Example"
+  astraVersion: "1619-integration"
+  astraAddress: "astra.example.com"
+  autoSupport:
+    enrolled: True
+    url: "https://stagesupport.netapp.com/asupprod/post/1.0/postAsup"
+  email: "admin@example.com"
+  firstName: "SRE"
+  lastName: "Admin"
+  imageRegistry:
+    name: "docker.repo.eng.netapp.com/globalcicd/astra"
+    secret: ""
+  # storageClass: "solidfire-gold"
+  # volumeReclaimPolicy: "Retain"
+  astraResourcesScaler: "Default"
+  crds: {}
+  ingressType: AccTraefik
+  scaleSize: "Small"
+  additionalValues: |
+    {
+      "polaris-mongodb": {
+        "mongodb": {
+          "replicaCount": 1,
+          "image": {
+            "registry": "ghcr.io",
+            "tag": "5.0.14",
+            "repository": "zcube/bitnami-compat/mongodb"
+          }
+        }
+      },
+      "polaris-consul": {
+        "consul": {
+          "server": {
+            "resources": {
+              "limits": {
+                "memory": "500Mi"
+              }
+            }
+          }
+        }
+      },
+      "features": {
+        "resources": {
+          "requests": {
+            "cpu": "10m",
+            "memory": "40Mi"
+          }
+        }
+      },
+      "loki": {
+        "resources": {
+          "requests": {
+            "cpu": "10m",
+            "memory": "10Mi"
+          }
+        }
+      },
+      "asup": {
+        "resources": {
+          "requests": {
+            "cpu": "10m",
+            "memory": "10Mi"
+          }
+        }
+      },
+      "nautilus": {
+        "replicaCount": 1,
+        "resources": {
+          "requests": {
+            "cpu": "10m",
+            "memory": "10Mi"
+          }
+        }
+      },
+      "polaris-influxdb2": {
+        "resources": {
+          "requests": {
+            "cpu": "10m",
+            "memory": "10Mi"
+          }
+        }
+      },
+      "traefik": {
+        "resources": {
+          "requests": {
+            "cpu": "10m",
+            "memory": "10Mi"
+          }
+        }
+      },
+      "task-service": {
+        "resources": {
+          "requests": {
+            "cpu": "10m",
+            "memory": "10Mi"
+          }
+        }
+      },
+      "nats": {
+        "replicaCount": 1
+      },
+      "polaris-vault": {
+        "vault": {
+          "server": {
+            "ha": {
+              "replicas": 1
+            }
+          }
+        }
+      },
+      "certificates": {
+        "replicas": 1
+      },
+      "credentials": {
+        "replicas": 1
+      },
+      "krakend": {
+        "replicas": 1
+      },
+      "openapi": {
+        "replicas": 1
+      },
+      "vault-controller": {
+        "replicas": 1
+      },
+      "traefik": {
+        "replicas": 1
+      },
+      "keycloak-operator": {
+        "keycloak-operator": {
+           "env": [
+              {"name": "GOTRACEBACK", "value": "0"},
+              {"name": "KCOP_PORT", "value": "8000"},
+              {"name": "KCOP_KEYCLOAK_REPLICAS", "value": 1},
+              {"name": "KCOP_KEYCLOAK_DBREPLICAS", "value": 1}
+           ]
+        }
+      },
+      "polaris-keycloak-db": {
+        "replicas": 1
+      },
+      "polaris-consul-consul-server": {
+        "replicas": 1
+      },
+      "cert-manager": {
+        "replicas": 1
+      },
+      "cert-manager-cainjector": {
+        "replicas": 1
+      },
+      "cert-manager-webhook": {
+        "replicas": 1
+      }
+    }

@@ -1,0 +1,13 @@
+apiVersion: trident.netapp.io/v1
+kind: TridentOrchestrator
+metadata:
+  name: trident
+spec:
+  debug: true
+  namespace: trident
+  imagePullPolicy: IfNotPresent
+  windows: false
+  controllerPluginNodeSelector:
+    kubernetes.io/arch: amd64
+  nodePluginNodeSelector:
+    kubernetes.io/arch: arm64

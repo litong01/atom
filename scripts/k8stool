@@ -194,6 +194,8 @@ containerdConfigPatches:
   - |-
     [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:${REGISTRY_PORT}"]
       endpoint = ["http://${REGISTRY_NAME}:5000"]
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."${REGISTRY_NAME}:${REGISTRY_PORT}"]
+      endpoint = ["http://${REGISTRY_NAME}:5000"]
 EOF
 )
 }
@@ -416,6 +418,9 @@ networking:
   ${netExtra}
 nodes:
 - role: control-plane
+  extraMounts:
+  - hostPath: /tmp/astra
+    containerPath: /work
 ${MOREROLE}
 EOF
 else
@@ -431,6 +436,9 @@ networking:
   ${netExtra}
 nodes:
 - role: control-plane
+  extraMounts:
+  - hostPath: /tmp/astra
+    containerPath: /work
 ${MOREROLE}
 EOF
 fi
@@ -519,7 +527,6 @@ function createCluster() {
     WORKERNODES="${WORKERNODES}"
     LOADBALANCER="true"
 
-    # setupkind -n "${cname}" -p "${cInfo[i+2]}" -t "${cInfo[i+3]}" -s "${ss}" -w "${WORKERNODES}" -l true
     setupkind
 
     if [[ -z "${cInfo[i+4]}" ]]; then
@@ -709,6 +716,7 @@ keyUsage = critical, digitalSignature, nonRepudiation, keyEncipherment, keyCertS
 subjectAltName=@san
 [ san ]
 DNS.1 = ${CERTDOMAINNAME}
+DNS.2 = ${REGISTRY_NAME}
 IP.1 = 127.0.0.1
 IP.2 = ::1
 [ req_dn ]

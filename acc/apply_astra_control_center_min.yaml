@@ -1,0 +1,24 @@
+apiVersion: astra.netapp.io/v1
+kind: AstraControlCenter
+metadata:
+  name: astra
+spec:
+  accountName: "Example"
+  astraVersion: 1093
+  astraAddress: "astra.example.com"
+  autoSupport:
+    enrolled: True
+    url: "https://stagesupport.netapp.com/asupprod/post/1.0/postAsup"
+  email: "admin@example.com"
+  firstName: "SRE"
+  lastName: "Admin"
+  imageRegistry:
+    name: "docker.repo.eng.netapp.com/globalcicd/astra"
+    secret: ""
+  # storageClass: "solidfire-gold"
+  # volumeReclaimPolicy: "Retain"
+  astraResourcesScaler: "Off"
+  additionalValues: {}
+  crds: {}
+  ingressType: Generic
+  scaleSize: "Small"
