@@ -297,6 +297,7 @@ function deployACC() {
   IMAGENAME="enterprise-helm-repo:${ASTRA_VERSION}"
   pullACImages
   pushACImages
+
   IMAGENAME="acc-operator:${accoptag}"
   pullACImages
   pushACImages
@@ -305,7 +306,10 @@ function deployACC() {
   set -
   cd /home/acc
 
-  cmdOp="'"$(cat additional.json | jq -c .)"'"
+  cmdOp=$(cat additional.json | jq -c .)
+  echo ${cmdOp}
+
+  
 
   # Repair the image tag
   imgtag="${IMAGE_HOST}/kube-rbac-proxy:v4.8.0" yq 'select(document_index == 11).spec.template.spec.containers[0].image = env(imgtag)' \
@@ -315,9 +319,12 @@ function deployACC() {
 
   set +
   # Now run the whole deployment process
+  echo -e "${Green}Deploying ACC...${ColorOff}"
   ${CURDIR}/acc-operator/astractl/astractl deploy --registry "kind-registry:5001" --timeout 300 --astra-version "${ASTRA_VERSION}" \
-    --ingress-type AccTraefik --astra-resources-scalar "Default" --additional-values ${cmdOp} 2>&1 > /dev/null
+    --ingress-type AccTraefik --astra-resources-scalar "Default" --additional-values \
+    '{"activity":{"replicas":1},"polaris-mongodb":{"mongodb":{"persistence":{"size":"5Gi"},"replicaCount":1,"image":{"registry":"ghcr.io","tag":"5.0.14","repository":"zcube/bitnami-compat/mongodb"}}},"polaris-consul":{"consul":{"server":{"replicas":1,"bootstrapExpect":1,"storage":"2Gi","resources":{"limits":{"memory":"50Mi"}}}}},"keycloak-operator":{"replicaCount":1},"polaris-keycloak":{"replicaCount":1,"mariadb-galera":{"replicaCount":1}},"features":{"replicas":1,"resources":{"requests":{"cpu":"10m","memory":"40Mi"}}},"loki":{"persistence":{"size":"5Gi"},"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"asup":{"persistence":{"size":"5Gi"},"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"nautilus":{"replicaCount":1,"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"polaris-influxdb2":{"persistence":{"size":"5Gi"},"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"traefik":{"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"task-service":{"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"nats":{"replicaCount":1},"polaris-vault":{"vault":{"server":{"ha":{"replicas":1},"auditStorage":{"size":"2Gi"}}}},"certificates":{"replicas":1},"credentials":{"replicas":1},"krakend":{"replicas":1},"openapi":{"replicas":1},"vault-controller":{"replicas":1},"cert-manager":{"cert-manager":{"replicaCount":1,"webhook":{"replicaCount":1},"cainjector":{"replicaCount":1}}}}'
   
+  echo -e "${Green}Creating path to access ACC...${ColorOff}"
   set -
   # Now we setup the proxy
   ${SCRIPTDIR}/k8stool proxy --targetports "traefik 80 443" --workdir "${WORKDIR}" --context ${CONTEXT}
@@ -695,7 +702,7 @@ if [[ "${CMD}" == "up" ]]; then
   checkEnvironmentVariables
 
   echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
-  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}"
+  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}" -w 2
   echo -e "${Green}Upload Astra images to image repostiory"
   validateContext
 
@@ -724,7 +731,7 @@ elif [[ "${CMD}" == "prepare" ]]; then
 
   echo ""
   echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
-  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}"
+  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}" -w 2
   echo -e "${Green}Upload Astra images to image repostiory"
   validateContext
   echo ""
@@ -741,9 +748,9 @@ elif [[ "${CMD}" == "prepare" ]]; then
     setupTrident
   fi
 
-  echo -e "${Green}Create traefik certificate${ColorOff}"
-  ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
-  echo -e "${Green}Ready to deploy Astra, please run deploy command${ColorOff}"
+  # echo -e "${Green}Create traefik certificate${ColorOff}"
+  # ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
+  # echo -e "${Green}Ready to deploy Astra, please run deploy command${ColorOff}"
 
 elif [[ "${CMD}" == "down" ]]; then
   echo ""

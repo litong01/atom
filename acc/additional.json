@@ -23,7 +23,7 @@
              "storage":"2Gi",
              "resources":{
                 "limits":{
-                   "memory":"500Mi"
+                   "memory":"50Mi"
                 }
              }
           }
