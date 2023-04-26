@@ -20,8 +20,12 @@ spec:
   ingressType: AccTraefik
   scaleSize: Small
   additionalValues:
+    activity:
+      replicas: 1
     polaris-mongodb:
       mongodb:
+        persistence:
+          size: 5Gi
         replicaCount: 1
         image:
           registry: ghcr.io
@@ -30,20 +34,34 @@ spec:
     polaris-consul:
       consul:
         server:
+          replicas: 1
+          bootstrapExpect: 1
+          storage: 2Gi
           resources:
             limits:
               memory: 500Mi
+    keycloak-operator:
+      replicaCount: 1
+    polaris-keycloak:
+      replicaCount: 1
+      mariadb-galera:
+        replicaCount: 1
     features:
+      replicas: 1
       resources:
         requests:
           cpu: 10m
           memory: 40Mi
     loki:
+      persistence:
+        size: 5Gi
       resources:
         requests:
           cpu: 10m
           memory: 10Mi
     asup:
+      persistence:
+        size: 5Gi
       resources:
         requests:
           cpu: 10m
@@ -55,12 +73,17 @@ spec:
           cpu: 10m
           memory: 10Mi
     polaris-influxdb2:
+      persistence:
+        size: 5Gi
       resources:
         requests:
           cpu: 10m
           memory: 10Mi
     traefik:
-      replicas: 1
+      resources:
+        requests:
+          cpu: 10m
+          memory: 10Mi
     task-service:
       resources:
         requests:
@@ -73,6 +96,8 @@ spec:
         server:
           ha:
             replicas: 1
+          auditStorage:
+            size: 2Gi
     certificates:
       replicas: 1
     credentials:
@@ -83,24 +108,10 @@ spec:
       replicas: 1
     vault-controller:
       replicas: 1
-    keycloak-operator:
-      keycloak-operator:
-        env:
-          - name: GOTRACEBACK
-            value: "0"
-          - name: KCOP_PORT
-            value: "8000"
-          - name: KCOP_KEYCLOAK_REPLICAS
-            value: 1
-          - name: KCOP_KEYCLOAK_DBREPLICAS
-            value: 1
-    polaris-keycloak-db:
-      replicas: 1
-    polaris-consul-consul-server:
-      replicas: 1
     cert-manager:
-      replicas: 1
-    cert-manager-cainjector:
-      replicas: 1
-    cert-manager-webhook:
-      replicas: 1
+      cert-manager:
+        replicaCount: 1
+        webhook:
+          replicaCount: 1
+        cainjector:
+          replicaCount: 1

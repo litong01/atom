@@ -963,7 +963,7 @@ EOF
   PORTMAP=$(echo ${PORTMAP})
   # Now start up the proxy container
   docker run --name kubeproxy -d --network=kind ${PORTMAP} \
-    -v ${configpath}:/etc/nginx/nginx.conf:ro nginx:latest
+    -v ${configpath}:/etc/nginx/nginx.conf:ro nginx:1.23.4
   echo "${MSG}"
 }
 
