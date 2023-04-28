@@ -23,7 +23,7 @@ ACSIMAGES=(['activity']='' ['billing']='' ['bucketservice']='' ['asup']='' ['pac
   ['graphql-server']='' ['hybridauth']='' ['identity']='' ['krakend']='' ['nautilus']='' ['openapi']='' ['polaris-ui']='' \
   ['support']='' ['support_hourly']='support' ['support_weekly']='support' ['task-service']='' ['authentication']='' \
   ['task-service_task_purge']='task-service' ['tenancy']='' ['tenancy_account_purge']='tenancy' ['metrics-facade']='' \
-  ['trident-svc']='' ['acc-operator']='' ['vault-controller']='' ['certificates']='' ['certificates_upgrade']='certificates' \
+  ['trident-svc']='' ['acc-operator']='' ['vault-controller']='' ['certificates_upgrade']='certificates' \
   ['api-token-authentication']='' ['storage-backend-metrics']='' ['storage-provider']='' ['telemetry-service']='' \
   ['polaris-keycloak']='' ['login-ui']='' )
 
@@ -380,11 +380,19 @@ function deployACC() {
   # Get the user name and password for login
   loginpw=$(kubectl get astracontrolcenters.astra.netapp.io -n ${NAMESPACE} -o jsonpath='ACC-{..uid}')
   echo -e "${Green}Astra Control Center has been successfully setup${ColorOff}"
-  echo -e "Use the following as credential to login"
+  echo -e "Use the following to login"
   echo -e "   Email: ${Green}admin@integration.astra.netapp.io${ColorOff}"
   echo -e "   Password: ${Green}${loginpw}${ColorOff}"
 }
   
+function fixcertificateimage() {
+  # this method pulls the certificate image I fixed and use it for development
+  docker pull ghcr.io/netapp-polaris/polaris/astra/certificates:astradt
+  tag=$(getServiceTag certificates)
+  docker tag ghcr.io/netapp-polaris/polaris/astra/certificates:astradt "certificates:${tag}"
+  docker tag ghcr.io/netapp-polaris/polaris/astra/certificates:astradt "localhost:5001/certificates:${tag}"
+}
+
 function updateKeycloakOperatorSetting() {
   # This function will update the keycloak operator two hidden env to be 1
   # If the operator is ready, it will update, otherwise, it will do nothing.
@@ -393,7 +401,7 @@ function updateKeycloakOperatorSetting() {
   if [[ "${res}" == *"condition met"* ]]; then
     # It is ready, we need to apply the patch to it now.
     kubectl set env --context "${CONTEXT}" -n "${NAMESPACE}" deployment/keycloak-operator \
-      KCOP_KEYCLOAK_REPLICAS=1 KCOP_KEYCLOAK_DBREPLICAS=1
+      KCOP_KEYCLOAK_REPLICAS=1 KCOP_KEYCLOAK_DBREPLICAS=1 2>/dev/null
   fi
 }
 
@@ -671,6 +679,7 @@ function pushACImages() {
   # repologin="https://${IMAGE_REPOSITORY}/v2/"
   # response=$(docker login -u ${CREDS_IMAGE_USERNAME} -p ${CREDS_IMAGE_PASSWORD} ${IMAGE_REPOSITORY})
   if [[ "${IMAGENAME}" == "" ]]; then
+    fixcertificateimage
     size=$(echo ${#allimages[@]})
     if [ "$size" -lt "1" ]; then
       getAllImages
