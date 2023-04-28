@@ -306,12 +306,31 @@ function deployACC() {
   set -
   cd /home/acc
 
-  cmdOp=$(cat additional.json | jq -c .)
-  echo ${cmdOp}
+  # Setup netapp-acc-operator
+  accopns="netapp-acc-operator"
+  # Create the namespace
+  kubectl create --context="${CONTEXT}" namespace ${accopns} 2>/dev/null || true
 
-  
+  # Create the certificate
+  ${SCRIPTDIR}/k8stool cert --namespace ${accopns} --context ${CONTEXT} --workdir "${WORKDIR}"
 
-  # Repair the image tag
+  # getting the nginx image:
+  docker pull nginx:1.23.4
+  docker tag nginx:1.23.4 localhost:5001/nginx:1.23.4
+  docker push localhost:5001/nginx:1.23.4
+
+  registryip=$(docker inspect kind-registry --format "{{.NetworkSettings.Networks.kind.IPAddress}}" 2>/dev/null || true)
+  if [[ -z "${registryip}" ]]; then
+     echo -e "${Red}Local registry is not working, cannot continue${ColorOff}"
+     exit 1
+  fi
+  sed -i "s/KIND_REGISTRY_IP/${registryip}/" nginx.yaml
+
+  # This deployment is to ensure that acc operator happy with the image registry
+  # Deploy the service to the namespace
+  kubectl apply -n ${accopns} -f nginx.yaml
+
+  # Repair the image tag for acc operator
   imgtag="${IMAGE_HOST}/kube-rbac-proxy:v4.8.0" yq 'select(document_index == 11).spec.template.spec.containers[0].image = env(imgtag)' \
     -i astra_control_center_operator_deploy.yaml
   imgtag="${IMAGE_HOST}/acc-operator:${accoptag}" yq 'select(document_index == 11).spec.template.spec.containers[1].image = env(imgtag)' \
@@ -320,19 +339,43 @@ function deployACC() {
   set +
   # Now run the whole deployment process
   echo -e "${Green}Deploying ACC...${ColorOff}"
-  ${CURDIR}/acc-operator/astractl/astractl deploy --registry "kind-registry:5001" --timeout 300 --astra-version "${ASTRA_VERSION}" \
-    --ingress-type AccTraefik --astra-resources-scalar "Default" --additional-values \
-    '{"activity":{"replicas":1},"polaris-mongodb":{"mongodb":{"persistence":{"size":"5Gi"},"replicaCount":1,"image":{"registry":"ghcr.io","tag":"5.0.14","repository":"zcube/bitnami-compat/mongodb"}}},"polaris-consul":{"consul":{"server":{"replicas":1,"bootstrapExpect":1,"storage":"2Gi","resources":{"limits":{"memory":"50Mi"}}}}},"keycloak-operator":{"replicaCount":1},"polaris-keycloak":{"replicaCount":1,"mariadb-galera":{"replicaCount":1}},"features":{"replicas":1,"resources":{"requests":{"cpu":"10m","memory":"40Mi"}}},"loki":{"persistence":{"size":"5Gi"},"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"asup":{"persistence":{"size":"5Gi"},"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"nautilus":{"replicaCount":1,"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"polaris-influxdb2":{"persistence":{"size":"5Gi"},"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"traefik":{"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"task-service":{"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"nats":{"replicaCount":1},"polaris-vault":{"vault":{"server":{"ha":{"replicas":1},"auditStorage":{"size":"2Gi"}}}},"certificates":{"replicas":1},"credentials":{"replicas":1},"krakend":{"replicas":1},"openapi":{"replicas":1},"vault-controller":{"replicas":1},"cert-manager":{"cert-manager":{"replicaCount":1,"webhook":{"replicaCount":1},"cainjector":{"replicaCount":1}}}}'
+  # ${CURDIR}/acc-operator/astractl/astractl deploy --registry "kind-registry:5001" --timeout 300 --astra-version "${ASTRA_VERSION}" \
+  #   --ingress-type AccTraefik --astra-resources-scalar "Default" --additional-values \
+  #   '{"activity":{"replicas":1},"polaris-mongodb":{"mongodb":{"persistence":{"size":"5Gi"},"replicaCount":1,"image":{"registry":"ghcr.io","tag":"5.0.14","repository":"zcube/bitnami-compat/mongodb"}}},"polaris-consul":{"consul":{"server":{"replicas":1,"bootstrapExpect":1,"storage":"2Gi","resources":{"limits":{"memory":"50Mi"}}}}},"keycloak-operator":{"replicaCount":1},"polaris-keycloak":{"replicaCount":1,"mariadb-galera":{"replicaCount":1}},"features":{"replicas":1,"resources":{"requests":{"cpu":"10m","memory":"40Mi"}}},"loki":{"persistence":{"size":"5Gi"},"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"asup":{"persistence":{"size":"5Gi"},"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"nautilus":{"replicaCount":1,"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"polaris-influxdb2":{"persistence":{"size":"5Gi"},"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"traefik":{"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"task-service":{"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"nats":{"replicaCount":1},"polaris-vault":{"vault":{"server":{"ha":{"replicas":1},"auditStorage":{"size":"2Gi"}}}},"certificates":{"replicas":1},"credentials":{"replicas":1},"krakend":{"replicas":1},"openapi":{"replicas":1},"vault-controller":{"replicas":1},"cert-manager":{"cert-manager":{"replicaCount":1,"webhook":{"replicaCount":1},"cainjector":{"replicaCount":1}}}}'
   
-  echo -e "${Green}Creating path to access ACC...${ColorOff}"
+  # Now deploy acc operator first
+  kubectl apply --context ${CONTEXT} -n ${accopns} -f astra_control_center_operator_deploy.yaml
+
+  # Now fix up the astra version
+  astraVersion="${ASTRA_VERSION}" yq '.spec.astraVersion = env(astraVersion)' -i acc.yaml
+
+  # Deploy astra control center
+  kubectl create --context="${CONTEXT}" namespace ${NAMESPACE} 2>/dev/null || true
+  kubectl apply --context="${CONTEXT}" -n ${NAMESPACE} -f acc.yaml
+
+  # Wait for the first pod to become ready
+  while : ; do
+    res=$(kubectl wait --context "${CONTEXT}" -n ${NAMESPACE} pod \
+      -l app=acc-helm-repo --for=condition=Ready --timeout=30s 2>/dev/null ||true)
+    if [[ "${res}" == *"condition met"* ]]; then
+      break
+    fi
+    echo -e "Waiting for first pod be ready..."
+    sleep 30
+  done
+
   set -
-  # Now we setup the proxy
+
+  # Setup the proxy
+  echo -e "${Green}Creating path to access ACC...${ColorOff}"
   ${SCRIPTDIR}/k8stool proxy --targetports "traefik 80 443" --workdir "${WORKDIR}" --context ${CONTEXT}
 
-  # Now we get the user name and password for login
-  loginpw=$(kubectl get astracontrolcenters.astra.netapp.io -n pcloud -o jsonpath='ACC-{..uid}')
-  echo -e "{Green}Astra Control Center has been successfully setup${ColorOff}"
-  echo -e "Use ${Green}admin@integration.astra.netapp.io${ColorOff} and ${Green}${loginpw}${ColorOff} to login to ACC"
+  # Get the user name and password for login
+  loginpw=$(kubectl get astracontrolcenters.astra.netapp.io -n ${NAMESPACE} -o jsonpath='ACC-{..uid}')
+  echo -e "${Green}Astra Control Center has been successfully setup${ColorOff}"
+  echo -e "Use the following as credential to login"
+  echo -e "   Email: ${Green}admin@integration.astra.netapp.io${ColorOff}"
+  echo -e "   Password: ${Green}${loginpw}${ColorOff}"
 }
   
 function thebackup() {
@@ -492,10 +535,15 @@ function getACExternalImages() {
   #    "quay.io/jetstack/cert-manager-ctl:v1.11.0"
 
   # Get from the service json file and remove things not necessory or does not even exist on globalcicd
+  # This removed some not used ones
+  # accExtImages=$(cat ${CURDIR}/enterprise/external-services.json | jq '.services' |
+  #   jq 'map(."container-images") | flatten | unique |
+  #      del(..|select(. =="bitnami/mongodb-exporter:0.33.0-debian-11-r9")) | del(..|select(. =="bitnami/mongodb:5.0.10-debian-11-r3"))' |
+  #   jq '.[]')
+
+  # Get all external images needed
   accExtImages=$(cat ${CURDIR}/enterprise/external-services.json | jq '.services' |
-    jq 'map(."container-images") | flatten | unique |
-       del(..|select(. =="bitnami/mongodb-exporter:0.33.0-debian-11-r9")) | del(..|select(. =="bitnami/mongodb:5.0.10-debian-11-r3"))' |
-    jq '.[]')
+    jq 'map(."container-images") | flatten | unique' | jq '.[]')
 
   if [[ ${#accExtImages[@]} == 0 ]]; then
     echo -e "${Red}No external image found, this is an error, quiting...${ColorOff}"

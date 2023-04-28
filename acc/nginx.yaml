@@ -4,23 +4,28 @@ metadata:
   name: nginx-config
 data:
   nginx.conf: |
-    worker_processes  2;
+    worker_processes  1;
     events {
-      worker_connections  4096;
+      worker_connections  1024;
     }
     stream {
+      upstream registry {
+          server KIND_REGISTRY_IP:5000 max_fails=3 fail_timeout=10s;
+      }
+
       server {
         listen 5001 ssl;
+        listen [::]:5001 ssl;
         ssl_certificate /etc/nginx/ssl/tls.crt;
         ssl_certificate_key /etc/nginx/ssl/tls.key;
-        proxy_pass  172.18.0.3:5000;
+        proxy_pass  registry;
       }
     }
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx
+  name: kind-registry
   labels:
     app: nginx
 spec:
@@ -54,7 +59,7 @@ spec:
           name: nginx-config
       containers:
       - name: nginx
-        image: nginx:1.23.4
+        image: kind-registry:5001/nginx:1.23.4
         ports:
         - containerPort: 5001
         volumeMounts:

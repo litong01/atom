@@ -679,6 +679,7 @@ keyUsage = critical, digitalSignature, nonRepudiation, keyEncipherment, keyCertS
 subjectAltName=@san
 [ san ]
 DNS.1 = ${CERTDOMAINNAME}
+DNS.2 = ${REGISTRY_NAME}
 IP.1 = 127.0.0.1
 IP.2 = ::1
 [ req_dn ]

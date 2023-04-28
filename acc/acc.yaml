@@ -13,7 +13,7 @@ spec:
   firstName: SRE
   lastName: Admin
   imageRegistry:
-    name: integration.astra.netapp.io:5001
+    name: kind-registry:5001
     secret: ""
   astraResourcesScaler: Default
   crds: {}
@@ -39,7 +39,7 @@ spec:
           storage: 2Gi
           resources:
             limits:
-              memory: 500Mi
+              memory: 50Mi
     keycloak-operator:
       replicaCount: 1
     polaris-keycloak:
@@ -91,6 +91,8 @@ spec:
           memory: 10Mi
     nats:
       replicaCount: 1
+      auth:
+        enabled: true
     polaris-vault:
       vault:
         server:
