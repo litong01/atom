@@ -354,13 +354,18 @@ function deployACC() {
   kubectl apply --context="${CONTEXT}" -n ${NAMESPACE} -f acc.yaml
 
   # Wait for the polaris-ui pod to become ready, this can be a long wait.
+  echo -e "Waiting for polaris to become ready..."
+  startTime=$(date +%s)
   while : ; do
     res=$(kubectl wait --context "${CONTEXT}" -n ${NAMESPACE} pod \
       -l "app.kubernetes.io/name=polaris-ui" --for=condition=Ready --timeout=30s 2>/dev/null ||true)
     if [[ "${res}" == *"condition met"* ]]; then
       break
     fi
-    echo -e "Waiting for polaris to become ready..."
+    currentTime=$(date +%s)
+    elapsed=$(( currentTime - startTime ))
+    echo -ne "\033[0K\r"
+    echo -ne "   Time elapsed: ${Green}${elapsed}${ColorOff} seconds\033[0K"
     sleep 30
   done
 
