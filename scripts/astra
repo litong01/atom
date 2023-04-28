@@ -765,12 +765,12 @@ if [[ "${CMD}" == "up" ]]; then
 
   if [[ "${TYPE}" == "ACC" ]]; then
     setupTrident
+    deployACC
+  else
+    echo -e "${Green}Create traefik certificate${ColorOff}"
+    ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
+    deployAC "${COMPONENT}"
   fi
-
-  echo -e "${Green}Create traefik certificate${ColorOff}"
-  ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
-
-  deployAC "${COMPONENT}"
 
 elif [[ "${CMD}" == "prepare" ]]; then
   echo ""
