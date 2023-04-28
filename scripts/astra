@@ -353,14 +353,14 @@ function deployACC() {
   kubectl create --context="${CONTEXT}" namespace ${NAMESPACE} 2>/dev/null || true
   kubectl apply --context="${CONTEXT}" -n ${NAMESPACE} -f acc.yaml
 
-  # Wait for the first pod to become ready
+  # Wait for the polaris-ui pod to become ready, this can be a long wait.
   while : ; do
     res=$(kubectl wait --context "${CONTEXT}" -n ${NAMESPACE} pod \
-      -l app=acc-helm-repo --for=condition=Ready --timeout=30s 2>/dev/null ||true)
+      -l "app.kubernetes.io/name=polaris-ui" --for=condition=Ready --timeout=30s 2>/dev/null ||true)
     if [[ "${res}" == *"condition met"* ]]; then
       break
     fi
-    echo -e "Waiting for first pod be ready..."
+    echo -e "Waiting for polaris to become ready..."
     sleep 30
   done
 
