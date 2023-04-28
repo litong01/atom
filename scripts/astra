@@ -161,7 +161,7 @@ function doADTUpdate() {
 }
 
 function loginToDockerHub() {
-  if [[ ! -z "${DH_ID}" ]] && [[ ! -z "${DH_TOKEN}" ]]; then
+  if [[ ! -z "${GITHUB_ID}" ]] && [[ ! -z "${GITHUB_TOKEN}" ]]; then
     echo -e "${Green}Logging into docker hub...${ColorOff}"
     echo $DH_TOKEN | docker login -u $DH_ID --password-stdin docker.io >/dev/null 2>&1
   fi
@@ -387,6 +387,7 @@ function deployACC() {
   
 function fixcertificateimage() {
   # this method pulls the certificate image I fixed and use it for development
+  echo $GITHUB_TOKEN | docker login -u ${GITHUB_ID} --password-stdin ghcr.io >/dev/null 2>&1
   docker pull ghcr.io/netapp-polaris/polaris/astra/certificates:astradt
   tag=$(getServiceTag certificates)
   docker tag ghcr.io/netapp-polaris/polaris/astra/certificates:astradt "certificates:${tag}"
