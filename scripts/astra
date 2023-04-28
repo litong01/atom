@@ -372,6 +372,7 @@ function deployACC() {
   set -
 
   # Setup the proxy
+  echo ""
   echo -e "${Green}Creating path to access ACC...${ColorOff}"
   ${SCRIPTDIR}/k8stool proxy --targetports "traefik 80 443" --workdir "${WORKDIR}" --context ${CONTEXT}
 
