@@ -357,6 +357,7 @@ function deployACC() {
   echo -e "Waiting for polaris to become ready..."
   startTime=$(date +%s)
   while : ; do
+    updateKeycloakOperatorSetting
     res=$(kubectl wait --context "${CONTEXT}" -n ${NAMESPACE} pod \
       -l "app.kubernetes.io/name=polaris-ui" --for=condition=Ready --timeout=30s 2>/dev/null ||true)
     if [[ "${res}" == *"condition met"* ]]; then
@@ -384,6 +385,18 @@ function deployACC() {
   echo -e "   Password: ${Green}${loginpw}${ColorOff}"
 }
   
+function updateKeycloakOperatorSetting() {
+  # This function will update the keycloak operator two hidden env to be 1
+  # If the operator is ready, it will update, otherwise, it will do nothing.
+  res=$(kubectl wait --context "${CONTEXT}" -n ${NAMESPACE} pod \
+    -l "app.kubernetes.io/name=keycloak-operator" --for=condition=Ready --timeout=30s 2>/dev/null ||true)
+  if [[ "${res}" == *"condition met"* ]]; then
+    # It is ready, we need to apply the patch to it now.
+    kubectl set env --context "${CONTEXT}" -n "${NAMESPACE}" deployment/keycloak-operator \
+      KCOP_KEYCLOAK_REPLICAS=1 KCOP_KEYCLOAK_DBREPLICAS=1
+  fi
+}
+
 function thebackup() {
   set -
   cd /home/acc
