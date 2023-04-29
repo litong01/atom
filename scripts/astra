@@ -16,8 +16,8 @@ CLUSTER_ENDPOINT=${CLUSTER_ENDPOINT:-integration.astra.netapp.io}
 IMAGENAME=""
 
 
-declare -A ACSIMAGES
-ACSIMAGES=(['activity']='' ['billing']='' ['bucketservice']='' ['asup']='' ['packages']='' ['license']='' \
+declare -A ACIMAGES
+ACIMAGES=(['activity']='' ['billing']='' ['bucketservice']='' ['asup']='' ['packages']='' ['license']='' \
   ['cloud-extension']='' ['composite-compute']='' ['composite-volume']='' ['credentials']='' ['cloud-insights-service']='' \
   ['entitlement']='' ['features']='' ['features_upgrade']='features' ['public-metrics']='' ['keycloak-operator']='' \
   ['graphql-server']='' ['hybridauth']='' ['identity']='' ['krakend']='' ['nautilus']='' ['openapi']='' ['polaris-ui']='' \
@@ -25,7 +25,7 @@ ACSIMAGES=(['activity']='' ['billing']='' ['bucketservice']='' ['asup']='' ['pac
   ['task-service_task_purge']='task-service' ['tenancy']='' ['tenancy_account_purge']='tenancy' ['metrics-facade']='' \
   ['trident-svc']='' ['acc-operator']='' ['vault-controller']='' ['certificates_upgrade']='certificates' \
   ['api-token-authentication']='' ['storage-backend-metrics']='' ['storage-provider']='' ['telemetry-service']='' \
-  ['polaris-keycloak']='' ['login-ui']='' )
+  ['polaris-keycloak']='' ['login-ui']='' ['certificates']='')
 
 function printHelp() {
   echo ""
@@ -538,15 +538,19 @@ function loadAllImageTags() {
 
 function getServiceTag() {
   release_name=$1
-  tags=$(git tag -l "release/${release_name}/*-integration" --sort=-version:refname --merged | head -n 1)
-  
-  if [ -z "${tags}" ]; then
-    echo ""
+  if [[ "${TYPE}" == "acs" ]]; then
+    version=$(${CURDIR}/cicd/scripts/calculate_service_version.sh ${release_name} --release-versioning false)
+    echo "${version}"
   else
-    for tag in ${tags}; do
-      version=$(echo "${tag}" | sed 's,/,\n,g' | tail -1)
-      echo "${version}"
-    done
+    tags=$(git tag -l "release/${release_name}/*-integration" --sort=-version:refname --merged | head -n 1)
+    if [ -z "${tags}" ]; then
+      echo ""
+    else
+      for tag in ${tags}; do
+        version=$(echo "${tag}" | sed 's,/,\n,g' | tail -1)
+        echo "${version}"
+      done
+    fi
   fi
 }
 
@@ -587,34 +591,35 @@ function getACExternalImages() {
   for anItem in ${accExtImages[@]}; do
     # Strip the quotes if there are any
     anItem="${anItem%\"}"; anItem="${anItem#\"}"
+    # anItem is the full image with its registry
+    # anImte is the image name without its registry
     anImage=$(echo ${anItem} | rev | cut -d '/' -f 1|rev)
 
     echo -e "Processing ${Green}${anItem}${ColorOff}"
-    theImage=$(docker images "localhost:5001/${anImage}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
+    # check if the image is already exist locally with its full path
+    theImage=$(docker images "${anItem}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
     # The image already exists locally, do not need to pull
     if [[ -z "${theImage}" ]]; then
       # Pulling the image from its defined location)
       pullok=$(docker pull "${anItem}" 2>/dev/null || true)
       if [[ -z ${pullok} ]]; then
-        # The repo does not have the image, try the public one
+        # The repo does not have the image, try from cicd global repo
         docker pull "${IMAGE_REPOSITORY}/${anImage}"
         docker tag "${IMAGE_REPOSITORY}/${anImage}" "localhost:5001/${anImage}"
         docker tag "${IMAGE_REPOSITORY}/${anImage}" "${anItem}"
       else
-        # Tag the image with no registry for development purpose, probably do not need to do this
-        docker tag "${anItem}" "${anImage}"
         # Tag the image with localhost
         docker tag "${anItem}" "localhost:5001/${anImage}"
       fi
     else
       echo -e "   ${Green}Already exists locally, skipping pulling${ColorOff}"
+      # Still tag the image to make it available locally
+      docker tag "${anItem}" "localhost:5001/${anImage}"
     fi
-    # We need to push the image in case that the registry was removed
-    # We may need to verify first before push
+    # Now push the iamge to the registry or load to k8s node based on needs
     if [[ "${TYPE}" == "acs" ]]; then
       # For acs, these external images need to be pushed to each node to avoid pulling limit issues.
       # We could choose to not push at all. This list should be reduced to must have external images
-      docker tag "localhost:5001/${anImage}" "${anItem}"
       kind load docker-image -n astra "${anItem}"
     else
       docker push "localhost:5001/${anImage}"
@@ -624,8 +629,8 @@ function getACExternalImages() {
 
 function getAllImages() {
   echo -e "${Green}Calculating image tags based on current commit level...${ColorOff}"
-  for key in "${!ACSIMAGES[@]}"; do
-    val="${ACSIMAGES[$key]}"
+  for key in "${!ACIMAGES[@]}"; do
+    val="${ACIMAGES[$key]}"
     comp="${key}"
     if [[ ! -z "${val}" ]]; then
       comp="${val}"
