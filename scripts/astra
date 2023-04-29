@@ -607,13 +607,14 @@ function getACExternalImages() {
         docker tag "${anItem}" "localhost:5001/${anImage}"
       fi
     else
-      echo -e "   ${Green}Already exists locally, skipping${ColorOff}"
+      echo -e "   ${Green}Already exists locally, skipping pulling${ColorOff}"
     fi
     # We need to push the image in case that the registry was removed
     # We may need to verify first before push
     if [[ "${TYPE}" == "acs" ]]; then
       # For acs, these external images need to be pushed to each node to avoid pulling limit issues.
       # We could choose to not push at all. This list should be reduced to must have external images
+      docker tag "localhost:5001/${anImage}" "${anItem}"
       kind load docker-image -n astra "${anItem}"
     else
       docker push "localhost:5001/${anImage}"
@@ -779,7 +780,11 @@ if [[ "${CMD}" == "up" ]]; then
   checkEnvironmentVariables
 
   echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
-  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}" -w 2
+  if [[ "${TYPE}" == "acc" ]]; then
+    ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}" -w 2
+  else
+    ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}"
+  fi
   echo -e "${Green}Upload Astra images to image repostiory"
   validateContext
 
@@ -808,7 +813,11 @@ elif [[ "${CMD}" == "prepare" ]]; then
 
   echo ""
   echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
-  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}" -w 2
+  if [[ "${TYPE}" == "acc" ]]; then
+    ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}" -w 2
+  else
+    ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}"
+  fi
   echo -e "${Green}Upload Astra images to image repostiory"
   validateContext
   echo ""
@@ -821,7 +830,7 @@ elif [[ "${CMD}" == "prepare" ]]; then
   echo ""
   pushACImages
 
-  if [[ "${TYPE}" == "ACC" ]]; then
+  if [[ "${TYPE}" == "acc" ]]; then
     setupTrident
   fi
 
