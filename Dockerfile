@@ -3,6 +3,7 @@ LABEL maintainer="litong01"
 
 COPY ./scripts/astra /home/bin
 COPY ./scripts/k8stool /home/bin
+COPY ./scripts/astraimage /home/bin
 COPY ./scripts/pcloud-port-forward /home/bin
 COPY ./scripts/postsetup.py /home/bin
 COPY ./scripts/serviceaccount.py /home/bin

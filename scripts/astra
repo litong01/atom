@@ -15,18 +15,6 @@ IMAGE_REPOSITORY=${IMAGE_REPOSITORY:-docker.repo.eng.netapp.com/globalcicd/astra
 CLUSTER_ENDPOINT=${CLUSTER_ENDPOINT:-integration.astra.netapp.io}
 IMAGENAME=""
 
-
-declare -A ACIMAGES
-ACIMAGES=(['activity']='' ['billing']='' ['bucketservice']='' ['asup']='' ['packages']='' ['license']='' \
-  ['cloud-extension']='' ['composite-compute']='' ['composite-volume']='' ['credentials']='' ['cloud-insights-service']='' \
-  ['entitlement']='' ['features']='' ['features_upgrade']='features' ['public-metrics']='' ['keycloak-operator']='' \
-  ['graphql-server']='' ['hybridauth']='' ['identity']='' ['krakend']='' ['nautilus']='' ['openapi']='' ['polaris-ui']='' \
-  ['support']='' ['support_hourly']='support' ['support_weekly']='support' ['task-service']='' ['authentication']='' \
-  ['task-service_task_purge']='task-service' ['tenancy']='' ['tenancy_account_purge']='tenancy' ['metrics-facade']='' \
-  ['trident-svc']='' ['acc-operator']='' ['vault-controller']='' ['certificates_upgrade']='certificates' \
-  ['api-token-authentication']='' ['storage-backend-metrics']='' ['storage-provider']='' ['telemetry-service']='' \
-  ['polaris-keycloak']='' ['login-ui']='' ['certificates']='')
-
 function printHelp() {
   echo ""
   echo "Usage:"
@@ -293,15 +281,7 @@ function deployACC() {
 
   # acc operator pulls helm chart from a local helm chart repo which needs to be setup
   # using the enterprise-helm-repo image, the tag equals ASTRA_VERSION
-  orignalName=${IMAGENAME}
-  IMAGENAME="enterprise-helm-repo:${ASTRA_VERSION}"
-  pullACImages
-  pushACImages
-
-  IMAGENAME="acc-operator:${accoptag}"
-  pullACImages
-  pushACImages
-  IMAGENAME=${orignalName}
+  PullTagPushOneACImage "enterprise-helm-repo:${ASTRA_VERSION}"
 
   set -
   cd /home/acc
@@ -406,50 +386,6 @@ function updateKeycloakOperatorSetting() {
   fi
 }
 
-function thebackup() {
-  set -
-  cd /home/acc
-
-  imgtag="${IMAGE_HOST}/kube-rbac-proxy:v4.8.0" yq '.spec.template.spec.containers[0].image = env(imgtag)' -i part2_op_deploy.yaml
-  imgtag="${IMAGE_HOST}/acc-operator:${accoptag}" yq '.spec.template.spec.containers[1].image = env(imgtag)' -i part2_op_deploy.yaml
-
-  # Ensure ACC operator namespace exists
-  ACCOPNAMESPACE="netapp-acc-operator"
-  kubectl create --context="${CONTEXT}" namespace ${ACCOPNAMESPACE} --dry-run=client -o yaml \
-    | kubectl apply --context="${CONTEXT}" -f -
-
-  # Here we need to setup a service and endpoint so that the stupid acc operator can do crazy stuff
-  registryip=$(docker inspect kind-registry --format "{{.NetworkSettings.Networks.kind.IPAddress}}" 2>/dev/null || true)
-  if [[ -z "${registryip}" ]]; then
-     echo -e "${Red}Local registry is not working, cannot continue${ColorOff}"
-     exit 1
-  fi
-
-  registryip="${registryip}" yq 'select(document_index == 1).subsets[0].addresses[0].ip = env(registryip)' -i registry-service.yaml
-
-  # now we create a secret to save the tls certs
-  ${SCRIPTDIR}/k8stool cert --namespace ${ACCOPNAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
-
-  kubectl --context ${CONTEXT} apply -n ${ACCOPNAMESPACE} -f registry-service.yaml
-
-  # Deploy service account, roles, configmaps
-  kubectl --context ${CONTEXT} apply -n ${ACCOPNAMESPACE} -f part1_op_deploy.yaml
-  # Now Deploy ACC operator
-  kubectl --context ${CONTEXT} apply -n ${ACCOPNAMESPACE} -f part2_op_deploy.yaml
-
-  # Ensure astra control center namespace exists
-  kubectl create --context="${CONTEXT}" namespace ${NAMESPACE} --dry-run=client -o yaml \
-    | kubectl apply --context="${CONTEXT}" -f -
-  ASTRA_VERSION=$ASTRA_VERSION yq '.spec.astraVersion = env(ASTRA_VERSION)' -i /home/acc/acc.yaml
-  REGISTRY_NAME="${IMAGE_HOST}" yq '.spec.imageRegistry.name = env(REGISTRY_NAME)' -i /home/acc/acc.yaml
-
-  # Deploy Astra control center
-  kubectl --context ${CONTEXT} apply -n ${NAMESPACE} -f /home/acc/acc.yaml
-
-  cd ${CURDIR}
-  set +
-}
-
 function deployAC() {
   CNAME=$1
   if [[ "${CNAME}" == "all" ]] || [[ "${CNAME}" == "traefik" ]]; then
@@ -499,205 +435,10 @@ function deployAC() {
   fi
 }
 
-function pullAndTag() {
-  iname=$1
-  itag=$2
-  echo -e "   Processing ${iname}:${itag}"
-  anImage=$(docker images "localhost:5001/${iname}:${itag}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
-  # The image already exists locally, do not need to pull
-  if [[ -z "${anImage}" ]]; then
-    docker pull "${IMAGE_REPOSITORY}/${iname}:${itag}"
-    docker tag "${IMAGE_REPOSITORY}/${iname}:${itag}" "localhost:5001/${iname}:${itag}"
-  else
-    echo -e "   ${Green}Already exists locally, skipping${ColorOff}"
-  fi
-}
-
-declare -A allimages
-# allimages=(['ghcr.io/zcube/bitnami-compat/mongodb:5.0.14']='d' ['nk:v0.1.0']='' ['kube-rbac-proxy:v4.8.0']='')
-allimages=()
-function saveAllImageTags() {
-  cid=$(git rev-parse --short HEAD)
-  echo -e "${Green}Current commit ${cid}${ColorOff}"
-  content="allimages=("
-  for imagename in "${!allimages[@]}"; do
-    content="${content} ['"${imagename}"']='"${allimages[$imagename]}"'"
-  done
-  content="${content})"
-  echo ${content} > /home/work/astra/${cid}.sh
-}
-
-function loadAllImageTags() {
-  cid=$(git rev-parse --short HEAD)
-  echo -e "${Green}Current commit ${cid}${ColorOff}"
-  if [ -f /home/work/astra/${cid}.sh ]; then
-    echo -e "${Green}Commit level did not change, loading the saved the image tags...${ColorOff}"
-    source /home/work/astra/${cid}.sh
-  fi
-}
-
 function getServiceTag() {
   release_name=$1
-  if [[ "${TYPE}" == "acs" ]]; then
-    version=$(${CURDIR}/cicd/scripts/calculate_service_version.sh ${release_name} --release-versioning false)
-    echo "${version}"
-  else
-    tags=$(git tag -l "release/${release_name}/*-integration" --sort=-version:refname --merged | head -n 1)
-    if [ -z "${tags}" ]; then
-      echo ""
-    else
-      for tag in ${tags}; do
-        version=$(echo "${tag}" | sed 's,/,\n,g' | tail -1)
-        echo "${version}"
-      done
-    fi
-  fi
-}
-
-
-# This function will parse the ACC master image list and create a list
-# of the images needed to deploy ACC
-function getACExternalImages() {
-  # Use jq to parse the external-services.json file and get a string list like this.
-  #
-  #    "nk:v0.1.0"
-  #    "quay.io/jetstack/cert-manager-controller:v1.11.0"
-  #    "quay.io/jetstack/cert-manager-webhook:v1.11.0"
-  #    "quay.io/jetstack/cert-manager-cainjector:v1.11.0"
-  #    "quay.io/jetstack/cert-manager-ctl:v1.11.0"
-
-  # Get from the service json file and remove things not necessory or does not even exist on globalcicd
-  # This removed some not used ones
-  # accExtImages=$(cat ${CURDIR}/enterprise/external-services.json | jq '.services' |
-  #   jq 'map(."container-images") | flatten | unique |
-  #      del(..|select(. =="bitnami/mongodb-exporter:0.33.0-debian-11-r9")) | del(..|select(. =="bitnami/mongodb:5.0.10-debian-11-r3"))' |
-  #   jq '.[]')
-
-  # Get all external images needed
-  accExtImages=$(cat ${CURDIR}/enterprise/external-services.json | jq '.services' |
-    jq 'map(."container-images") | flatten | unique' | jq '.[]')
-
-  if [[ ${#accExtImages[@]} == 0 ]]; then
-    echo -e "${Red}No external image found, this is an error, quiting...${ColorOff}"
-    exit 1
-  fi
-
-  # We try to login to docker hub for images not available on netapp repo
-  loginToDockerHub
-
-  # Since the mongodb is special, we have to add it here
-  accExtImages+=("ghcr.io/zcube/bitnami-compat/mongodb:5.0.14")
-
-  for anItem in ${accExtImages[@]}; do
-    # Strip the quotes if there are any
-    anItem="${anItem%\"}"; anItem="${anItem#\"}"
-    # anItem is the full image with its registry
-    # anImte is the image name without its registry
-    anImage=$(echo ${anItem} | rev | cut -d '/' -f 1|rev)
-
-    echo -e "Processing ${Green}${anItem}${ColorOff}"
-    # check if the image is already exist locally with its full path
-    theImage=$(docker images "${anItem}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
-    # The image already exists locally, do not need to pull
-    if [[ -z "${theImage}" ]]; then
-      # Pulling the image from its defined location)
-      pullok=$(docker pull "${anItem}" 2>/dev/null || true)
-      if [[ -z ${pullok} ]]; then
-        # The repo does not have the image, try from cicd global repo
-        docker pull "${IMAGE_REPOSITORY}/${anImage}"
-        docker tag "${IMAGE_REPOSITORY}/${anImage}" "localhost:5001/${anImage}"
-        docker tag "${IMAGE_REPOSITORY}/${anImage}" "${anItem}"
-      else
-        # Tag the image with localhost
-        docker tag "${anItem}" "localhost:5001/${anImage}"
-      fi
-    else
-      echo -e "   ${Green}Already exists locally, skipping pulling${ColorOff}"
-      # Still tag the image to make it available locally
-      docker tag "${anItem}" "localhost:5001/${anImage}"
-    fi
-    # Now push the iamge to the registry or load to k8s node based on needs
-    if [[ "${TYPE}" == "acs" ]]; then
-      # For acs, these external images need to be pushed to each node to avoid pulling limit issues.
-      # We could choose to not push at all. This list should be reduced to must have external images
-      kind load docker-image -n astra "${anItem}"
-    else
-      docker push "localhost:5001/${anImage}"
-    fi
-  done
-}
-
-function getAllImages() {
-  echo -e "${Green}Calculating image tags based on current commit level...${ColorOff}"
-  for key in "${!ACIMAGES[@]}"; do
-    val="${ACIMAGES[$key]}"
-    comp="${key}"
-    if [[ ! -z "${val}" ]]; then
-      comp="${val}"
-    fi
-    tag=$(getServiceTag ${comp})
-    imagename="${key}:${tag}"
-    echo "   ${imagename}"
-    allimages[$imagename]=''
-  done
-  saveAllImageTags
-}
-
-function pullAstraComponentImage() {
-  imagename=$1
-  imageparts=(${imagename//:/ })
-  name=${imageparts[0]}
-  tag=${imageparts[1]}
-  echo -e "${Green}Pulling Astra Control image ${imagename}${ColorOff}"
-  pullAndTag ${name} ${tag}
-}
-
-function pullACImages() {
-  # repologin="https://${IMAGE_REPOSITORY}/v2/"
-  # response=$(docker login -u ${CREDS_IMAGE_USERNAME} -p ${CREDS_IMAGE_PASSWORD} ${IMAGE_REPOSITORY})
-  loginToDockerHub
-  if [[ "${IMAGENAME}" == "" ]]; then
-    loadAllImageTags
-    size=$(echo ${#allimages[@]})
-    if [ "$size" -lt "1" ]; then
-      getAllImages
-    fi
-    echo -e "${Green}Start pulling Astra images...${ColorOff}"
-    for imagename in "${!allimages[@]}"; do
-      pullAstraComponentImage "${imagename}"
-    done
-  else
-    pullAstraComponentImage "${IMAGENAME}"
-  fi
-}
-
-# pushAstraComponentImage only pushes image to the local
-# image repository.
-function pushAstraComponentImage() {
-  imagename=$1
-  imageparts=(${imagename//:/ })
-  name=${imageparts[0]}
-  tag=${imageparts[1]}
-  echo -e "${Green}Ready to push ${imagename}${ColorOff}"
-  docker push "localhost:5001/${imagename}"  
-}
-
-function pushACImages() {
-  # repologin="https://${IMAGE_REPOSITORY}/v2/"
-  # response=$(docker login -u ${CREDS_IMAGE_USERNAME} -p ${CREDS_IMAGE_PASSWORD} ${IMAGE_REPOSITORY})
-  if [[ "${IMAGENAME}" == "" ]]; then
-    fixcertificateimage
-    size=$(echo ${#allimages[@]})
-    if [ "$size" -lt "1" ]; then
-      getAllImages
-    fi
-    echo -e "${Green}Pushing images...${ColorOff}"
-    for imagename in "${!allimages[@]}"; do
-      pushAstraComponentImage "${imagename}"
-    done
-  else
-    pushAstraComponentImage "${IMAGENAME}"
-  fi
+  version=$(${CURDIR}/cicd/scripts/calculate_service_version.sh ${release_name} --release-versioning false)
+  echo "${version}"
 }
 
 function refreshDeployment() {
@@ -794,13 +535,9 @@ if [[ "${CMD}" == "up" ]]; then
   validateContext
 
   echo ""
-  echo -e "${Green}Process required external images...${ColorOff}"
-  getACExternalImages
-  
-  echo -e "${Green}Process astra images...${ColorOff}"
-  pullACImages
-  echo ""
-  pushACImages
+  echo -e "${Green}Process AC images...${ColorOff}"
+  source "/home/bin/astraimage"
+  SetupACComponentImage
 
   if [[ "${TYPE}" == "acc" ]]; then
     setupTrident
@@ -827,21 +564,19 @@ elif [[ "${CMD}" == "prepare" ]]; then
   validateContext
   echo ""
   # Process external images needed
-  echo -e "${Green}Process required external images...${ColorOff}"
-  getACExternalImages
-  
-  echo -e "${Green}Process astra images...${ColorOff}"
-  pullACImages
   echo ""
-  pushACImages
+  echo -e "${Green}Process AC images...${ColorOff}"
+  source "/home/bin/astraimage"
+  SetupACComponentImage
 
   if [[ "${TYPE}" == "acc" ]]; then
     setupTrident
+  else
+    # echo -e "${Green}Create traefik certificate${ColorOff}"
+    ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
   fi
 
-  # echo -e "${Green}Create traefik certificate${ColorOff}"
-  # ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
-  # echo -e "${Green}Ready to deploy Astra, please run deploy command${ColorOff}"
+  echo -e "${Green}Ready to deploy Astra, please run deploy command${ColorOff}"
 
 elif [[ "${CMD}" == "down" ]]; then
   echo ""
@@ -875,21 +610,13 @@ elif [[ "${CMD}" == "image" ]]; then
   validateContext
   checkInPolaris
   checkEnvironmentVariables
-  if [[ "${IMAGENAME}" == "" ]]; then
-    getACExternalImages
-  fi
-  pullACImages
-  pushACImages
+  echo -e "${Green}Process AC images...${ColorOff}"
+  source "/home/bin/astraimage"
+  SetupACComponentImage
 
 elif [[ "${CMD}" == "pull" ]]; then
-  validateContext
-  checkInPolaris
-  checkEnvironmentVariables
-  if [[ "${IMAGENAME}" == "" ]]; then
-    getACExternalImages
-  fi
-  pullACImages
-  pushACImages
+  source "/home/bin/astraimage"
+  SetupACComponentImage
 
 elif [[ "${CMD}" == "deploy" ]]; then
   checkInPolaris
