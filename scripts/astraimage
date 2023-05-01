@@ -35,7 +35,6 @@ else
     ['influxdb']='' \
     ['k8s.gcr.io/kube-state-metrics/kube-state-metrics']='' \
     ['kube-rbac-proxy']='' \
-    ['kube-rbac-proxy']='' \
     ['nats']='' \
     ['netapp-monitoring']='' \
     ['netappdownloads.jfrog.io/oss-docker/harvest']='' \
@@ -52,7 +51,7 @@ else
     ['theotw/natssync-server']='' \
     ['traefik']='')
 
-  ACIMAGES=(['acc-operator']='' ['activity']='' ['astra-py-k8s']='' ['billing']='' ['bucketservice']='' ['asup']='' ['packages']='' ['license']='' \
+  ACIMAGES=(['activity']='' ['astra-py-k8s']='' ['billing']='' ['bucketservice']='' ['asup']='' ['packages']='' ['license']='' \
     ['cloud-extension']='' ['composite-compute']='' ['composite-volume']='' ['credentials']='' ['cloud-insights-service']='' \
     ['entitlement']='' ['features']='' ['features_upgrade']='features' ['public-metrics']='' ['keycloak-operator']='' \
     ['graphql-server']='' ['hybridauth']='' ['identity']='' ['krakend']='' ['nautilus']='' ['openapi']='' ['polaris-ui']='' \
@@ -200,10 +199,15 @@ function SetupACComponentImage() {
   # Fix the use of the nk in the script for ACS
   if [[ "${TYPE}" == "acs" ]]; then
     doTagNK
+  else
+    imagePullTagPush "kube-rbac-proxy" "v0.13.0" "kube-rbac-proxy" "true"
   fi
 }
 
 function PullTagPushOneACImage() {
+  if [[ "${#EXTImageNameTag[@]}" == 0 ]]; then
+    externalImages
+  fi
   iname=$(echo ${1} | cut -d ':' -f 1)
   itag=$(echo ${1} | cut -d ':' -f 2)
   imagePullTagPush "${iname}" "${itag}" "${iname}" "true"

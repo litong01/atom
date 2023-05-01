@@ -275,13 +275,25 @@ function deployAccounts() {
 
 function deployACC() {
   # Get latest astra version
-  ASTRA_VERSION=$(${CURDIR}/cicd/scripts/get_latest_version_tag.sh --version-only astra)
-  accoptag=$(getServiceTag 'acc-operator')
-  echo -e "${Green}Deploying Astra version ${ASTRA_VERSION}...${ColorOff}"
+  # It seems that the versions of ACC component rely on enterprise-helm-repo. So we do
+  # things based on that repo. It is important for local development, one should built
+  # this container image first using this command
+  #    KUBE_CONTEXT=astra-kind SKIP_KUBE_CONTEXT_CHECK=true make enterprise-helm-repo ENTERPRISE=true
+  # then tag it with localhost:5001/enterprise-helm-repo:<whatever>
+  # what is very important is that the repo versions and code are in sync.
+  source /home/bin/astraimage
+  itag=$(docker images enterprise-helm-repo --format "{{.Tag}}")
+  if [[ -z "${itag}" ]]; then
+    aversion=$(${CURDIR}/cicd/scripts/get_latest_version_tag.sh --version-only astra)
+    itag=$(${CURDIR}/cicd/scripts/increment_build_version.sh --release-versioning false ${aversion})
+    PullTagPushOneACImage "enterprise-helm-repo:${itag}"
+  else
+    docker tag "enterprise-helm-repo:${itag}" "localhost:5001/enterprise-helm-repo:${itag}"
+    docker push "localhost:5001/enterprise-helm-repo:${itag}"
+  fi
 
-  # acc operator pulls helm chart from a local helm chart repo which needs to be setup
-  # using the enterprise-helm-repo image, the tag equals ASTRA_VERSION
-  PullTagPushOneACImage "enterprise-helm-repo:${ASTRA_VERSION}"
+  accoptag=$(getServiceTag 'acc-operator')
+  echo -e "${Green}Deploying Astra version ${itag}...${ColorOff}"
 
   set -
   cd /home/acc
@@ -319,7 +331,7 @@ function deployACC() {
   set +
   # Now run the whole deployment process
   echo -e "${Green}Deploying ACC...${ColorOff}"
-  # ${CURDIR}/acc-operator/astractl/astractl deploy --registry "kind-registry:5001" --timeout 300 --astra-version "${ASTRA_VERSION}" \
+  # ${CURDIR}/acc-operator/astractl/astractl deploy --registry "kind-registry:5001" --timeout 300 --astra-version "${itag}" \
   #   --ingress-type AccTraefik --astra-resources-scalar "Default" --additional-values \
   #   '{"activity":{"replicas":1},"polaris-mongodb":{"mongodb":{"persistence":{"size":"5Gi"},"replicaCount":1,"image":{"registry":"ghcr.io","tag":"5.0.14","repository":"zcube/bitnami-compat/mongodb"}}},"polaris-consul":{"consul":{"server":{"replicas":1,"bootstrapExpect":1,"storage":"2Gi","resources":{"limits":{"memory":"50Mi"}}}}},"keycloak-operator":{"replicaCount":1},"polaris-keycloak":{"replicaCount":1,"mariadb-galera":{"replicaCount":1}},"features":{"replicas":1,"resources":{"requests":{"cpu":"10m","memory":"40Mi"}}},"loki":{"persistence":{"size":"5Gi"},"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"asup":{"persistence":{"size":"5Gi"},"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"nautilus":{"replicaCount":1,"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"polaris-influxdb2":{"persistence":{"size":"5Gi"},"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"traefik":{"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"task-service":{"resources":{"requests":{"cpu":"10m","memory":"10Mi"}}},"nats":{"replicaCount":1},"polaris-vault":{"vault":{"server":{"ha":{"replicas":1},"auditStorage":{"size":"2Gi"}}}},"certificates":{"replicas":1},"credentials":{"replicas":1},"krakend":{"replicas":1},"openapi":{"replicas":1},"vault-controller":{"replicas":1},"cert-manager":{"cert-manager":{"replicaCount":1,"webhook":{"replicaCount":1},"cainjector":{"replicaCount":1}}}}'
   
@@ -327,7 +339,7 @@ function deployACC() {
   kubectl apply --context ${CONTEXT} -n ${accopns} -f astra_control_center_operator_deploy.yaml
 
   # Now fix up the astra version
-  astraVersion="${ASTRA_VERSION}" yq '.spec.astraVersion = env(astraVersion)' -i acc.yaml
+  astraVersion="${itag}" yq '.spec.astraVersion = env(astraVersion)' -i acc.yaml
 
   # Deploy astra control center
   kubectl create --context="${CONTEXT}" namespace ${NAMESPACE} 2>/dev/null || true
@@ -339,7 +351,7 @@ function deployACC() {
   while : ; do
     updateKeycloakOperatorSetting
     res=$(kubectl wait --context "${CONTEXT}" -n ${NAMESPACE} pod \
-      -l "app.kubernetes.io/name=polaris-ui" --for=condition=Ready --timeout=30s 2>/dev/null ||true)
+      -l "app.kubernetes.io/name=traefik" --for=condition=Ready --timeout=30s 2>/dev/null ||true)
     if [[ "${res}" == *"condition met"* ]]; then
       break
     fi
