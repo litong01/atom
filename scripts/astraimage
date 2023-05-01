@@ -13,7 +13,7 @@ if [[ "${TYPE}" == "acs" ]]; then
     ['theotw/httpproxy-server']='' \
     ['theotw/natssync-server']='')
 
-  ACIMAGES=(['activity']='' ['astra-py-k8s']='' ['billing']='' ['bucketservice']='' ['cloud-extension']='' \
+  ACIMAGES=(['activity']='' ['activity_upgrade']='activity' ['astra-py-k8s']='' ['billing']='' ['bucketservice']='' ['cloud-extension']='' \
     ['composite-compute']='' ['composite-volume']='' ['credentials']='' ['entitlement']='' ['features']='' \
     ['features_upgrade']='features' ['graphql-server']='' ['hybridauth']='' ['identity']='' ['krakend']='' \
     ['nautilus']='' ['openapi']='' ['polaris-ui']='' ['support']='' ['support_hourly']='support' \
@@ -51,7 +51,7 @@ else
     ['theotw/natssync-server']='' \
     ['traefik']='')
 
-  ACIMAGES=(['activity']='' ['astra-py-k8s']='' ['billing']='' ['bucketservice']='' ['asup']='' ['packages']='' ['license']='' \
+  ACIMAGES=(['activity']='' ['activity_upgrade']='activity' ['astra-py-k8s']='' ['billing']='' ['bucketservice']='' ['asup']='' ['packages']='' ['license']='' \
     ['cloud-extension']='' ['composite-compute']='' ['composite-volume']='' ['credentials']='' ['cloud-insights-service']='' \
     ['entitlement']='' ['features']='' ['features_upgrade']='features' ['public-metrics']='' ['keycloak-operator']='' \
     ['graphql-server']='' ['hybridauth']='' ['identity']='' ['krakend']='' ['nautilus']='' ['openapi']='' ['polaris-ui']='' \

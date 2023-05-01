@@ -94,8 +94,6 @@ spec:
           memory: 10Mi
     nats:
       replicaCount: 1
-      auth:
-        enabled: true
     polaris-vault:
       vault:
         server:
