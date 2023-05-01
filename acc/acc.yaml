@@ -28,9 +28,9 @@ spec:
           size: 5Gi
         replicaCount: 1
         image:
-          registry: ghcr.io
+          registry: kind-registry:5001
           tag: 5.0.14
-          repository: zcube/bitnami-compat/mongodb
+          repository: mongodb
     polaris-consul:
       consul:
         server:

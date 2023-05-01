@@ -394,7 +394,7 @@ function updateKeycloakOperatorSetting() {
   if [[ "${res}" == *"condition met"* ]]; then
     # It is ready, we need to apply the patch to it now.
     kubectl set env --context "${CONTEXT}" -n "${NAMESPACE}" deployment/keycloak-operator \
-      KCOP_KEYCLOAK_REPLICAS=1 KCOP_KEYCLOAK_DBREPLICAS=1 2>/dev/null
+      KCOP_KEYCLOAK_REPLICAS=1 KCOP_KEYCLOAK_DBREPLICAS=1 >/dev/null 2>&1
   fi
 }
 
@@ -423,7 +423,7 @@ function deployAC() {
     make helminstall DEPLOY_TARGET=cicd NAUTILUS_REPLICAS=1 \
     CLUSTER_ENDPOINT=integration.astra.netapp.io \
     TRAEFIK_ENDPOINT=integration.astra.netapp.io \
-    HELMOVERRIDE='--set mongodb.image.registry=ghcr.io --set mongodb.image.repository=zcube/bitnami-compat/mongodb --set mongodb.image.tag=5.0.14 --set mongodb.replicaCount=1'
+    HELMOVERRIDE='--set mongodb.image.registry=${IMAGE_HOST} --set mongodb.image.repository=mongodb --set mongodb.image.tag=5.0.14 --set mongodb.replicaCount=1'
 
     # For now remove the services/deployments that not needed
     kubectl delete --context ${CONTEXT} -n ${NAMESPACE} deployment natssync-server httpproxy-server hybridauth 2>/dev/null||true

@@ -219,7 +219,13 @@ function PullTagPushOneExtImage() {
   # Pull the image
   docker pull "${1}"
   # Load to astra cluster nodes
-  kind load docker-image -n astra "${1}"
+  # kind load docker-image -n astra "${1}"
+  anImage=$(echo ${1} | rev | cut -d '/' -f 1|rev)
+  imageName=$(echo ${anImage} | cut -d ':' -f 1)
+  imageTag=$(echo ${anImage} | cut -d ':' -f 2)
+  imageFullname=$(echo ${1} | cut -d ':' -f 1)
+  docker tag "${1}" "localhost:5001/${imageName}:${imageTag}"
+  docker push "localhost:5001/${imageName}:${imageTag}"
 }
 
 function doTagNK() {
