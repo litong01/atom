@@ -52,7 +52,7 @@ else
     ['theotw/natssync-server']='' \
     ['traefik']='')
 
-  ACIMAGES=([['acc-operator']='' 'activity']='' ['astra-py-k8s']='' ['billing']='' ['bucketservice']='' ['asup']='' ['packages']='' ['license']='' \
+  ACIMAGES=(['acc-operator']='' ['activity']='' ['astra-py-k8s']='' ['billing']='' ['bucketservice']='' ['asup']='' ['packages']='' ['license']='' \
     ['cloud-extension']='' ['composite-compute']='' ['composite-volume']='' ['credentials']='' ['cloud-insights-service']='' \
     ['entitlement']='' ['features']='' ['features_upgrade']='features' ['public-metrics']='' ['keycloak-operator']='' \
     ['graphql-server']='' ['hybridauth']='' ['identity']='' ['krakend']='' ['nautilus']='' ['openapi']='' ['polaris-ui']='' \
