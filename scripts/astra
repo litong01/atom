@@ -285,13 +285,15 @@ function deployACC() {
   itag=$(docker images enterprise-helm-repo --format "{{.Tag}}")
   if [[ -z "${itag}" ]]; then
     aversion=$(${CURDIR}/cicd/scripts/get_latest_version_tag.sh --version-only astra)
-    itag=$(${CURDIR}/cicd/scripts/increment_build_version.sh --release-versioning false ${aversion})
-    PullTagPushOneACImage "enterprise-helm-repo:${itag}"
+    # itag=$(${CURDIR}/cicd/scripts/increment_build_version.sh --release-versioning false ${aversion})
+    PullTagPushOneACImage "enterprise-helm-repo:${aversion}"
   else
     docker tag "enterprise-helm-repo:${itag}" "localhost:5001/enterprise-helm-repo:${itag}"
     docker push "localhost:5001/enterprise-helm-repo:${itag}"
   fi
 
+  # Certificate falls over always. Use the fixed up certificates for now.
+  fixcertificateimage
   accoptag=$(getServiceTag 'acc-operator')
   echo -e "${Green}Deploying Astra version ${itag}...${ColorOff}"
 
