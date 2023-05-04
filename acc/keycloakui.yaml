@@ -1,0 +1,60 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  annotations:
+    meta.helm.sh/release-name: traefik-ingressroutes
+    meta.helm.sh/release-namespace: pcloud
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: keycloak-prefixstrip
+  namespace: pcloud
+spec:
+  stripPrefix:
+    forceSlash: false
+    prefixes:
+    - /keycloak
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  annotations:
+    meta.helm.sh/release-name: traefik-ingressroutes
+    meta.helm.sh/release-namespace: pcloud
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: keycloak-host-header
+  namespace: pcloud
+spec:
+  headers:
+    customRequestHeaders:
+      Host: polaris-keycloak.pcloud.svc
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  annotations:
+    meta.helm.sh/release-name: traefik-ingressroutes
+    meta.helm.sh/release-namespace: pcloud
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: keycloakroutetls
+  namespace: pcloud
+spec:
+  entryPoints:
+  - web
+  - websecure
+  routes:
+  - kind: Rule
+    match: Host(`integration.astra.netapp.io`) &&  PathPrefix(`/keycloak`)
+    middlewares:
+    - name: secured
+    - name: keycloak-prefixstrip
+    - name: keycloak-host-header
+    services:
+    - name: polaris-keycloak
+      namespace: pcloud
+      passHostHeader: true
+      port: 8080
+  tls:
+    secretName: secure-testing-cert

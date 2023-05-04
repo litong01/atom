@@ -1,0 +1,159 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openldapconfig
+data:
+  users.ldif: |
+    version: 1
+
+    ## Entry 1: dc=example,dc=org
+    dn: dc=example,dc=org
+    dc: example
+    o: "MyExample Inc."
+    objectclass: top
+    objectclass: dcObject
+    objectclass: organization
+
+    ## Entry 2: cn=admint,dc=example,dc=org
+    dn: cn=admint,dc=example,dc=org
+    cn: admint
+    description: LDAP administrator
+    objectclass: simpleSecurityObject
+    objectclass: organizationalRole
+    userpassword: {SSHA}iGmwNRRDcGxmafPklI1kcKivNq8cCb4j
+
+    # Entry 3: ou=groups,dc=example,dc=org
+    dn: ou=groups,dc=example,dc=org
+    objectclass: organizationalUnit
+    objectclass: top
+    ou: groups
+
+    # Entry 4: cn=admin,ou=groups,dc=example,dc=org
+    dn: cn=admin,ou=groups,dc=example,dc=org
+    cn: admin
+    gidnumber: 501
+    memberuid: 1003
+    objectclass: posixGroup
+    objectclass: top
+    userpassword: {SSHA}iGmwNRRDcGxmafPklI1kcKivNq8cCb4j
+
+    # Entry 5: cn=developers,ou=groups,dc=example,dc=org
+    dn: cn=developers,ou=groups,dc=example,dc=org
+    cn: developers
+    gidnumber: 500
+    memberuid: 1000
+    memberuid: 1001
+    memberuid: 1002
+    objectclass: posixGroup
+    objectclass: top
+
+    # Entry 6: ou=users,dc=example,dc=org
+    dn: ou=users,dc=example,dc=org
+    objectclass: organizationalUnit
+    objectclass: top
+    ou: users
+
+    # Entry 7: cn=Bill Gates,ou=users,dc=example,dc=org
+    dn: cn=Bill Gates,ou=users,dc=example,dc=org
+    cn: Bill Gates
+    gidnumber: 500
+    givenname: bill
+    homedirectory: /home/users/bgates
+    objectclass: inetOrgPerson
+    objectclass: posixAccount
+    objectclass: top
+    sn: gates
+    uid: bgates
+    uidnumber: 1000
+    mail: bgates@example.org
+    userpassword: {MD5}ICy5YqxZB1uWSwcVLSNLcA==
+
+    # Entry 8: cn=Ivan Franchin,ou=users,dc=example,dc=org
+    dn: cn=Ivan Franchin,ou=users,dc=example,dc=org
+    cn: Ivan Franchin
+    gidnumber: 501
+    givenname: Ivan
+    homedirectory: /home/users/ifranchin
+    objectclass: inetOrgPerson
+    objectclass: posixAccount
+    objectclass: top
+    sn: Franchin
+    uid: ifranchin
+    uidnumber: 1003
+    mail: ifranchin@example.org
+    userpassword: {MD5}ICy5YqxZB1uWSwcVLSNLcA==
+
+    # Entry 9: cn=Mark Cuban,ou=users,dc=example,dc=org
+    dn: cn=Mark Cuban,ou=users,dc=example,dc=org
+    cn: Mark Cuban
+    gidnumber: 500
+    givenname: Mark
+    homedirectory: /home/users/mcuban
+    objectclass: inetOrgPerson
+    objectclass: posixAccount
+    objectclass: top
+    sn: Cuban
+    uid: mcuban
+    uidnumber: 1002
+    mail: mcuban@example.org
+    userpassword: {MD5}ICy5YqxZB1uWSwcVLSNLcA==
+
+    # Entry 10: cn=Steve Jobs,ou=users,dc=example,dc=org
+    dn: cn=Steve Jobs,ou=users,dc=example,dc=org
+    cn: Steve Jobs
+    gidnumber: 500
+    givenname: Steve
+    homedirectory: /home/users/sjobs
+    objectclass: inetOrgPerson
+    objectclass: posixAccount
+    objectclass: top
+    sn: Jobs
+    uid: sjobs
+    uidnumber: 1001
+    mail: sjobs@example.org
+    userpassword: {MD5}ICy5YqxZB1uWSwcVLSNLcA==
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: openldap
+  name: openldap
+spec:
+  ports:
+  - name: ldap
+    port: 1389
+    protocol: TCP
+    targetPort: 1389
+  selector:
+    app: openldap
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: openldap
+  name: openldap
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openldap
+  template:
+    metadata:
+      labels:
+        app: openldap
+    spec:
+      containers:
+      - image: bitnami/openldap:latest
+        imagePullPolicy: IfNotPresent
+        name: openldap
+        volumeMounts:
+        - name: openldapconfig
+          mountPath: "/ldifs/users.ldif"
+          subPath: users.ldif
+      volumes:
+        - name: openldapconfig
+          configMap:
+            name: openldapconfig          

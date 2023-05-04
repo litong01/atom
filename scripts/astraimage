@@ -152,18 +152,27 @@ function imagePullTagPush() {
   ifullname=$3  # the image fullname
   isexternal=$4  # is external or ac image
 
-  echo -e "   Processing ${Green}${ifullname}:${itag}${ColorOff}..."  
-  anImage=$(docker images "localhost:5001/${iname}:${itag}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
-  # The image already exists locally, do not need to pull
+  echo -e "   Processing ${Green}${ifullname}:${itag}${ColorOff}..."
+  # We first check the local image without repository, it may be just built locally, we always use
+  # that, we are a development tool after all.
+
+  anImage=$(docker images "${iname}:${itag}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
   if [[ -z "${anImage}" ]]; then
-    docker pull "${IMAGE_REPOSITORY}/${iname}:${itag}"
-    docker tag "${IMAGE_REPOSITORY}/${iname}:${itag}" "localhost:5001/${iname}:${itag}"
-    if [[ "${TYPE}" == "acs" ]]; then
-      # If this is ACS deployment, we need to tag the image to be the original repo
-      docker tag "${IMAGE_REPOSITORY}/${iname}:${itag}" "${ifullname}:${itag}"
+    # no local image without repository, now check if has been downloaded before and tagged as localhost:5001
+    anImage=$(docker images "localhost:5001/${iname}:${itag}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
+    # The image already exists locally, do not need to pull
+    if [[ -z "${anImage}" ]]; then
+      docker pull "${IMAGE_REPOSITORY}/${iname}:${itag}"
+      docker tag "${IMAGE_REPOSITORY}/${iname}:${itag}" "localhost:5001/${iname}:${itag}"
+      if [[ "${TYPE}" == "acs" ]]; then
+        # If this is ACS deployment, we need to tag the image to be the original repo
+        docker tag "${IMAGE_REPOSITORY}/${iname}:${itag}" "${ifullname}:${itag}"
+      fi
+    else
+      echo -e "   ${Green}Already exists locally, skip pulling${ColorOff}"
     fi
   else
-    echo -e "   ${Green}Already exists locally, skip pulling${ColorOff}"
+    docker tag "${iname}:${itag}" "localhost:5001/${iname}:${itag}"
   fi
 
   if [[ "${TYPE}" == "acc" ]] || [[ "${isexternal}" == "false" ]]; then

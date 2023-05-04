@@ -45,6 +45,7 @@ gidnumber: 501
 memberuid: 1003
 objectclass: posixGroup
 objectclass: top
+userpassword: {SSHA}iGmwNRRDcGxmafPklI1kcKivNq8cCb4j
 
 # Entry 5: cn=developers,ou=groups,dc=example,dc=org
 dn: cn=developers,ou=groups,dc=example,dc=org
@@ -74,6 +75,7 @@ objectclass: top
 sn: gates
 uid: bgates
 uidnumber: 1000
+mail: bgates@example.org
 userpassword: {MD5}ICy5YqxZB1uWSwcVLSNLcA==
 
 # Entry 8: cn=Ivan Franchin,ou=users,dc=example,dc=org
@@ -88,6 +90,7 @@ objectclass: top
 sn: Franchin
 uid: ifranchin
 uidnumber: 1003
+mail: ifranchin@example.org
 userpassword: {MD5}ICy5YqxZB1uWSwcVLSNLcA==
 
 # Entry 9: cn=Mark Cuban,ou=users,dc=example,dc=org
@@ -102,6 +105,7 @@ objectclass: top
 sn: Cuban
 uid: mcuban
 uidnumber: 1002
+mail: mcuban@example.org
 userpassword: {MD5}ICy5YqxZB1uWSwcVLSNLcA==
 
 # Entry 10: cn=Steve Jobs,ou=users,dc=example,dc=org
@@ -116,6 +120,7 @@ objectclass: top
 sn: Jobs
 uid: sjobs
 uidnumber: 1001
+mail: sjobs@example.org
 userpassword: {MD5}ICy5YqxZB1uWSwcVLSNLcA==
 EOF
 

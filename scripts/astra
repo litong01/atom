@@ -60,7 +60,7 @@ function printHelp() {
 
 function validateCMD() {
   cmd=$1
-  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "pull" "refresh" "make" "update" "k8stool" "trident")
+  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "pull" "refresh" "make" "update" "k8stool" "trident" "keycloakui")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -273,6 +273,19 @@ function deployAccounts() {
   kill_port_forward krakend
 }
 
+
+function enableKeycloakUI() {
+  cd /home/acc
+  # Deploy traefik middlewares
+  kubectl apply --context ${CONTEXT} -n ${NAMESPACE} -f keycloakui.yaml
+
+  # Now set the statefulset polaris-keycloak with new environment, this will cause
+  # polaris-keycloak to be restarted, it will take awhile.
+  kubectl set env --context ${CONTEXT} -n ${NAMESPACE} statefulset/polaris-keycloak \
+  KC_HOSTNAME_URL=https://${CLUSTER_ENDPOINT}/keycloak \
+  KC_HOSTNAME_ADMIN_URL=https://${CLUSTER_ENDPOINT}/keycloak
+}
+
 function deployACC() {
   # Get latest astra version
   # It seems that the versions of ACC component rely on enterprise-helm-repo. So we do
@@ -282,15 +295,8 @@ function deployACC() {
   # then tag it with localhost:5001/enterprise-helm-repo:<whatever>
   # what is very important is that the repo versions and code are in sync.
   source /home/bin/astraimage
-  itag=$(docker images enterprise-helm-repo --format "{{.Tag}}")
-  if [[ -z "${itag}" ]]; then
-    aversion=$(${CURDIR}/cicd/scripts/get_latest_version_tag.sh --version-only astra)
-    # itag=$(${CURDIR}/cicd/scripts/increment_build_version.sh --release-versioning false ${aversion})
-    PullTagPushOneACImage "enterprise-helm-repo:${aversion}"
-  else
-    docker tag "enterprise-helm-repo:${itag}" "localhost:5001/enterprise-helm-repo:${itag}"
-    docker push "localhost:5001/enterprise-helm-repo:${itag}"
-  fi
+  aversion=$(${CURDIR}/cicd/scripts/get_latest_version_tag.sh --version-only astra)
+  PullTagPushOneACImage "enterprise-helm-repo:${aversion}"
 
   # Certificate falls over always. Use the fixed up certificates for now.
   fixcertificateimage
@@ -396,7 +402,9 @@ function updateKeycloakOperatorSetting() {
   if [[ "${res}" == *"condition met"* ]]; then
     # It is ready, we need to apply the patch to it now.
     kubectl set env --context "${CONTEXT}" -n "${NAMESPACE}" deployment/keycloak-operator \
-      KCOP_KEYCLOAK_REPLICAS=1 KCOP_KEYCLOAK_DBREPLICAS=1 >/dev/null 2>&1
+      KCOP_KEYCLOAK_REPLICAS=1 KCOP_KEYCLOAK_DBREPLICAS=1 \
+      KCOP_KEYCLOAK_INITIALADMINUSERNAME=admin KCOP_KEYCLOAK_INITIALADMINPASSWORD=admin \
+      KCOP_KEYCLOAK_KEEPINITIALADMIN="true" >/dev/null 2>&1
   fi
 }
 
@@ -658,6 +666,11 @@ elif [[ "${CMD}" == "trident" ]]; then
 elif [[ "${CMD}" == "update" ]]; then
   checkEnvironmentVariables
   doADTUpdate
+
+elif [[ "${CMD}" == "keycloakui" ]]; then
+  checkEnvironmentVariables
+  validateContext
+  enableKeycloakUI
 
 elif [[ "${CMD}" == "make" ]]; then
   loginToDockerHub
