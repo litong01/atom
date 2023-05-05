@@ -237,8 +237,10 @@ ldapsearch -x -D "cn=admin,dc=example,dc=org" -w adminpassword \
 ldapsearch -x -D "cn=admin,dc=example,dc=org" -w adminpassword \
   -H ldap://localhost:1389 -b "ou=groups,dc=example,dc=org" -s sub '(cn=*)'
 
+# this is the default admin user with default password
 ldapsearch -x -D "cn=admin,dc=example,dc=org" -w adminpassword \
   -H ldap://localhost:1389 -b "dc=example,dc=org" -s sub '(cn=admin*)'
 
-ldapsearch -x -D "cn=admin,dc=example,dc=org" -w adminpassword \
+# this is the admin user with set password
+ldapsearch -x -D "cn=admin,ou=groups,dc=example,dc=org" -w password \
   -H ldap://localhost:1389 -b "dc=example,dc=org" -s sub '(cn=Steve*)'
