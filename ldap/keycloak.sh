@@ -1,4 +1,84 @@
 #!/bin/bash
+
+cat << EOF > /tmp/inetorgperson.ldif
+# InetOrgPerson (RFC2798)
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2022 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+#
+# InetOrgPerson (RFC2798)
+#
+# Depends upon
+#   Definition of an X.500 Attribute Type and an Object Class to Hold
+#   Uniform Resource Identifiers (URIs) [RFC2079]
+#	(core.ldif)
+#
+#   A Summary of the X.500(96) User Schema for use with LDAPv3 [RFC2256]
+#	(core.ldif)
+#
+#   The COSINE and Internet X.500 Schema [RFC1274] (cosine.ldif)
+#
+# This file was automatically generated from inetorgperson.schema; see
+# that file for complete references.
+#
+dn: cn=inetorgperson,cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: inetorgperson
+olcAttributeTypes: ( 2.16.840.1.113730.3.1.1 NAME 'carLicense' DESC 'RFC279
+ 8: vehicle license or registration plate' EQUALITY caseIgnoreMatch SUBSTR cas
+ eIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+olcAttributeTypes: ( 2.16.840.1.113730.3.1.2 NAME 'departmentNumber' DESC '
+ RFC2798: identifies a department within an organization' EQUALITY caseIgnoreM
+ atch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+olcAttributeTypes: ( 2.16.840.1.113730.3.1.241 NAME 'displayName' DESC 'RFC
+ 2798: preferred name to be used when displaying entries' EQUALITY caseIgnoreM
+ atch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SI
+ NGLE-VALUE )
+olcAttributeTypes: ( 2.16.840.1.113730.3.1.3 NAME 'employeeNumber' DESC 'RF
+ C2798: numerically identifies an employee within an organization' EQUALITY ca
+ seIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.12
+ 1.1.15 SINGLE-VALUE )
+olcAttributeTypes: ( 2.16.840.1.113730.3.1.4 NAME 'employeeType' DESC 'RFC2
+ 798: type of employment for a person' EQUALITY caseIgnoreMatch SUBSTR caseIgn
+ oreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+olcAttributeTypes: ( 0.9.2342.19200300.100.1.60 NAME 'jpegPhoto' DESC 'RFC2
+ 798: a JPEG image' SYNTAX 1.3.6.1.4.1.1466.115.121.1.28 )
+olcAttributeTypes: ( 2.16.840.1.113730.3.1.39 NAME 'preferredLanguage' DESC
+ 'RFC2798: preferred written or spoken language for a person' EQUALITY caseIg
+ noreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.
+ 15 SINGLE-VALUE )
+olcAttributeTypes: ( 2.16.840.1.113730.3.1.40 NAME 'userSMIMECertificate' D
+ ESC 'RFC2798: PKCS#7 SignedData used to support S/MIME' SYNTAX 1.3.6.1.4.1.14
+ 66.115.121.1.5 )
+olcAttributeTypes: ( 2.16.840.1.113730.3.1.216 NAME 'userPKCS12' DESC 'RFC2
+ 798: personal identity information, a PKCS #12 PFX' SYNTAX 1.3.6.1.4.1.1466.1
+ 15.121.1.5 )
+olcAttributeTypes: (1.2.840.113556.1.4.656
+  NAME ( 'userPrincipalName' )
+  DESC 'RFC822: user principal name'
+  EQUALITY caseIgnoreIA5Match
+  SUBSTR caseIgnoreIA5SubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{128} )
+olcObjectClasses: ( 2.16.840.1.113730.3.2.2 NAME 'inetOrgPerson' DESC 'RFC2
+ 798: Internet Organizational Person' SUP organizationalPerson STRUCTURAL MAY
+ ( audio $ businessCategory $ carLicense $ departmentNumber $ displayName $ em
+ ployeeNumber $ employeeType $ givenName $ homePhone $ homePostalAddress $ ini
+ tials $ jpegPhoto $ labeledURI $ mail $ manager $ mobile $ o $ pager $ photo
+ $ roomNumber $ secretary $ uid $ userCertificate $ x500uniqueIdentifier $ pre
+ ferredLanguage $ userSMIMECertificate $ userPKCS12 $ userPrincipalName) )
+EOF
+
+
 # This script sets up keycloak and ldap and also add ldap schema and users to ldap
 # At the end, it added command to verify ldap entry.
 
@@ -76,6 +156,7 @@ sn: gates
 uid: bgates
 uidnumber: 1000
 mail: bgates@example.org
+userPrincipalName: bgates@example.org
 userpassword: {MD5}ICy5YqxZB1uWSwcVLSNLcA==
 
 # Entry 8: cn=Ivan Franchin,ou=users,dc=example,dc=org
@@ -91,6 +172,7 @@ sn: Franchin
 uid: ifranchin
 uidnumber: 1003
 mail: ifranchin@example.org
+userPrincipalName: ifranchin@example.org
 userpassword: {MD5}ICy5YqxZB1uWSwcVLSNLcA==
 
 # Entry 9: cn=Mark Cuban,ou=users,dc=example,dc=org
@@ -106,6 +188,7 @@ sn: Cuban
 uid: mcuban
 uidnumber: 1002
 mail: mcuban@example.org
+userPrincipalName: mcuban@example.org
 userpassword: {MD5}ICy5YqxZB1uWSwcVLSNLcA==
 
 # Entry 10: cn=Steve Jobs,ou=users,dc=example,dc=org
@@ -121,6 +204,7 @@ sn: Jobs
 uid: sjobs
 uidnumber: 1001
 mail: sjobs@example.org
+userPrincipalName: sjobs@example.org
 userpassword: {MD5}ICy5YqxZB1uWSwcVLSNLcA==
 EOF
 
@@ -133,9 +217,12 @@ docker run -d --rm -p 8080:8080 --name keycloak \
 # BIND_DN and BIND_PASSWORD seem to be hard coded.
 #  -e LDAP_BIND_DN="cn=admin,dc=example,dc=org" \
 #  -e LDAP_BIND_PASSWORD=adminpassword \
+#  -v /tmp/schema.ldif:/schemas/schema.ldif \
+#   -v /tmp/newldif:"/bitnami/openldap/slapd.d/cn=config/cn=schema/'cn={1}cosine.ldif'" \
 
-docker run -d --name openldap \
+docker run -d --name openldap -e LDAP_LOGLEVEL=4 \
   -v /tmp/users.ldif:/ldifs/users.ldif \
+  -v /tmp/inetorgperson.ldif:/opt/bitnami/openldap/etc/schema/inetorgperson.ldif \
   bitnami/openldap:latest
 
 exit 0
@@ -155,3 +242,6 @@ ldapsearch -x -D "cn=admin,dc=example,dc=org" -w adminpassword \
 
 ldapsearch -x -D "cn=admin,dc=example,dc=org" -w adminpassword \
   -H ldap://localhost:1389 -b "dc=example,dc=org" -s sub '(cn=admin*)'
+
+ldapsearch -x -D "cn=admin,dc=example,dc=org" -w adminpassword \
+  -H ldap://localhost:1389 -b "dc=example,dc=org" -s sub '(cn=Steve*)'
