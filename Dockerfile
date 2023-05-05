@@ -11,6 +11,7 @@ COPY ./scripts/tridentctl /home/bin
 COPY ./addon /home/addon
 COPY ./trident /home/trident
 COPY ./acc /home/acc
+COPY ./ldap /home/ldap
 RUN mkdir -p /home/polaris
 ENV PATH $PATH:/home/bin
 ENV HOME=/home

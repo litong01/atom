@@ -60,7 +60,8 @@ function printHelp() {
 
 function validateCMD() {
   cmd=$1
-  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "pull" "refresh" "make" "update" "k8stool" "trident" "keycloakui")
+  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "pull" "refresh" "make" \
+    "update" "k8stool" "trident" "keycloakui" "openldap")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -273,6 +274,11 @@ function deployAccounts() {
   kill_port_forward krakend
 }
 
+function enableOpenLDAP() {
+  cd /home/ldap
+  # Deploy traefik middlewares
+  kubectl apply --context ${CONTEXT} -n ${NAMESPACE} -f openldap.yaml
+}
 
 function enableKeycloakUI() {
   cd /home/acc
@@ -671,6 +677,11 @@ elif [[ "${CMD}" == "keycloakui" ]]; then
   checkEnvironmentVariables
   validateContext
   enableKeycloakUI
+
+elif [[ "${CMD}" == "openldap" ]]; then
+  checkEnvironmentVariables
+  validateContext
+  enableOpenLDAP
 
 elif [[ "${CMD}" == "make" ]]; then
   loginToDockerHub
