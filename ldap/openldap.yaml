@@ -4,6 +4,12 @@ kind: ConfigMap
 metadata:
   name: openldapconfig
 data:
+  ldap.conf |
+    #
+    # LDAP Defaults
+    # 
+    # ldapAuth.dnResolution.searchFilter = (|(uid=%u)(mail=%u)(userPrincipalName=%u))
+    ldapAuth.dnResolution.searchFilter = (|(uid=%u)(userPrincipalName=%u))
   inetorgperson.ldif: |
     dn: cn=inetorgperson,cn=schema,cn=config
     objectClass: olcSchemaConfig
@@ -219,6 +225,9 @@ spec:
         - name: openldapconfig
           mountPath: "/opt/bitnami/openldap/etc/schema/inetorgperson.ldif"
           subPath: inetorgperson.ldif
+        - name: openldapconfig
+          mountPath: "/opt/bitnami/openldap/etc/ldap.conf"
+          subPath: ldap.conf
       volumes:
         - name: openldapconfig
           configMap:

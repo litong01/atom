@@ -1,5 +1,24 @@
 #!/bin/bash
 
+cat << EOF > /tmp/ldap.conf
+#
+# LDAP Defaults
+#
+
+# See ldap.conf(5) for details
+# This file should be world readable but not world writable.
+
+#BASE	dc=example,dc=com
+#URI	ldap://ldap.example.com ldap://ldap-provider.example.com:666
+
+#SIZELIMIT	12
+#TIMELIMIT	15
+#DEREF		never
+
+# ldapAuth.dnResolution.searchFilter = (|(uid=%u)(mail=%u)(userPrincipalName=%u))
+ldapAuth.dnResolution.searchFilter = (|(uid=%u)(userPrincipalName=%u))
+EOF
+
 cat << EOF > /tmp/inetorgperson.ldif
 # InetOrgPerson (RFC2798)
 # $OpenLDAP$
@@ -220,6 +239,7 @@ docker run -d --rm -p 8080:8080 --name keycloak \
 docker run -d --name openldap -e LDAP_LOGLEVEL=4 \
   -v /tmp/users.ldif:/ldifs/users.ldif \
   -v /tmp/inetorgperson.ldif:/opt/bitnami/openldap/etc/schema/inetorgperson.ldif \
+  -v /tmp/ldap.conf:/opt/bitnami/openldap/etc/ldap.conf \
   bitnami/openldap:latest
 
 exit 0
