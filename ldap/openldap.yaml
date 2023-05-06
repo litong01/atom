@@ -4,7 +4,7 @@ kind: ConfigMap
 metadata:
   name: openldapconfig
 data:
-  ldap.conf |
+  ldap.conf: |
     #
     # LDAP Defaults
     # 
