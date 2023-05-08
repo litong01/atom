@@ -9,7 +9,7 @@ data:
     # LDAP Defaults
     # 
     # ldapAuth.dnResolution.searchFilter = (|(uid=%u)(mail=%u)(userPrincipalName=%u))
-    ldapAuth.dnResolution.searchFilter = (|(uid=%u)(userPrincipalName=%u))
+    ldapAuth.dnResolution.searchFilter = (|(uid=%u)(userPrincipalName=%u)(mail=%u))
   inetorgperson.ldif: |
     dn: cn=inetorgperson,cn=schema,cn=config
     objectClass: olcSchemaConfig
@@ -130,7 +130,7 @@ data:
     sn: gates
     uid: bgates
     uidnumber: 1000
-    mail: bgates@example.org
+    mail: bgates1@example.org
     userPrincipalName: bgates@example.org
     userpassword: {MD5}X03MO1qnZdYdgyfeuILPmQ==
 
@@ -146,7 +146,7 @@ data:
     sn: Franchin
     uid: ifranchin
     uidnumber: 1003
-    mail: ifranchin@example.org
+    mail: ifranchin1@example.org
     userPrincipalName: ifranchin@example.org
     userpassword: {MD5}X03MO1qnZdYdgyfeuILPmQ==
 
@@ -162,7 +162,7 @@ data:
     sn: Cuban
     uid: mcuban
     uidnumber: 1002
-    mail: mcuban@example.org
+    mail: mcuban1@example.org
     userPrincipalName: mcuban@example.org
     userpassword: {MD5}X03MO1qnZdYdgyfeuILPmQ==
 
@@ -178,7 +178,7 @@ data:
     sn: Jobs
     uid: sjobs
     uidnumber: 1001
-    mail: sjobs@example.org
+    mail: sjobs1@example.org
     userPrincipalName: sjobs@example.org
     userpassword: {MD5}X03MO1qnZdYdgyfeuILPmQ==
 
