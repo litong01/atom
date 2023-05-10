@@ -61,7 +61,7 @@ function printHelp() {
 function validateCMD() {
   cmd=$1
   allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "pull" "refresh" "make" \
-    "update" "k8stool" "trident" "keycloakui" "openldap")
+    "update" "k8stool" "trident" "keycloakui" "openldap" "sambaad")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -276,8 +276,12 @@ function deployAccounts() {
 
 function enableOpenLDAP() {
   cd /home/ldap
-  # Deploy traefik middlewares
   kubectl apply --context ${CONTEXT} -n ${NAMESPACE} -f openldap.yaml
+}
+
+function enableSambaAD() {
+  cd /home/ldap
+  kubectl apply --context ${CONTEXT} -n ${NAMESPACE} -f sambaad.yaml
 }
 
 function enableKeycloakUI() {
@@ -682,6 +686,11 @@ elif [[ "${CMD}" == "openldap" ]]; then
   checkEnvironmentVariables
   validateContext
   enableOpenLDAP
+
+elif [[ "${CMD}" == "sambaad" ]]; then
+  checkEnvironmentVariables
+  validateContext
+  enableSambaAD
 
 elif [[ "${CMD}" == "make" ]]; then
   loginToDockerHub

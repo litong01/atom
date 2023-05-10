@@ -264,3 +264,7 @@ ldapsearch -x -D "cn=admin,dc=example,dc=org" -w adminpassword \
 # this is the admin user with set password
 ldapsearch -x -D "cn=admin,ou=groups,dc=example,dc=org" -w password \
   -H ldap://localhost:1389 -b "dc=example,dc=org" -s sub '(cn=Steve*)'
+
+samba-tool user create user3 --given-name John --surname Doe --mail-address johndoe@netapp.com --random-password
+
+samba-tool user create user2 --given-name tong --surname li --mail-address tli@netapp.com
