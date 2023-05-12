@@ -710,9 +710,9 @@ spec:
             - name: ACCOP_LOG_LEVEL
               value: "1"
             - name: ACCOP_HELM_INSTALLTIMEOUT
-              value: 5m
+              value: 2m
             - name: ACCOP_HELM_UPGRADETIMEOUT
-              value: 5m
+              value: 2m
             - name: ACCOP_HELM_GETCHARTRETRYCOUNT
               value: "3"
           image: TOBEREPLACED/acc-operator:167-integration
