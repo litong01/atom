@@ -446,7 +446,16 @@ function deployAC() {
     echo -e "${Green}Ready to deploy Astra${ColorOff}"
 
     KUBE_CONTEXT=${CONTEXT} SKIP_KUBE_CONTEXT_CHECK=true IMAGE_HOST=${IMAGE_HOST} \
-    make helminstall DEPLOY_TARGET=cicd NAUTILUS_REPLICAS=1 \
+    make charts DEPLOY_TARGET=cicd NAUTILUS_REPLICAS=1 \
+    CLUSTER_ENDPOINT=integration.astra.netapp.io \
+    TRAEFIK_ENDPOINT=integration.astra.netapp.io \
+    HELMOVERRIDE='--set mongodb.image.registry=${IMAGE_HOST} --set mongodb.image.repository=mongodb --set mongodb.image.tag=5.0.14 --set mongodb.replicaCount=1'
+
+    # Here we can change any attribute in values.yaml file to make the deployment whatever we want
+    yq e '.nats.replicaCount = 1' -i ${CURDIR}/build/acs_charts/values.yaml
+
+    KUBE_CONTEXT=${CONTEXT} SKIP_KUBE_CONTEXT_CHECK=true IMAGE_HOST=${IMAGE_HOST} \
+    make deploy DEPLOY_TARGET=cicd NAUTILUS_REPLICAS=1 \
     CLUSTER_ENDPOINT=integration.astra.netapp.io \
     TRAEFIK_ENDPOINT=integration.astra.netapp.io \
     HELMOVERRIDE='--set mongodb.image.registry=${IMAGE_HOST} --set mongodb.image.repository=mongodb --set mongodb.image.tag=5.0.14 --set mongodb.replicaCount=1'
