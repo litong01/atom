@@ -178,6 +178,12 @@ function imagePullTagPush() {
   if [[ "${TYPE}" == "acc" ]] || [[ "${isexternal}" == "false" ]]; then
     docker push "localhost:5001/${iname}:${itag}"
   elif [[ "${TYPE}" == "acs" ]]; then
+    # It is possible that the image was pulled from astra image repo, the actual full named image may have not be
+    # tagged. so we check that as well.
+    anImage=$(docker images "${ifullname}:${itag}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
+    if [[ -z "${anImage}" ]]; then
+      docker tag "localhost:5001/${iname}:${itag}" "${ifullname}:${itag}"
+    fi
     kind load docker-image -n astra "${ifullname}:${itag}"
   else
     echo "The deployment type can only to be either acc or acs"

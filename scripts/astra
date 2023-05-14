@@ -396,12 +396,18 @@ function deployACC() {
 }
   
 function fixcertificateimage() {
-  # this method pulls the certificate image I fixed and use it for development
+  # this method pulls the certificate and acc-operator image that I fixed, these measures are strictly done for development
   echo $GITHUB_TOKEN | docker login -u ${GITHUB_ID} --password-stdin ghcr.io >/dev/null 2>&1
   docker pull ghcr.io/netapp-polaris/polaris/astra/certificates:astradt
   tag=$(getServiceTag certificates)
   docker tag ghcr.io/netapp-polaris/polaris/astra/certificates:astradt "certificates:${tag}"
   docker tag ghcr.io/netapp-polaris/polaris/astra/certificates:astradt "localhost:5001/certificates:${tag}"
+
+  docker pull ghcr.io/netapp-polaris/polaris/astra/acc-operator:astradt
+  tag=$(getServiceTag acc-operator)
+  docker tag ghcr.io/netapp-polaris/polaris/astra/acc-operator:astradt "acc-operator:${tag}"
+  docker tag ghcr.io/netapp-polaris/polaris/astra/acc-operator:astradt "localhost:5001/acc-operator:${tag}"
+
 }
 
 function updateKeycloakOperatorSetting() {
