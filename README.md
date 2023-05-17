@@ -1,11 +1,12 @@
 # Astra developer tool
-Astra developer tool(ADT) is to setup Astra Control Services(ACS) on OS X, WSL, Windows and Linux environment for development and testing.
+Astra developer tool(ADT) is to setup Astra Control Services(ACS) or Astra Control Center on OS X, WSL, Windows and Linux environment for development and testing.
 
 ## One time environment setup
 
    * Pull Astra [polaris](https://github.com/NetApp-Polaris/polaris) source code if you have not.
    * Set up environment variables. Use this [example](myenv.sh) script to create your own and save it in a secure place so that you can easily run `source myenv.sh` when you need to.
    * Ensure `/etc/hosts` file has entry `127.0.0.1 integration.astra.netapp.io`
+   * Pulling AC images will require netapp intranet connection
 
 ## Get Astra developer tool
 
@@ -15,41 +16,35 @@ Download [astra](./astra) file, name it `astra` and `chmod +x astra`. It is best
 ### For Windows system
 Download [astra.cmd](./astra.cmd) file, name it `astra.cmd`. It is best to move `astra.cmd` to a directory in your %PATH% so that you do not have to refer its location when running it.
 
-## One-step ACS deployment
+## One-step AC deployment
 All the command should run from your polaris root directory
 
-1. ### Create k8s cluster and stand up ACS
+1. ### Create k8s cluster and stand up Astra Control
 ```
-   astra up
+   astra up -t acs   # setup ACS
+   astra up -t acc   # setup ACC, when -t is not used, default to acc
 ```
-2. ### Access ACS at [https://integration.astra.netapp.io/](https://integration.astra.netapp.io/)
-3. ### Shutdown ACS and remove k8s cluster
+2. ### Access ACS or ACC at [https://integration.astra.netapp.io/](https://integration.astra.netapp.io/)
+3. ### Shutdown AC and remove k8s cluster
 ```
    astra clean
 ```
 
 ## Multi-step ACS deployment
-1. ### Pull all Astra images
+1. ### Setup Astra images
 ```
-   astra pull
+   astra image
 ```
 2. ### Create k8s cluster and image repository for Astra deployment
 ```
    astra prepare
 ```
-3. ### Install ACS
+3. ### Install ACS or ACC
 ```
-   astra deploy
+   astra deploy -t acs
+   astra deploy -t acc
 ```
-Note: This step will deploy traefik first, a proxy, then all other ACS components. You may also choose to use the fine grained tasks to deploy ACS components step by step, so that you can verify each step after it is done. If any of the steps fails, you can re-run the failed step like below.
-```
-   astra deploy -a traefik   # traefik and proxy
-   astra deploy -a main      # all Astra components except traefik
-   astra deploy -a dash      # astra product grafana/prometheus dashboard
-   astra deploy -a service   # deploy astra service account
-   astra deploy -a user      # create astra accounts, users, subscription
-```
-4. ### Access ACS using the following URLs
+4. ### Access ACS or ACC using the following URLs
 
     * ACS dashboard at [https://integration.astra.netapp.io/](https://integration.astra.netapp.io/)
   
@@ -80,14 +75,6 @@ environment variables were set as [described above](#one-time-environment-setup)
   astra make docker-identity
 ```
 
-- Pull all necessary images:
-```
-  astra pull
-```
-- Pull a specific image:
-```
-  astra pull -i identity:xxx-integration
-```
 - Push or load local images to k8s cluster image repo:
 ```
   astra image

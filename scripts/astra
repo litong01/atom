@@ -306,8 +306,14 @@ function deployACC() {
   # what is very important is that the repo versions and code are in sync.
   source /home/bin/astraimage
   aversion=$(${CURDIR}/cicd/scripts/get_latest_version_tag.sh --version-only astra)
-  PullTagPushOneACImage "enterprise-helm-repo:${aversion}"
-
+  # Here we try the next version in the case of we are at a commit which is newer
+  nextversion=$(${CURDIR}/cicd/scripts/increment_build_version.sh $aversion)
+  anImage=$(docker images "enterprise-helm-repo:${nextversion}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
+  if [[ -z "$anImage" ]]; then
+    PullTagPushOneACImage "enterprise-helm-repo:${aversion}"
+  else
+    PullTagPushOneACImage "enterprise-helm-repo:${nextversion}"
+  fi
   # Certificate falls over always. Use the fixed up certificates for now.
   fixcertificateimage
   accoptag=$(getServiceTag 'acc-operator')

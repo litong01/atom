@@ -5,6 +5,7 @@ export SKIP_KUBE_CONTEXT_CHECK=true
 export VAULT_ADDR="http://vault.openenglab.netapp.com"
 export GITHUB_TOKEN="Your github token"
 export GITHUB_ID="Your github ID"
+export GITHUB_USERNAME=${GITHUB_ID}
 export DEPLOY_TYPE=dev
 
 export CREDS_AUTH_CLIENT_ID="auth_client_id from vault"
