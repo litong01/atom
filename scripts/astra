@@ -34,6 +34,7 @@ function printHelp() {
   echo "     refresh  - restart a deployment and its image"
   echo "     make     - run polaris make command"
   echo "     k8stool  - run k8stool command with parameters"
+  echo "     whelp    - run whelp tests"
   echo ""
   echo -e "Product type, valid values are ACC or ACS"
   echo "     -t|--type  - Astra product type. valid options are acc and acs, default is acs"
@@ -61,7 +62,7 @@ function printHelp() {
 function validateCMD() {
   cmd=$1
   allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "pull" "refresh" "make" \
-    "update" "k8stool" "trident" "keycloakui" "openldap" "sambaad")
+    "update" "k8stool" "trident" "keycloakui" "openldap" "sambaad" "whelp")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -91,7 +92,9 @@ REST="$@"
 validateCMD "${CMD}"
 
 # We will only handle command parameters if command was not make and not k8stool
-if [[ "${CMD}" != "make" ]] && [[ "${CMD}" != "k8stool" ]]; then
+if [[ "${CMD}" == "make" || "${CMD}" == "k8stool" || "${CMD}" == "whelp" ]]; then
+  echo "Skip parameter parsing..."
+else
   # Handling parameters
   while [[ $# -gt 0 ]]; do
     optkey="$1"
@@ -529,6 +532,70 @@ function refreshDeployment() {
 }
 
 
+function doWhelp() {
+
+  aversion=$(${CURDIR}/cicd/scripts/get_latest_version_tag.sh --version-only astra)
+  # Here we try the next version in the case of we are at a commit which is newer
+  nextversion=$(${CURDIR}/cicd/scripts/increment_build_version.sh $aversion)
+  anImage=$(docker images "enterprise-helm-repo:${nextversion}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
+  if [[ ! -z "$anImage" ]]; then
+    aversion="${nextversion}"
+  fi
+
+  REALROOT=$(docker inspect astra | jq '.[0].Mounts | .[] | select(.Destination == "/home/polaris").Source')
+  REALROOT="${REALROOT%\"}"; REALROOT="${REALROOT#\"}"
+
+  KUBEDIR=$(docker inspect astra | jq '.[0].Mounts | .[] | select(.Destination == "/home/.kube").Source')
+  KUBEDIR="${KUBEDIR%\"}"; KUBEDIR="${KUBEDIR#\"}"
+
+  whelpimage=$(docker images --format "{{ .Repository}}:{{.Tag}}" | grep whelp-dependencies)
+  if [[ -z "${whelpimage}" ]]; then
+    echo -e "${Red}Cannot find whelp image, run make build to create the image first${ColorOff}"
+    exit -1
+  fi
+
+  echo "The root directory: ${REALROOT}"
+  echo "The kubedir: ${KUBEDIR}"
+  echo "Whelp image: ${whelpimage}"
+
+  docker run --platform linux/amd64 --network host --rm \
+			-e HOST_MACHINE_NAME=tli-mac-0 \
+			-e GITHUB_TOKEN=${GITHUB_TOKEN} \
+			-e KUBECONFIG=/kube/config \
+			-v ${KUBEDIR}:/kube \
+			-v ${REALROOT}/whelp:/usr/src/whelp \
+			-v ${REALROOT}/scripts:/usr/src/scripts \
+			-v ${REALROOT}/acc-operator:/usr/src/acc-operator \
+			-v ${REALROOT}/nautilus/hooks/sample_scripts:/usr/src/nautilus/hooks/sample_scripts \
+      ${whelpimage} \
+      python tools/gen_resources_and_test_params/gen_resources_and_test_params.py \
+      -b "https://${CLUSTER_ENDPOINT}" -i "https://${CLUSTER_ENDPOINT}" -d ${TYPE} \
+      -t "https://${CLUSTER_ENDPOINT}/auth/oauth/token" \
+      -u "admin@${CLUSTER_ENDPOINT}" -p 'Tongli$1' -c 'astra-automation' \
+      -k "/kube/config" -a "/kube/config" -clus 'CaaS' \
+      -ab "${aversion}" --zeroth-account-name "admin@${CLUSTER_ENDPOINT}"
+
+  # Now change the image registry
+  cat /home/polaris/whelp/resources-and-test-params.json | \
+    jq '.resources.astra.deployment.base_image_registry = "kind-registry:5001" |
+     .resources.astra.deployment.image_registry = "kind-registry:5001"' \
+    > /home/polaris/whelp/aaa.json
+
+  mv /home/polaris/whelp/aaa.json /home/polaris/whelp/resources-and-test-params.json
+
+  docker run --platform linux/amd64 --network host --rm -it \
+			-e HOST_MACHINE_NAME=tli-mac-0 \
+			-e GITHUB_TOKEN=${GITHUB_TOKEN} \
+			-e KUBECONFIG=/kube/config \
+			-v ${KUBEDIR}:/kube \
+			-v ${REALROOT}/whelp:/usr/src/whelp \
+			-v ${REALROOT}/scripts:/usr/src/scripts \
+			-v ${REALROOT}/acc-operator:/usr/src/acc-operator \
+			-v ${REALROOT}/nautilus/hooks/sample_scripts:/usr/src/nautilus/hooks/sample_scripts \
+      ${whelpimage} /bin/bash
+
+}
+
 function setupTrident() {
   set +e
   tridentns="trident"
@@ -712,6 +779,11 @@ elif [[ "${CMD}" == "sambaad" ]]; then
   checkEnvironmentVariables
   validateContext
   enableSambaAD
+
+elif [[ "${CMD}" == "whelp" ]]; then
+  checkEnvironmentVariables
+  validateContext
+  doWhelp ${REST}
 
 elif [[ "${CMD}" == "make" ]]; then
   loginToDockerHub
