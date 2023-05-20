@@ -29,12 +29,12 @@ function printHelp() {
   echo "     clean    - Remove all astra including k8s cluster"
   echo "     cleanall - Remove all astra including k8s cluster, proxy, local registry"
   echo "     trident  - Set up trident"
-  echo "     pull     - pull tagged commit image from repo"
   echo "     update   - update this tool"
   echo "     refresh  - restart a deployment and its image"
   echo "     make     - run polaris make command"
   echo "     k8stool  - run k8stool command with parameters"
   echo "     whelp    - run whelp tests"
+  echo '     chamgepw - change ACC zeroth account password to Password$1'
   echo ""
   echo -e "Product type, valid values are ACC or ACS"
   echo "     -t|--type  - Astra product type. valid options are acc and acs, default is acs"
@@ -62,7 +62,7 @@ function printHelp() {
 function validateCMD() {
   cmd=$1
   allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "pull" "refresh" "make" \
-    "update" "k8stool" "trident" "keycloakui" "openldap" "sambaad" "whelp")
+    "update" "k8stool" "trident" "keycloakui" "openldap" "sambaad" "whelp" "changepw")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -275,6 +275,58 @@ function deployAccounts() {
 
   # Now stop the port forwarding
   kill_port_forward krakend
+}
+
+function changeACCPW() {
+  # We are going to use krakend pod to run the commands
+  runCMD="kubectl exec -n ${NAMESPACE} deployment/krakend -- curl -s"
+
+  # Get system user account ID
+  accountID=$($runCMD http://tenancy:5000/v1/accounts \
+     -H "x-pcloud-userid: system-user" \
+     -H "x-pcloud-role: system" -H "x-pcloud-correlationid: 1234" | jq -r '.items[0].id')
+  echo -e "   Account-ID: ${Green}${accountID}${ColorOff}"
+
+  # Get system user userID
+  userID=$($runCMD -G http://identity:5000/v1/users \
+    --data-urlencode "filter=email eq 'admin@integration.astra.netapp.io'" \
+    -H "x-pcloud-userid: system-user" -H "x-pcloud-role: system" -H "x-pcloud-correlationid: 1234" \
+    -H "x-pcloud-accountid: $accountID" | jq -r '.items[0].id')
+  echo -e "   User-ID: ${Green}${userID}${ColorOff}"
+
+  # Get the system user credentialID
+  credentialID=$($runCMD -G http://credentials:8080/v1/credentials \
+    --data-urlencode "filter=name eq ${userID}" \
+    -H "x-pcloud-userid: system-user" -H "x-pcloud-role: system" -H "x-pcloud-correlationid: 1234" \
+    -H "x-pcloud-accountid: ${accountID}" | jq -r '.items[0].id')
+  echo -e "   Credential-ID: ${Green}${credentialID}${ColorOff}"
+
+  # Create a base64 value for the new password 'Password$1'
+  newPW=$(echo '{"pw": "Password$1"}' | jq -r '.pw | @base64')
+
+  # Now we create json data to change the password and set the first time login to false
+pwSetData=$(cat << EOF
+{
+  "type": "application/astra-credential+json",
+  "version": "1.1",
+  "id": "${credentialID}",
+  "name": "${userID}",
+  "keyType": "passwordHash",
+  "keyStore": {
+    "cleartext": "${newPW}",
+    "change": "ZmFsc2U="
+  }
+}
+EOF
+)
+
+  # Now ready to set the password to the new password
+  result=$($runCMD -X PUT http://credentials:8080/v1/credentials/${credentialID} \
+    -H "x-pcloud-userid: system-user" -H "x-pcloud-role: admin" -H "x-pcloud-correlationid: 1234" \
+    -H "x-pcloud-accountid: ${accountID}" \
+    -d "${pwSetData}")
+  echo "Password change execution results:"
+  echo "${result}" | jq '.'
 }
 
 function enableOpenLDAP() {
@@ -735,8 +787,12 @@ elif [[ "${CMD}" == "image" ]]; then
   SetupACComponentImage
 
 elif [[ "${CMD}" == "pull" ]]; then
-  source "/home/bin/astraimage"
-  SetupACComponentImage
+  echo -e "Deprecated, use image command instead"
+
+elif [[ "${CMD}" == "changepw" ]]; then
+  validateContext
+  checkEnvironmentVariables
+  changeACCPW
 
 elif [[ "${CMD}" == "deploy" ]]; then
   checkInPolaris

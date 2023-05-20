@@ -7,7 +7,7 @@ spec:
   astraVersion: 1619-integration
   astraAddress: integration.astra.netapp.io
   autoSupport:
-    enrolled: true
+    enrolled: false
     url: https://stagesupport.netapp.com/asupprod/post/1.0/postAsup
   email: admin@integration.astra.netapp.io
   firstName: SRE
@@ -25,7 +25,7 @@ spec:
     polaris-mongodb:
       mongodb:
         persistence:
-          size: 5Gi
+          size: 2Gi
         replicaCount: 1
         image:
           registry: kind-registry:5001
@@ -36,7 +36,7 @@ spec:
         server:
           replicas: 1
           bootstrapExpect: 1
-          storage: 2Gi
+          storage: 1Gi
           resources:
             limits:
               memory: 50Mi
@@ -54,14 +54,14 @@ spec:
           memory: 40Mi
     loki:
       persistence:
-        size: 5Gi
+        size: 1Gi
       resources:
         requests:
           cpu: 10m
           memory: 10Mi
     asup:
       persistence:
-        size: 5Gi
+        size: 1Gi
       resources:
         requests:
           cpu: 10m
@@ -74,7 +74,7 @@ spec:
           memory: 10Mi
     polaris-influxdb2:
       persistence:
-        size: 5Gi
+        size: 1Gi
       resources:
         requests:
           cpu: 10m
@@ -99,7 +99,7 @@ spec:
           ha:
             replicas: 1
           auditStorage:
-            size: 2Gi
+            size: 1Gi
     certificates:
       replicas: 1
     credentials:
