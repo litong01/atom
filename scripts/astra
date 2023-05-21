@@ -219,15 +219,29 @@ forward_port() {
 function wait_for_pod() {
   # Since the billing, trident-svc and bucketservice are the ones become available latest
   # We will just watch them.
-  echo -e "${Green}Waiting for pods to be ready...${ColorOff}"
+  startTime=$1
+  if [[ "${TYPE}" == "acs" ]]; then
+    extrapod="billing"
+  else
+    extrapod="asup"
+  fi
   while : ; do
-    if kubectl wait pod --context ${CONTEXT} -n ${NAMESPACE} --for=condition=ready \
-      -l 'app.kubernetes.io/name in (billing, trident-svc, bucketservice)' --timeout=120s 2>&1; then
+    waitresult=$(kubectl wait pod --context ${CONTEXT} -n ${NAMESPACE} --for=condition=ready \
+      -l "app.kubernetes.io/name in (${extrapod}, trident-svc, bucketservice)" --timeout=60s 2>/dev/null || true)
+    # If the wait returns, it can only be either timed out or condition met. We check if there is
+    # timedout, we continue to wait. Since the timeout is an error, and it goes to /dev/null, only
+    # condition met will have anything in waitresult, in any other condition, the waitresult is empty.
+    if [[ -z "${waitresult}" ]]; then
+      currentTime=$(date +%s)
+      elapsed=$(( currentTime - startTime ))
+      echo -ne "\033[0K\r"
+      echo -ne "   Time elapsed: ${Green}${elapsed}${ColorOff} seconds\033[0K"
+    else
        break
     fi
-    sleep 5
   done
-  echo -e "${Green}ACS pods are ready now${ColorOff}"
+  echo ""
+  echo -e "${Green}AC pods are ready now${ColorOff}"
 }
 
 ACCOUNTINDEX=1
@@ -248,7 +262,8 @@ function loadAccountIndex() {
 
 function initACS() {
   # Get sre token
-  wait_for_pod
+  startTime=$(date +%s)
+  wait_for_pod ${startTime}
   forward_port credentials
 
   # Run setting service accounts
@@ -441,10 +456,12 @@ function deployACC() {
     sleep 30
   done
 
+  # Here we continue to wait for other pods to be ready
+  wait_for_pod ${startTime}
+
   set -
 
   # Setup the proxy
-  echo ""
   echo -e "${Green}Creating path to access ACC...${ColorOff}"
   ${SCRIPTDIR}/k8stool proxy --targetports "traefik 80 443" --workdir "${WORKDIR}" --context ${CONTEXT}
 
