@@ -34,7 +34,7 @@ function printHelp() {
   echo "     make     - run polaris make command"
   echo "     k8stool  - run k8stool command with parameters"
   echo "     whelp    - run whelp tests"
-  echo '     chamgepw - change ACC zeroth account password to Password$1'
+  echo '     changepw - change ACC zeroth account password to Password$1'
   echo ""
   echo -e "Product type, valid values are ACC or ACS"
   echo "     -t|--type  - Astra product type. valid options are acc and acs, default is acs"
@@ -483,6 +483,7 @@ function fixcertificateimage() {
   fi
   tag=$(getServiceTag certificates)
   docker tag ghcr.io/netapp-polaris/polaris/astra/certificates:astradt "localhost:5001/certificates:${tag}"
+  docker push "localhost:5001/certificates:${tag}"
 
   anImage=$(docker images "ghcr.io/netapp-polaris/polaris/astra/acc-operator:astradt" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
   # If the image does not exist locally
@@ -492,6 +493,7 @@ function fixcertificateimage() {
   fi
   tag=$(getServiceTag acc-operator)
   docker tag ghcr.io/netapp-polaris/polaris/astra/acc-operator:astradt "localhost:5001/acc-operator:${tag}"
+  docker push "localhost:5001/acc-operator:${tag}"
 }
 
 function updateKeycloakOperatorSetting() {
