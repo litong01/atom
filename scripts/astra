@@ -648,7 +648,7 @@ function doWhelp() {
       python tools/gen_resources_and_test_params/gen_resources_and_test_params.py \
       -b "https://${CLUSTER_ENDPOINT}" -i "https://${CLUSTER_ENDPOINT}" -d ${TYPE} \
       -t "https://${CLUSTER_ENDPOINT}/auth/oauth/token" \
-      -u "admin@${CLUSTER_ENDPOINT}" -p 'Tongli$1' -c 'astra-automation' \
+      -u "admin@${CLUSTER_ENDPOINT}" -p 'Password$1' -c 'astra-automation' \
       -k "/kube/config" -a "/kube/config" -clus 'CaaS' \
       -ab "${aversion}" --zeroth-account-name "admin@${CLUSTER_ENDPOINT}"
 
