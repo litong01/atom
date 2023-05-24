@@ -35,8 +35,6 @@ export CREDS_AUTH_CLIENT_ID=<*******>
 export CREDS_AUTH_DOMAIN=staging-netapp-cloud-account.auth0.com
 export CREDS_ISSUER_URL=https://staging-netapp-cloud-account.auth0.com/
 
-export CREDS_IMAGE_USERNAME=<***>
-export CREDS_IMAGE_PASSWORD=<*****>
 ```
 
 3. Install ACS by running the following command

@@ -167,7 +167,7 @@ function checkEnvironmentVariables() {
     if [[ -z ${!value} ]]; then
       echo -e "${Red}${value}${ColorOff} was not set, quiting..."
       exit 1
-    elif [[ "${value}" == "GITHUB_TOKEN" ]] || [[ "${value}" == "CREDS_IMAGE_PASSWORD" ]]; then
+    elif [[ "${value}" == "GITHUB_TOKEN" ]]; then
       echo -e "${Green}${value}${ColorOff}=************"  
     else
       echo -e "${Green}${value}${ColorOff}=${!value}"
