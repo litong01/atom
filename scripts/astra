@@ -147,6 +147,8 @@ function doADTUpdate() {
     echo $GITHUB_TOKEN | docker login -u ${GITHUB_ID} --password-stdin ghcr.io >/dev/null 2>&1
     # Pull the image
     docker pull "${adtimage}"
+    docker pull ghcr.io/netapp-polaris/polaris/astra/acc-operator:astradt
+    docker tag ghcr.io/netapp-polaris/polaris/astra/acc-operator:astradt acc-operator:astradt
     # Try to clean up dangling images, use a variable to avoid none 0 return
     notuseval=$(docker rmi -f $(docker images -f "dangling=true") >/dev/null 2>&1 || true)
   fi
