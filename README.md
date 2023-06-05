@@ -4,9 +4,9 @@ Astra developer tool(ADT) is to setup Astra Control Services(ACS) or Astra Contr
 ## One time environment setup
 
    * Pull Astra [polaris](https://github.com/NetApp-Polaris/polaris) source code if you have not.
-   * Set up environment variables. Use this [example](myenv.sh) script to create your own and save it in a secure place so that you can easily run `source myenv.sh` when you need to.
-   * Ensure `/etc/hosts` file has entry `127.0.0.1 integration.astra.netapp.io`
-   * Pulling AC images will require netapp intranet connection
+   * Set up environment variables. Use this [example](myenv.sh) script to create your own and save it in a secure place so that you can easily run `source myenv.sh` when you need to. Use this [windows example](myenv.cmd) for windows
+   * Ensure `/etc/hosts` file has entry `127.0.0.1 integration.astra.netapp.io`. Use `C:\Windows\System32\drivers\etc\hosts` for windows
+   * Intranet connection for pulling AC images if you prefer not to build locally
 
 ## Get Astra developer tool
 
@@ -29,22 +29,28 @@ All the command should run from your polaris root directory
 ```
    astra clean
 ```
+4. ### Shutdown AC and clean up everything including local image registry
+```
+   astra cleanall
+```
 
-## Multi-step ACS deployment
-1. ### Setup Astra images
-```
-   astra image
-```
-2. ### Create k8s cluster and image repository for Astra deployment
+
+
+## Multi-step AC deployment
+1. ### Create k8s cluster and image repository for Astra deployment
 ```
    astra prepare
 ```
-3. ### Install ACS or ACC
+2. ### Setup Astra images
+```
+   astra image
+```
+3. ### Deploy ACS or ACC
 ```
    astra deploy -t acs
    astra deploy -t acc
 ```
-4. ### Access ACS or ACC using the following URLs
+4. ### Access AC using the following URLs
 
     * ACS dashboard at [https://integration.astra.netapp.io/](https://integration.astra.netapp.io/)
   
@@ -61,7 +67,7 @@ All the command should run from your polaris root directory
    astra -h
 ```
 
-## Develop Astra Control Services
+## Extra utilities to help one to develop Astra Control
 All the commands should run in Polaris root directory and make sure
 environment variables were set as [described above](#one-time-environment-setup)
 
@@ -93,4 +99,14 @@ environment variables were set as [described above](#one-time-environment-setup)
 - Update adt itself
 ```
   astra update
+```
+
+- Get an interactive session to run whelp
+```
+  astra whelp
+```
+
+- Setup active directory service in your k8s cluster
+```
+  astra sambaad
 ```
