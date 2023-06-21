@@ -191,10 +191,57 @@ function imagePullTagPush() {
   fi
 }
 
+function tagOneImage() {
+  # docker load returns something like this
+  #  Loaded image: loki:2.3.0
+  # we split the string to get image name and tag
+  IFS=':' read -ra PARTS <<< "${1}"
+  PART1=$(echo "${PARTS[1]}" | xargs)
+  PART2=$(echo "${PARTS[2]}" | xargs)
+  if [[ ! -z "${PART1}" && ! -z "${PART2}" ]]; then
+    echo -e "${Green}Ready to tag ${PART1}:${PART2}${ColorOff}"
+    docker tag "${PART1}:${PART2}" "localhost:5001/${PART1}:${PART2}"
+    # docker tag "${PART1}:${PART2}" "${IMAGE_REPOSITORY}/${PART1}:${PART2}"
+    docker push "localhost:5001/${PART1}:${PART2}"
+  else
+    echo -e "${Red}The image cannot be processed, missing name or tag${ColorOff}"
+    exit 1
+  fi
+}
+
+function loadUpReleaseImages() {
+  bundlename=$1
+  mkdir -p /home/work/astra/releasebundle
+  echo -e "${Green}Unpack release images...${ColorOff}"
+  tar -xzf ${bundlename} -C /home/work/astra/releasebundle
+  for relimage in "/home/work/astra/releasebundle/acc/images"/*.tar
+  do
+    echo -e "${Green}${relimage}${ColorOff}..."
+    result=$(docker load --input ${relimage})
+    tagOneImage "${result}"
+  done
+}
+
+function ImportReleaseImages() {
+  # This method search the home/work/astra directory for astra control center tar gz files
+  # if there is one, it will unpack and load up to the host docker registry.
+  for entry in "/home/work/astra/astra-control-center-"*.tar.gz
+  do
+    echo -e "Process Release ${Green}${entry}${ColorOff} images..."
+    loadUpReleaseImages "${entry}"
+  done
+}
+
 # This method will setup all necessary ACS or ACC images
 function SetupACComponentImage() {
   if [[ "${#EXTImageNameTag[@]}" == 0 ]]; then
     externalImages
+  fi
+
+  # handle release images if there are any placed in /tmp/astra directory.
+  if [[ "${RELEASEIMAGE}" == "true" ]]; then
+    ImportReleaseImages
+    return
   fi
 
   # Process external images first
