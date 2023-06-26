@@ -11,6 +11,7 @@ if [[ "${TYPE}" == "acs" ]]; then
     ['nats']='' \
     ['traefik']='' \
     ['theotw/httpproxy-server']='' \
+    ['theotw/k8srelayserver']='' \
     ['theotw/natssync-server']='')
 
   ACIMAGES=(['activity']='' ['activity_upgrade']='activity' ['astra-py-k8s']='' ['billing']='' ['bucketservice']='' ['cloud-extension']='' \
@@ -18,7 +19,7 @@ if [[ "${TYPE}" == "acs" ]]; then
     ['features_upgrade']='features' ['graphql-server']='' ['hybridauth']='' ['identity']='' ['krakend']='' \
     ['nautilus']='' ['openapi']='' ['polaris-ui']='' ['support']='' ['support_hourly']='support' \
     ['support_weekly']='support' ['task-service']='' ['task-service_task_purge']='task-service' \
-    ['tenancy']='' ['tenancy_account_purge']='tenancy' ['trident-svc']='' ['nk']='')
+    ['tenancy']='' ['tenancy_account_purge']='tenancy' ['trident-svc']='' ['nk']='' ['container-registry']='')
 
 else
   # Define ACC images needed
@@ -93,6 +94,10 @@ function externalImages() {
     EXTImageNameTag[${imageName}]="${imageTag}"
     EXTImageFullnameTag[${imageName}]="${imageFullname}"
   done
+
+  #We have to deal with the stupid practice of randomly adding new image
+  EXTImageNameTag['k8srelayserver']="2.1.202305112214"
+  EXTImageFullnameTag['k8srelayserver']="theotw/k8srelayserver"
 }
 
 # This method returns a value indicating if an element exists in a map
@@ -258,6 +263,9 @@ function SetupACComponentImage() {
 
   # Now handling the mongodb image since it is special
   PullTagPushOneExtImage "ghcr.io/zcube/bitnami-compat/mongodb:5.0.14"
+  # Now handling the k8srelayserver since it is yet another special image
+  imagePullTagPush 'k8srelayserver' '2.1.202305112214' 'theotw/k8srelayserver' 'false'
+
   # Fix the use of the nk in the script for ACS
   if [[ "${TYPE}" == "acs" ]]; then
     doTagNK
