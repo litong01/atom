@@ -264,7 +264,7 @@ function SetupACComponentImage() {
   # Now handling the mongodb image since it is special
   PullTagPushOneExtImage "ghcr.io/zcube/bitnami-compat/mongodb:5.0.14"
   # Now handling the k8srelayserver since it is yet another special image
-  imagePullTagPush 'k8srelayserver' '2.1.202305112214' 'theotw/k8srelayserver' 'false'
+  imagePullTagPush "k8srelayserver" "2.1.202305112214" "theotw/k8srelayserver" "false"
 
   # Fix the use of the nk in the script for ACS
   if [[ "${TYPE}" == "acs" ]]; then
