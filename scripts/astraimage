@@ -17,7 +17,7 @@ if [[ "${TYPE}" == "acs" ]]; then
   ACIMAGES=(['activity']='' ['activity_upgrade']='activity' ['astra-py-k8s']='' ['billing']='' ['bucketservice']='' ['cloud-extension']='' \
     ['composite-compute']='' ['composite-volume']='' ['credentials']='' ['entitlement']='' ['features']='' \
     ['features_upgrade']='features' ['graphql-server']='' ['hybridauth']='' ['identity']='' ['krakend']='' \
-    ['nautilus']='' ['openapi']='' ['polaris-ui']='' ['support']='' ['support_hourly']='support' \
+    ['nautilus']='' ['openapi']='' ['polaris-ui']='' ['support']='' ['support_hourly']='support' ['support_upgrade']='support' \
     ['support_weekly']='support' ['task-service']='' ['task-service_task_purge']='task-service' \
     ['tenancy']='' ['tenancy_account_purge']='tenancy' ['trident-svc']='' ['nk']='' ['container-registry']='')
 
