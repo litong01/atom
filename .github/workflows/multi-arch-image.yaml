@@ -11,12 +11,12 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: astradt
+  IMAGE_NAME: astra3dt
   IMAGE_TAG: v0.1.0
   DH_REGISTRY: docker.io
   DH_NAMESPACE: tli551
   GH_REGISTRY: ghcr.io
-  GH_NAMESPACE: netapp-polaris/polaris/astra
+  GH_NAMESPACE: netapp-polaris/neptune/astra3
 
 jobs:
   build:
