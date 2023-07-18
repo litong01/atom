@@ -16,7 +16,7 @@ env:
   DH_REGISTRY: docker.io
   DH_NAMESPACE: tli551
   GH_REGISTRY: ghcr.io
-  GH_NAMESPACE: litong01/astra3
+  GH_NAMESPACE: litong01/astra
 
 jobs:
   build:

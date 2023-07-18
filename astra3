@@ -13,4 +13,4 @@ docker run -it --rm --name astra3 --network host \
    -v /var/run/docker.sock:/var/run/docker.sock \
    -v /tmp/astra3:/home/work/astra3 \
    -v $(pwd):/home/neptune -v ${HOME}/.kube:/home/.kube \
-   ghcr.io/netapp-polaris/neptune/astra/astra3dt:v0.1.0 time astra3 $@
+   ghcr.io/litong01/astra/astra3dt:v0.1.0 time astra3 $@
