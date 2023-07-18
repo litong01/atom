@@ -1,0 +1,298 @@
+#!/bin/bash
+
+ColorOff='\033[0m'        # Text Reset
+Black='\033[0;30m'        # Black
+Red='\033[0;31m'          # Red
+Green='\033[0;32m'        # Green
+SCRIPTDIR=$(dirname $0)
+APPNAME=$(basename "$0")
+TYPE="acc"
+CURDIR=$(pwd)
+WORKDIR=${WORKDIR:-/tmp/astra3}
+COMPONENT="all"
+NAMESPACE="${NAMESPACE:-neptune-system}"
+IMAGE_REPOSITORY=${IMAGE_REPOSITORY:-docker.repo.eng.netapp.com/globalcicd/astra}
+IMAGENAME=""
+
+function printHelp() {
+  echo ""
+  echo "Usage:"
+  echo "    ${APPNAME} <cmd> [options]"
+  echo ""
+  echo -e "Available commands:"
+  echo "     up       - Start up astra network include cluster"
+  echo "     down     - Remove all astra but k8s cluster"
+  echo "     image    - Update image to the local repo"
+  echo "     prepare  - Get cluster and image ready"
+  echo "     deploy   - Deploy astra components"
+  echo "     clean    - Remove all astra including k8s cluster"
+  echo "     cleanall - Remove all astra including k8s cluster, proxy, local registry"
+  echo "     update   - update this tool"
+  echo "     refresh  - restart a deployment and its image"
+  echo "     make     - run polaris make command"
+  echo "     k8stool  - run k8stool command with parameters"
+  echo "     whelp    - run whelp tests"
+  echo '     changepw - change ACC zeroth account password to Password$1'
+  echo ""
+  echo -e "Product type, valid values are ACC or ACS"
+  echo "     -t|--type  - Astra product type. valid options are acc and acs, default is acc"
+  echo ""
+  echo -e "Parameters for ${Green}image${ColorOff} command:"
+  echo "     -i|--imagename  - an astra image name. default is all images"
+  echo "     -r|--releaseiamge - load release image bundles instead of pulling, default is false"
+  echo ""
+  echo -e "Parameters for ${Green}deploy${ColorOff} command:"
+  echo "     -a|--astra-name) - a name of astra component to be deployed. Valid option"
+  echo "                        are all, main, traefik, post, dash default is all"
+  echo "        --context)    - a kubernetes context to use, if not specified, the"
+  echo "                        current kubernetes context will be used"
+  echo ""
+  echo -e "Parameters for ${Green}refresh${ColorOff} command:"
+  echo "     -d|--deployment-name  - a deployment name such as identity"
+  echo "     -n|--namespace        - the namespace where the deployment is, default pcloud"
+  echo "        --context)         - a kubernetes context to use, if not specified, the"
+  echo "                             current kubernetes context will be used"
+  echo ""
+}
+
+function validateCMD() {
+  cmd=$1
+  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "pull" "refresh" "make" \
+    "update" "k8stool" "trident" "keycloakui" "openldap" "sambaad" "whelp" "changepw")
+  ccmd=""
+  for item in "${allCommands[@]}"; do
+    if [[ "${cmd}" == "${item}" ]]; then
+      ccmd="${cmd}"
+      isValidCMD="true"
+      break
+    fi
+  done
+  if [[ -z "${ccmd}" ]]; then
+    if [[ "${cmd}" != "-h" ]] && [[ "${cmd}" != "--help" ]] && [[ "${cmd}" != "" ]]; then
+      echo ""
+      echo -e "ERROR: ${Red}${cmd}${ColorOff} is not a supported command!"
+      printHelp "${isValidCMD}"
+      exit 1
+    else
+      printHelp "${isValidCMD}"
+      exit 0
+    fi
+  fi
+}
+
+CMD=$1
+shift
+# This saves the rest of the command in case it is to pass along for make command
+REST="$@"
+# Validate the command
+validateCMD "${CMD}"
+
+# We will only handle command parameters if command was not make and not k8stool
+if [[ "${CMD}" == "make" || "${CMD}" == "k8stool" || "${CMD}" == "whelp" ]]; then
+  echo "Skip parameter parsing..."
+else
+  # Handling parameters
+  while [[ $# -gt 0 ]]; do
+    optkey="$1"
+    case $optkey in
+      -h|--help)
+        printHelp "true"; exit 0;;
+      --context)
+        CONTEXT="$2";shift 2;;
+      --targetports)
+        TARGETPORTS="$2";shift 2;;
+      -n|--namespace)
+        NAMESPACE="$2";shift 2;;
+      -w|--workdir)
+        WORKDIR="$2";shift 2;;
+      -a|--astra-name)
+        COMPONENT="$2";shift 2;;
+      -d|--deployment-name)
+        DEPLOYMENT="$2";shift 2;;
+      -i|--imagename)
+        IMAGENAME="$2";shift 2;;
+      -r|--releaseimage)
+        RELEASEIMAGE="$2";shift 2;;
+      -t|--type)
+        TYPE="$2";shift 2;;
+      *) # unknown option
+        echo "parameter $1 is not supported"; exit 1;;
+    esac
+  done
+fi
+
+
+function validateContext() {
+  # Context was not set, trying to use current context
+  if [[ -z "${CONTEXT}" ]]; then
+    # Get current context
+    ctx=$(kubectl config current-context 2>/dev/null || true)
+  else # Context was set, verify it exists in the kubernetes context
+    ctx=$(kubectl config get-contexts "${CONTEXT}" -o=name 2>/dev/null || true)
+  fi
+
+  if [[ -z "${ctx}" ]]; then
+    echo -e "${Red}No kubernetes context available, cannot continue${ColorOff}"
+    exit 1
+  fi
+
+  CONTEXT="${ctx}"
+}
+
+function installStorageCRDs() {
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/release-5.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/release-5.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/release-5.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
+}
+
+
+function doADTUpdate() {
+  adtimage=$(docker inspect astra3 --format "{{.Config.Image}}" 2>/dev/null || true)
+  if [[ ! -z "${adtimage}" ]]; then
+    # Using the github token and id to login
+    echo $GITHUB_TOKEN | docker login -u ${GITHUB_ID} --password-stdin ghcr.io >/dev/null 2>&1
+    # Pull the image
+    docker pull "${adtimage}"
+    docker pull ghcr.io/netapp-polaris/polaris/astra/acc-operator:astradt
+    docker tag ghcr.io/netapp-polaris/polaris/astra/acc-operator:astradt acc-operator:astradt
+    # Try to clean up dangling images, use a variable to avoid none 0 return
+    notuseval=$(docker rmi -f $(docker images -f "dangling=true") >/dev/null 2>&1 || true)
+  fi
+}
+
+function loginToDockerHub() {
+  if [[ ! -z "${GITHUB_ID}" ]] && [[ ! -z "${GITHUB_TOKEN}" ]]; then
+    echo -e "${Green}Logging into docker hub...${ColorOff}"
+    echo $DH_TOKEN | docker login -u $DH_ID --password-stdin docker.io >/dev/null 2>&1
+  fi
+}
+
+function checkEnvironmentVariables() {
+  envs=(DEPLOY_TYPE VAULT_ADDR GITHUB_USERNAME \
+        GITHUB_TOKEN GITHUB_ID CREDS_AUTH_CLIENT_ID \
+        CREDS_AUTH_DOMAIN CREDS_ISSUER_URL CLUSTER_ENDPOINT IMAGE_HOST)
+  for value in ${envs[@]}; do
+    if [[ -z ${!value} ]]; then
+      echo -e "${Red}${value}${ColorOff} was not set, quiting..."
+      exit 1
+    elif [[ "${value}" == "GITHUB_TOKEN" ]]; then
+      echo -e "${Green}${value}${ColorOff}=************"  
+    else
+      echo -e "${Green}${value}${ColorOff}=${!value}"
+    fi
+  done
+}
+
+function checkInNeptune() {
+    # check that the Makefile and pcloud directory exists
+    if [[ ! -f "${CURDIR}/Makefile" ]] || [[ ! -f "${CURDIR}/PROJECT" ]]; then
+      echo -e "${Red}You are not in neptune root directory, quiting...${ColorOff}"
+      exit 1
+    fi
+}
+
+function wait_for_pod() {
+  # Since the billing, trident-svc and bucketservice are the ones become available latest
+  # We will just watch them.
+  startTime=$1
+  if [[ "${TYPE}" == "acs" ]]; then
+    extrapod="billing"
+  else
+    extrapod="asup"
+  fi
+  while : ; do
+    waitresult=$(kubectl wait pod --context ${CONTEXT} -n ${NAMESPACE} --for=condition=ready \
+      -l "app.kubernetes.io/name in (${extrapod}, trident-svc, bucketservice)" --timeout=60s 2>/dev/null || true)
+    # If the wait returns, it can only be either timed out or condition met. We check if there is
+    # timedout, we continue to wait. Since the timeout is an error, and it goes to /dev/null, only
+    # condition met will have anything in waitresult, in any other condition, the waitresult is empty.
+    if [[ -z "${waitresult}" ]]; then
+      currentTime=$(date +%s)
+      elapsed=$(( currentTime - startTime ))
+      echo -ne "\033[0K\r"
+      echo -ne "   Time elapsed: ${Green}${elapsed}${ColorOff} seconds\033[0K"
+    else
+       break
+    fi
+  done
+  echo ""
+  echo -e "${Green}AC pods are ready now${ColorOff}"
+}
+
+function deployNeptune() {
+  echo -e "${Red}Working${ColorOff}"
+}
+
+
+#=================Start main process=========================
+
+set -e
+# cluster processes
+if [[ "${CMD}" == "up" ]]; then
+  echo ""
+  checkInNeptune
+
+  echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
+  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}"
+  installStorageCRDs
+
+  validateContext
+
+  ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
+  
+  deployNeptune
+
+elif [[ "${CMD}" == "prepare" ]]; then
+  echo ""
+  checkInNeptune
+
+  echo ""
+  echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
+  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}"
+  installStorageCRDs
+
+  validateContext
+
+  # echo -e "${Green}Create traefik certificate${ColorOff}"
+  ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
+
+  echo -e "${Green}Ready to deploy Astra Neptune, please run deploy command${ColorOff}"
+
+elif [[ "${CMD}" == "down" ]]; then
+  echo ""
+  echo -e "${Green}Removing Astra main components...${ColorOff}"
+  checkInNeptune
+
+  make helmuninstall DEPLOY_TARGET=cicd
+
+elif [[ "${CMD}" == "clean" ]]; then
+  echo -e "${Green}Removing Astra and cluster...${ColorOff}"
+  ${SCRIPTDIR}/k8stool cluster -d
+
+elif [[ "${CMD}" == "cleanall" ]]; then
+  echo -e "${Green}Removing everything...${ColorOff}"
+  ${SCRIPTDIR}/k8stool cluster -d
+  # Remove the proxy and the local registry as well
+  docker rm -f kubeproxy &> /dev/null || true
+  docker rm -f kind-registry &> /dev/null || true
+  # Need to clean up docker volumes
+  docker volume prune -f &> /dev/null || true
+  rm -rf /home/work/astra/*.sh
+
+elif [[ "${CMD}" == "deploy" ]]; then
+  checkInNeptune
+  # Always check and recreate namespace and the cert in case it was removed
+  ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
+  deployNeptune
+
+elif [[ "${CMD}" == "update" ]]; then
+  checkEnvironmentVariables
+  doADTUpdate
+
+elif [[ "${CMD}" == "make" ]]; then
+  checkInNeptune
+  export IMG=kind-registry:5001/controller:latest
+  make ${REST}
+
+fi
+#=================End main process=========================

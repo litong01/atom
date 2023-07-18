@@ -1,5 +1,5 @@
 @echo off
-docker run -it --rm --name astra --network host ^
+docker run -it --rm --name astra3 --network host ^
    -e "SKIP_KUBE_CONTEXT_CHECK=true" ^
    -e "DEPLOY_TYPE=dev" ^
    -e "WORKDIR=/home/work/astra" ^
@@ -10,10 +10,7 @@ docker run -it --rm --name astra --network host ^
    -e "GITHUB_ID=%GITHUB_ID%" ^
    -e "DH_ID=%DH_ID%" ^
    -e "DH_TOKEN=%DH_TOKEN%" ^
-   -e "CREDS_AUTH_CLIENT_ID=%CREDS_AUTH_CLIENT_ID%" ^
-   -e "CREDS_AUTH_DOMAIN=%CREDS_AUTH_DOMAIN%" ^
-   -e "CREDS_ISSUER_URL=%CREDS_ISSUER_URL%" ^
    -v /var/run/docker.sock:/var/run/docker.sock ^
-   -v %TEMP%/astra:/home/work/astra ^
-   -v %CD%:/home/polaris -v %USERPROFILE%/.kube:/home/.kube ^
-   ghcr.io/netapp-polaris/polaris/astra/astradt:v0.1.0 time astra %*
+   -v %TEMP%/astra3:/home/work/astra3 ^
+   -v %CD%:/home/neptune -v %USERPROFILE%/.kube:/home/.kube ^
+   ghcr.io/netapp-polaris/neptune/astra/astra3dt:v0.1.0 time astra3 %*
