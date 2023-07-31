@@ -243,6 +243,7 @@ if [[ "${CMD}" == "up" ]]; then
 
   ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
   
+  doNeptuneImage
   deployNeptune
 
 elif [[ "${CMD}" == "prepare" ]]; then
