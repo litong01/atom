@@ -209,7 +209,7 @@ function deployNeptune() {
   export IMG=kind-registry:5001/controller:latest
   export NEPTUNE_BIN=${LOCALBIN}
   make install
-  # make deploy
+  make deploy
 }
 
 function doNeptuneImage() {
