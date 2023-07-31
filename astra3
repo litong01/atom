@@ -1,15 +1,5 @@
 #!/bin/bash
 docker run -it --rm --name astra3 --network host \
-   -e "SKIP_KUBE_CONTEXT_CHECK=true" \
-   -e "DEPLOY_TYPE=dev" \
-   -e "WORKDIR=/home/work/astra" \
-   -e "HOSTWORKDIR=/tmp/astra" \
-   -e "VAULT_ADDR=${VAULT_ADDR}" \
-   -e "GITHUB_USERNAME=${GITHUB_ID}" \
-   -e "GITHUB_TOKEN=${GITHUB_TOKEN}" \
-   -e "GITHUB_ID=${GITHUB_ID}" \
-   -e "DH_ID=${DH_ID}" \
-   -e "DH_TOKEN=${DH_TOKEN}" \
    -v /var/run/docker.sock:/var/run/docker.sock \
    -v /tmp/astra3:/home/work/astra3 \
    -v $(pwd):/home/neptune -v ${HOME}/.kube:/home/.kube \

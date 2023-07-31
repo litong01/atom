@@ -31,7 +31,7 @@ function printHelp() {
   echo "     refresh  - restart a deployment and its image"
   echo "     make     - run polaris make command"
   echo "     k8stool  - run k8stool command with parameters"
-  echo "     whelp    - run whelp tests"
+  echo "     bash     - run bash interactively"
   echo '     changepw - change ACC zeroth account password to Password$1'
   echo ""
   echo -e "Product type, valid values are ACC or ACS"
@@ -58,7 +58,7 @@ function printHelp() {
 function validateCMD() {
   cmd=$1
   allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "pull" "refresh" "make" \
-    "update" "k8stool" "trident" "keycloakui" "openldap" "sambaad" "whelp" "changepw")
+    "update" "k8stool" "trident" "keycloakui" "openldap" "sambaad" "bash" "changepw")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -88,7 +88,7 @@ REST="$@"
 validateCMD "${CMD}"
 
 # We will only handle command parameters if command was not make and not k8stool
-if [[ "${CMD}" == "make" || "${CMD}" == "k8stool" || "${CMD}" == "whelp" ]]; then
+if [[ "${CMD}" == "make" || "${CMD}" == "k8stool" || "${CMD}" == "bash" ]]; then
   echo "Skip parameter parsing..."
 else
   # Handling parameters
@@ -167,25 +167,10 @@ function loginToDockerHub() {
   fi
 }
 
-function checkEnvironmentVariables() {
-  envs=(DEPLOY_TYPE VAULT_ADDR GITHUB_USERNAME \
-        GITHUB_TOKEN GITHUB_ID CREDS_AUTH_CLIENT_ID \
-        CREDS_AUTH_DOMAIN CREDS_ISSUER_URL CLUSTER_ENDPOINT IMAGE_HOST)
-  for value in ${envs[@]}; do
-    if [[ -z ${!value} ]]; then
-      echo -e "${Red}${value}${ColorOff} was not set, quiting..."
-      exit 1
-    elif [[ "${value}" == "GITHUB_TOKEN" ]]; then
-      echo -e "${Green}${value}${ColorOff}=************"  
-    else
-      echo -e "${Green}${value}${ColorOff}=${!value}"
-    fi
-  done
-}
-
 function checkInNeptune() {
     # check that the Makefile and pcloud directory exists
-    if [[ ! -f "${CURDIR}/Makefile" ]] || [[ ! -f "${CURDIR}/PROJECT" ]]; then
+    projectName=$(cat PROJECT | yq '.projectName')
+    if [[ ! -f "${CURDIR}/Makefile" ]] || [[ "${projectName}" != "neptune" ]]; then
       echo -e "${Red}You are not in neptune root directory, quiting...${ColorOff}"
       exit 1
     fi
@@ -220,9 +205,27 @@ function wait_for_pod() {
 }
 
 function deployNeptune() {
-  echo -e "${Red}Working${ColorOff}"
+  echo -e "${Green}Deploying Neptune...${ColorOff}"
+  export IMG=kind-registry:5001/controller:latest
+  export NEPTUNE_BIN=${LOCALBIN}
+  make install
+  # make deploy
 }
 
+function doNeptuneImage() {
+  echo -e "${Green}Setting up Neptune Manager image...${ColorOff}"
+  img=$(docker image ls controller:latest --quiet)
+  if [[ -z "${img}" ]]; then
+    img=$(docker image ls kind-registry:5001/controller:latest --quiet)
+    if [[ -z "${img}" ]]; then
+      echo -e "${Red}No local image exist, do a docker build first${ColorOff}"
+      return
+    fi
+  fi
+
+  docker tag ${img} localhost:5001/controller:latest
+  docker push localhost:5001/controller:latest
+}
 
 #=================Start main process=========================
 
@@ -245,6 +248,7 @@ if [[ "${CMD}" == "up" ]]; then
 elif [[ "${CMD}" == "prepare" ]]; then
   echo ""
   checkInNeptune
+  validateContext
 
   echo ""
   echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
@@ -263,7 +267,7 @@ elif [[ "${CMD}" == "down" ]]; then
   echo -e "${Green}Removing Astra main components...${ColorOff}"
   checkInNeptune
 
-  make helmuninstall DEPLOY_TARGET=cicd
+  make undeploy
 
 elif [[ "${CMD}" == "clean" ]]; then
   echo -e "${Green}Removing Astra and cluster...${ColorOff}"
@@ -277,22 +281,30 @@ elif [[ "${CMD}" == "cleanall" ]]; then
   docker rm -f kind-registry &> /dev/null || true
   # Need to clean up docker volumes
   docker volume prune -f &> /dev/null || true
-  rm -rf /home/work/astra/*.sh
 
 elif [[ "${CMD}" == "deploy" ]]; then
   checkInNeptune
+  validateContext
   # Always check and recreate namespace and the cert in case it was removed
   ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
   deployNeptune
 
+elif [[ "${CMD}" == "image" ]]; then
+  doNeptuneImage
+
 elif [[ "${CMD}" == "update" ]]; then
-  checkEnvironmentVariables
   doADTUpdate
 
 elif [[ "${CMD}" == "make" ]]; then
   checkInNeptune
   export IMG=kind-registry:5001/controller:latest
+  # export PLATFORMS=linux/arm64,linux/amd64
   make ${REST}
+
+elif [[ "${CMD}" == "bash" ]]; then
+  checkInNeptune
+  validateContext
+  bash
 
 fi
 #=================End main process=========================

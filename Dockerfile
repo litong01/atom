@@ -4,7 +4,8 @@ LABEL maintainer="litong01"
 COPY ./scripts/astra3 /home/bin
 COPY ./scripts/k8stool /home/bin
 RUN mkdir -p /home/neptune
-ENV PATH $PATH:/home/bin
+ENV PATH /home/bin:$PATH
+ENV LOCALBIN=/home/bin
 ENV HOME=/home
 
 WORKDIR /home/neptune
