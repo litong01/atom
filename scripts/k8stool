@@ -202,7 +202,7 @@ EOF
 
 # Check prerequisites
 function checkRequiredTools() {
-  requisites=("kubectl" "kind" "docker" "openssl" "helm")
+  requisites=("kubectl" "kind" "docker" "openssl")
   for item in "${requisites[@]}"; do
     if [[ -z $(which "${item}") ]]; then
       echo "${item} cannot be found on your system, please install ${item}"
