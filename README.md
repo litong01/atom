@@ -1,112 +1,70 @@
 # Astra developer tool
-Astra developer tool(ADT) is to setup Astra Control Services(ACS) or Astra Control Center on OS X, WSL, Windows and Linux environment for development and testing.
+Astra3 developer tool(ADT) is a tool to build, setup Astra Neptune
 
 ## One time environment setup
 
-   * Pull Astra [polaris](https://github.com/NetApp-Polaris/polaris) source code if you have not.
-   * Set up environment variables. Use this [example](myenv.sh) script to create your own and save it in a secure place so that you can easily run `source myenv.sh` when you need to. Use this [windows example](myenv.cmd) for windows
-   * Ensure `/etc/hosts` file has entry `127.0.0.1 integration.astra.netapp.io`. Use `C:\Windows\System32\drivers\etc\hosts` for windows
-   * Intranet connection for pulling AC images if you prefer not to build locally
+   * Pull Astra [neptune](https://github.com/NetApp-Polaris/neptune) source code if you have not.
 
 ## Get Astra developer tool
 
 ### For OS X and Linux system
-Download [astra](./astra) file, name it `astra` and `chmod +x astra`. It is best to move `astra` to a directory in your $PATH so that you do not have to refer its location when running it.
+Download [astra3](./astra3) file, name it `astra3` and `chmod +x astra3`. It is best to move `astra3` to a directory in your $PATH so that you do not have to refer its location when running it.
 
 ### For Windows system
-Download [astra.cmd](./astra.cmd) file, name it `astra.cmd`. It is best to move `astra.cmd` to a directory in your %PATH% so that you do not have to refer its location when running it.
+Download [astra3.cmd](./astra3.cmd) file, name it `astra3.cmd`. It is best to move `astra3.cmd` to a directory in your %PATH% so that you do not have to refer its location when running it.
 
-## One-step AC deployment
-All the command should run from your polaris root directory
+## One-step Neptune deployment and cleanup
+All the command should run from your neptune root directory
 
-1. ### Create k8s cluster and stand up Astra Control
+1. ### Create k8s cluster and set up neptune controller
 ```
-   astra up -t acs   # setup ACS
-   astra up -t acc   # setup ACC, when -t is not used, default to acc
+   astra3 up
 ```
-2. ### Access ACS or ACC at [https://integration.astra.netapp.io/](https://integration.astra.netapp.io/)
-3. ### Shutdown AC and remove k8s cluster
+2. ### Remove everything the up command sets up
 ```
-   astra clean
-```
-4. ### Shutdown AC and clean up everything including local image registry
-```
-   astra cleanall
+   astra3 cleanall
 ```
 
+## Neptune development
+1. ### Create k8s cluster and image repository for Neptune development
+```
+   astra3 prepare
+```
+2. ### Push local built Astra neptune controller image to local registry
+```
+   astra3 image
+```
+3. ### Deploy Neptune CRDs and control
+```
+   astra3 deploy
+```
+4. ### Build Neptune
+```
+   astra3 make <target>
+```
+   Replace <target> with any target that Neptune Makefile defines
 
-
-## Multi-step AC deployment
-1. ### Create k8s cluster and image repository for Astra deployment
+5. ### Remove Neptune from k8s cluster
 ```
-   astra prepare
-```
-2. ### Setup Astra images
-```
-   astra image
-```
-3. ### Deploy ACS or ACC
-```
-   astra deploy -t acs
-   astra deploy -t acc
-```
-4. ### Access AC using the following URLs
-
-    * ACS dashboard at [https://integration.astra.netapp.io/](https://integration.astra.netapp.io/)
-  
-    * ACS grafana dashboard at [https://integration.astra.netapp.io/grafana](https://integration.astra.netapp.io/grafana)
-  
-    * ACS prometheus dashboard at [https://integration.astra.netapp.io/prometheus/graph](https://integration.astra.netapp.io/prometheus/graph)
- 
-5. ### Cleanup everything after use
-```
-   astra cleanall
-```
-6. ### Learn more
-```
-   astra -h
+  astra3 down
 ```
 
-## Extra utilities to help one to develop Astra Control
-All the commands should run in Polaris root directory and make sure
-environment variables were set as [described above](#one-time-environment-setup)
-
-- Build all images locally
+6. ### Bounce a deployment after you produced a newer Neptune image
 ```
-  astra make docker
+  astra refresh -d controller-manager
 ```
 
-- Build just one image, for example, identity image
+7. ### Update this tool
 ```
-  astra make docker-identity
-```
-
-- Push or load local images to k8s cluster image repo:
-```
-  astra image
+   astra3 update
 ```
 
-- Push or load just one local image to k8s cluster image repo:
+8. ### Get a bash session with Neptune
 ```
-  astra image -i identity:xxx-integration
-```
-
-- Bounce a deployment after you produced a newer image, for example, identity
-```
-  astra refresh -d identity
+   astra3 bash
 ```
 
-- Update adt itself
+9. ### Learn more
 ```
-  astra update
-```
-
-- Get an interactive session to run whelp
-```
-  astra whelp
-```
-
-- Setup active directory service in your k8s cluster
-```
-  astra sambaad
+   astra3 -h
 ```

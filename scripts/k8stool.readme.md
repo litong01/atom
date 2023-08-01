@@ -6,7 +6,7 @@
     k8stool clusters
     k8stool image
     k8stool image --source-tag astra-py-k8s:v0.0.6 
-    k8stool cert --namespace pcloud --cluster-name astra
+    k8stool cert --namespace "neptune-system" --cluster-name astra
 ```
 Note #1: this step creates k8s cluser, load up necessary images, and create traefik tls cert.
 
@@ -52,7 +52,7 @@ export CREDS_ISSUER_URL=https://staging-netapp-cloud-account.auth0.com/
 KUBE_CONTEXT=kind-astra SKIP_KUBE_CONTEXT_CHECK=true \
   make traefikinstall DEPLOY_TARGET=local \
   CLUSTER_ENDPOINT=integration.astra.netapp.io \
-  TRAEFIK_ENDPOINT=integration.astra.netapp.io NAMESPACE=pcloud
+  TRAEFIK_ENDPOINT=integration.astra.netapp.io NAMESPACE="neptune-system"
 ```
 5. Run post install script, make sure scripts/beta/auth2.json file match your credential
 from BlueXP. Also make sure that your env is on intranet.

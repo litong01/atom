@@ -11,6 +11,7 @@ CURDIR=$(pwd)
 WORKDIR=${WORKDIR:-/tmp/astra3}
 COMPONENT="all"
 NAMESPACE="${NAMESPACE:-neptune-system}"
+DEPLOYMENT="${DEPLOYMENT:-neptune-controller-manager}"
 IMAGE_REPOSITORY=${IMAGE_REPOSITORY:-docker.repo.eng.netapp.com/globalcicd/astra}
 IMAGENAME=""
 
@@ -30,35 +31,18 @@ function printHelp() {
   echo "     update   - update this tool"
   echo "     refresh  - restart a deployment and its image"
   echo "     make     - run polaris make command"
-  echo "     k8stool  - run k8stool command with parameters"
   echo "     bash     - run bash interactively"
-  echo '     changepw - change ACC zeroth account password to Password$1'
-  echo ""
-  echo -e "Product type, valid values are ACC or ACS"
-  echo "     -t|--type  - Astra product type. valid options are acc and acs, default is acc"
-  echo ""
-  echo -e "Parameters for ${Green}image${ColorOff} command:"
-  echo "     -i|--imagename  - an astra image name. default is all images"
-  echo "     -r|--releaseiamge - load release image bundles instead of pulling, default is false"
-  echo ""
-  echo -e "Parameters for ${Green}deploy${ColorOff} command:"
-  echo "     -a|--astra-name) - a name of astra component to be deployed. Valid option"
-  echo "                        are all, main, traefik, post, dash default is all"
-  echo "        --context)    - a kubernetes context to use, if not specified, the"
-  echo "                        current kubernetes context will be used"
   echo ""
   echo -e "Parameters for ${Green}refresh${ColorOff} command:"
-  echo "     -d|--deployment-name  - a deployment name such as identity"
-  echo "     -n|--namespace        - the namespace where the deployment is, default pcloud"
-  echo "        --context)         - a kubernetes context to use, if not specified, the"
-  echo "                             current kubernetes context will be used"
+  echo "     -d|--deployment-name  - a deployment name such as neptune-controller-manager"
+  echo "     -n|--namespace        - the namespace where the deployment is, default neptune-system"
   echo ""
 }
 
 function validateCMD() {
   cmd=$1
-  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "pull" "refresh" "make" \
-    "update" "k8stool" "trident" "keycloakui" "openldap" "sambaad" "bash" "changepw")
+  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" \
+    "update" "k8stool" "bash")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -89,7 +73,7 @@ validateCMD "${CMD}"
 
 # We will only handle command parameters if command was not make and not k8stool
 if [[ "${CMD}" == "make" || "${CMD}" == "k8stool" || "${CMD}" == "bash" ]]; then
-  echo "Skip parameter parsing..."
+  echo ""
 else
   # Handling parameters
   while [[ $# -gt 0 ]]; do
@@ -168,7 +152,6 @@ function loginToDockerHub() {
 }
 
 function checkInNeptune() {
-    # check that the Makefile and pcloud directory exists
     projectName=$(cat PROJECT | yq '.projectName')
     if [[ ! -f "${CURDIR}/Makefile" ]] || [[ "${projectName}" != "neptune" ]]; then
       echo -e "${Red}You are not in neptune root directory, quiting...${ColorOff}"
@@ -227,6 +210,40 @@ function doNeptuneImage() {
   docker push localhost:5001/controller:latest
 }
 
+function refreshDeployment() {
+  if [[ "${DEPLOYMENT}" == "" ]]; then
+    DEPLOYMENT="neptune-controller-manager"
+  fi
+
+  OLDIFS=$IFS
+  dep=$(kubectl --context ${CONTEXT} get -n ${NAMESPACE} deployment "${DEPLOYMENT}" -o \
+    jsonpath='{.spec.template.spec.containers[*].image}' 2>/dev/null||true)
+  if [[ "${dep}" == "" ]]; then
+    echo -e "${Red}Could not find the deployment ${DEPLOYMENT}${ColorOff}"
+    echo -e "${Green}If the deployment was not installed in neptune-system, you can use -n to specify${ColorOff}"
+    IFS=$OLDIFS
+    exit 1
+  else
+    # Now need to get the tag and the actual image name
+    IFS=$'/' parts=($(echo "${dep}"|rev))
+    imagename=$(echo "${parts[0]}"|rev)
+    IFS=$OLDIFS
+    if [[ "${imagename}" != "" ]]; then
+      echo "Ready to update ${imagename}"
+      if [[ "${dep}" =~ "${IMAGE_HOST}" ]]; then
+        # astra image, push the newer image
+        ${SCRIPTDIR}/k8stool image --source-tag "${imagename}"
+        # Remove the cached image
+        docker exec astra-control-plane crictl rmi "${dep}" 2>/dev/null || true
+      else
+        # other images
+        ${SCRIPTDIR}/k8stool image --load-or-push true --source-tag "${imagename}"
+      fi
+      kubectl --context ${CONTEXT} rollout restart -n ${NAMESPACE} deployment ${DEPLOYMENT}
+    fi
+  fi
+}
+
 #=================Start main process=========================
 
 set -e
@@ -265,10 +282,11 @@ elif [[ "${CMD}" == "prepare" ]]; then
 
 elif [[ "${CMD}" == "down" ]]; then
   echo ""
-  echo -e "${Green}Removing Astra main components...${ColorOff}"
+  echo -e "${Green}Removing Neptune CRDs and Controller...${ColorOff}"
   checkInNeptune
 
   make undeploy
+  make uninstall
 
 elif [[ "${CMD}" == "clean" ]]; then
   echo -e "${Green}Removing Astra and cluster...${ColorOff}"
@@ -290,6 +308,11 @@ elif [[ "${CMD}" == "deploy" ]]; then
   ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
   deployNeptune
 
+elif [[ "${CMD}" == "refresh" ]]; then
+  checkInNeptune
+  validateContext
+  refreshDeployment
+
 elif [[ "${CMD}" == "image" ]]; then
   doNeptuneImage
 
@@ -305,7 +328,8 @@ elif [[ "${CMD}" == "make" ]]; then
 elif [[ "${CMD}" == "bash" ]]; then
   checkInNeptune
   validateContext
-  bash
+  echo -e "${Green}Entering bash session...${ColorOff}"
+  env IMG=kind-registry:5001/controller:latest bash
 
 fi
 #=================End main process=========================

@@ -150,7 +150,7 @@ function setupDefaults() {
   LOADBALANCER="false"
 
   CLUSTERNAME="astra"
-  NAMESPACE="pcloud"
+  NAMESPACE="neptune-system"
   CERTNAME="secure-testing-cert"
   WORKDIR=${WORKDIR:-/tmp/astra}
   CERTDOMAINNAME="integration.astra.netapp.io"
