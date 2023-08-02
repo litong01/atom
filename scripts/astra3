@@ -327,7 +327,6 @@ elif [[ "${CMD}" == "make" ]]; then
 
 elif [[ "${CMD}" == "bash" ]]; then
   checkInNeptune
-  validateContext
   echo -e "${Green}Entering bash session...${ColorOff}"
   env IMG=kind-registry:5001/controller:latest bash
 
