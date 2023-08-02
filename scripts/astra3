@@ -254,9 +254,8 @@ if [[ "${CMD}" == "up" ]]; then
 
   echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
   ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}"
-  installStorageCRDs
-
   validateContext
+  installStorageCRDs
 
   ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
   
@@ -266,11 +265,11 @@ if [[ "${CMD}" == "up" ]]; then
 elif [[ "${CMD}" == "prepare" ]]; then
   echo ""
   checkInNeptune
-  validateContext
 
   echo ""
   echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
   ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}"
+  validateContext
   installStorageCRDs
 
   validateContext
