@@ -159,6 +159,18 @@ function checkInNeptune() {
     fi
 }
 
+function checkEnvironmentVariables() {
+  envs=(REGISTRY REGISTRY_USERID REGISTRY_TOKEN TAG PLATFORMS)
+  for value in ${envs[@]}; do
+    if [[ "${value}" == "REGISTRY_TOKEN" ]]; then
+      echo -e "${Green}${value}${ColorOff}=************"
+    else
+      echo -e "${Green}${value}${ColorOff}=${!value}"
+    fi
+  done
+  echo ""
+}
+
 function wait_for_pod() {
   # Since the billing, trident-svc and bucketservice are the ones become available latest
   # We will just watch them.
@@ -247,6 +259,8 @@ function refreshDeployment() {
 #=================Start main process=========================
 
 set -e
+checkEnvironmentVariables
+
 # cluster processes
 if [[ "${CMD}" == "up" ]]; then
   echo ""
@@ -320,14 +334,33 @@ elif [[ "${CMD}" == "update" ]]; then
 
 elif [[ "${CMD}" == "make" ]]; then
   checkInNeptune
-  export IMG=kind-registry:5001/controller:latest
-  # export PLATFORMS=linux/arm64,linux/amd64
-  make ${REST}
+
+  # Only login to image repository when both registry userid and token are available
+  # this is to allow publish to the image repo will be successful
+  if [[ ! -z $REGISTRY_USERID ]] && [[ ! -z $REGISTRY_TOKEN ]]; then
+    # Login to the registry only to allow multiarch image built and push easier
+    if [[ -z "$REGISTRY" ]]; then
+      echo ${REGISTRY_TOKEN} | docker login docker.io -u ${REGISTRY_USERID} --password-stdin
+      REGISTRY="${REGISTRY_USERID}/"
+    else
+      echo ${REGISTRY_TOKEN} | docker login ${REGISTRY} -u ${REGISTRY_USERID} --password-stdin
+    fi
+  fi
+
+  if [[ -z "$PLATFORMS" ]]; then
+    ARCH=$(uname -m) && if [[ "${ARCH}" == "aarch64" ]]; then ARCH=arm64; fi
+    platforms=$(uname)/${ARCH}
+    # we only like to produce the image for the platform we are in now.
+    PLATFORMS="${platforms,,}"
+  fi
+
+  # We are ready to execute,
+  REGISTRY=${REGISTRY} PLATFORMS=${PLATFORMS} make ${REST}
 
 elif [[ "${CMD}" == "bash" ]]; then
   checkInNeptune
   echo -e "${Green}Entering bash session...${ColorOff}"
-  env IMG=kind-registry:5001/controller:latest bash
-
+  # env IMG=kind-registry:5001/controller:latest bash
+  bash
 fi
 #=================End main process=========================

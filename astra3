@@ -1,5 +1,17 @@
 #!/bin/bash
+# The following environment variables can be set
+#    REGISTRY         - value should be registry include namespace such as ghcr.io/tli551/
+#    REGISTRY_USERID  - the user id to be used to login to the registry
+#    REGISTRY_TOEKN   - the token for the REGISTRY_USERID
+#    TAG              - the tag be used, default to latest
+#    PLATFORMS        - a list of image architectures to be built
+# All these variables are used when build and push images
 docker run -it --rm --name astra3 --network host \
+   -e "REGISTRY=${REGISTRY}" \
+   -e "REGISTRY_USERID=${REGISTRY_USERID}" \
+   -e "REGISTRY_TOKEN=${REGISTRY_TOKEN}" \
+   -e "TAG=${TAG}" \
+   -e "PLATFORMS=${PLATFORMS}" \
    -v /var/run/docker.sock:/var/run/docker.sock \
    -v /tmp/astra3:/home/work/astra3 \
    -v $(pwd):/home/neptune -v ${HOME}/.kube:/home/.kube \
