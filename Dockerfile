@@ -7,6 +7,8 @@ RUN mkdir -p /home/neptune
 ENV PATH /home/bin:$PATH
 ENV LOCALBIN=/home/bin
 ENV HOME=/home
+ENV GOCACHE=/home/work/astra3/gobuild
+ENV GOPATH=/home/work/astra3/go
 
 WORKDIR /home/neptune
 CMD /home/bin/astra3
