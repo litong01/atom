@@ -256,6 +256,11 @@ function refreshDeployment() {
   fi
 }
 
+function removeBuilder() {
+  echo -e "${Green}Removing builder instance...${ColorOff}"
+  docker buildx rm astra-builder >/dev/null 2>&1
+}
+
 #=================Start main process=========================
 
 set -e
@@ -334,6 +339,12 @@ elif [[ "${CMD}" == "update" ]]; then
 
 elif [[ "${CMD}" == "make" ]]; then
   checkInNeptune
+
+  if [[ "$REST" == "docker-build" ]] || [[ "$REST" == "all-build" ]]; then
+    echo -e "${Green}Creating builder instance...${ColorOff}"
+    docker buildx create --name astra-builder --use
+    trap removeBuilder EXIT
+  fi
 
   # Only login to image repository when both registry userid and token are available
   # this is to allow publish to the image repo will be successful
