@@ -42,7 +42,7 @@ function printHelp() {
 function validateCMD() {
   cmd=$1
   allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" \
-    "update" "k8stool" "bash")
+    "update" "k8stool" "bash" "addon")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -172,17 +172,12 @@ function checkEnvironmentVariables() {
 }
 
 function wait_for_pod() {
-  # Since the billing, trident-svc and bucketservice are the ones become available latest
-  # We will just watch them.
-  startTime=$1
-  if [[ "${TYPE}" == "acs" ]]; then
-    extrapod="billing"
-  else
-    extrapod="asup"
-  fi
+  namespace=$1
+  podlabel=$2
+  condition=$3
   while : ; do
-    waitresult=$(kubectl wait pod --context ${CONTEXT} -n ${NAMESPACE} --for=condition=ready \
-      -l "app.kubernetes.io/name in (${extrapod}, trident-svc, bucketservice)" --timeout=60s 2>/dev/null || true)
+    waitresult=$(kubectl wait pod --context ${CONTEXT} -n ${namespace} --for=condition=${condition} \
+      -l "app.kubernetes.io/name in (${podlabel})" --timeout=60s 2>/dev/null || true)
     # If the wait returns, it can only be either timed out or condition met. We check if there is
     # timedout, we continue to wait. Since the timeout is an error, and it goes to /dev/null, only
     # condition met will have anything in waitresult, in any other condition, the waitresult is empty.
@@ -256,9 +251,22 @@ function refreshDeployment() {
   fi
 }
 
-function removeBuilder() {
-  echo -e "${Green}Removing builder instance...${ColorOff}"
-  docker buildx rm astra-builder >/dev/null 2>&1
+function doAddon() {
+
+  # This section deploys hashcorp vault onto the cluster
+  helm repo add hashicorp https://helm.releases.hashicorp.com >/dev/null 2>&1
+  kubectl create namespace vault >/dev/null 2>&1
+  helm install vault hashicorp/vault --namespace vault >/dev/null 2>&1
+  # wait_for_pod vault vault Initialized
+  sleep 20
+  kubectl exec -ti -n vault statefulset/vault -- vault operator init --format json > /home/work/astra3/vault.key.json
+  allkeys=($(cat /home/work/astra3/vault.key.json | jq -r '.unseal_keys_b64 | join(" ")'))
+  for key in ${allkeys[@]}; do
+    kubectl exec -ti -n vault statefulset/vault -- vault operator unseal ${key} >/dev/null 2>&1
+  done
+
+  # This section setup minio onto the cluster
+  kubectl apply -f /home/work/addon/minio-dev.yaml
 }
 
 #=================Start main process=========================
@@ -337,32 +345,25 @@ elif [[ "${CMD}" == "image" ]]; then
 elif [[ "${CMD}" == "update" ]]; then
   doADTUpdate
 
+elif [[ "${CMD}" == "addon" ]]; then
+  doAddon
+
 elif [[ "${CMD}" == "make" ]]; then
   checkInNeptune
 
-  if [[ "$REST" == "docker-build" ]] || [[ "$REST" == "all-build" ]]; then
-    echo -e "${Green}Creating builder instance...${ColorOff}"
-    docker buildx create --name astra-builder --use
-    trap removeBuilder EXIT
-  fi
+  if [[ "$REST" == "all-buildx" ]]; then
 
-  # Only login to image repository when both registry userid and token are available
-  # this is to allow publish to the image repo will be successful
-  if [[ ! -z $REGISTRY_USERID ]] && [[ ! -z $REGISTRY_TOKEN ]]; then
-    # Login to the registry only to allow multiarch image built and push easier
-    if [[ -z "$REGISTRY" ]]; then
-      echo ${REGISTRY_TOKEN} | docker login docker.io -u ${REGISTRY_USERID} --password-stdin >/dev/null 2>&1
-      REGISTRY="${REGISTRY_USERID}/"
-    else
-      echo ${REGISTRY_TOKEN} | docker login ${REGISTRY} -u ${REGISTRY_USERID} --password-stdin >/dev/null 2>&1
+    # Only login to image repository when both registry userid and token are available
+    # this is to allow publish to the image repo will be successful
+    if [[ ! -z $REGISTRY_USERID ]] && [[ ! -z $REGISTRY_TOKEN ]]; then
+      # Login to the registry only to allow multiarch image built and push easier
+      if [[ -z "$REGISTRY" ]]; then
+        echo ${REGISTRY_TOKEN} | docker login docker.io -u ${REGISTRY_USERID} --password-stdin >/dev/null 2>&1
+        REGISTRY="${REGISTRY_USERID}/"
+      else
+        echo ${REGISTRY_TOKEN} | docker login ${REGISTRY} -u ${REGISTRY_USERID} --password-stdin >/dev/null 2>&1
+      fi
     fi
-  fi
-
-  if [[ -z "$PLATFORMS" ]]; then
-    ARCH=$(uname -m) && if [[ "${ARCH}" == "aarch64" ]]; then ARCH=arm64; fi
-    platforms=$(uname)/${ARCH}
-    # we only like to produce the image for the platform we are in now.
-    PLATFORMS="${platforms,,}"
   fi
 
   # We are ready to execute,

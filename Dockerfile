@@ -9,7 +9,6 @@ ENV LOCALBIN=/home/bin
 ENV HOME=/home
 ENV GOCACHE=/home/work/astra3/gocache
 ENV GOPATH=/home/work/astra3/go
-ENV DOCKERCACHE=/home/work/astra3/dockercache
 
 WORKDIR /home/neptune
 CMD /home/bin/astra3
