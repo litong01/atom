@@ -14,6 +14,7 @@ NAMESPACE="${NAMESPACE:-neptune-system}"
 DEPLOYMENT="${DEPLOYMENT:-neptune-controller-manager}"
 IMAGE_REPOSITORY=${IMAGE_REPOSITORY:-docker.repo.eng.netapp.com/globalcicd/astra}
 IMAGENAME=""
+TAG=${TAG:-latest}
 
 function printHelp() {
   echo ""
@@ -499,8 +500,9 @@ elif [[ "${CMD}" == "make" ]]; then
     if [[ "${ARCH}" == "x86_64" ]]; then ARCH="amd64"; fi
     PLATFORMS=linux/${ARCH}
   fi
+
   # We are ready to execute,
-  make ${REST} REGISTRY=${REGISTRY} PLATFORMS=${PLATFORMS} 
+  make ${REST} REGISTRY=${REGISTRY} PLATFORMS=${PLATFORMS} REPOSITORY=${REPOSITORY} TAG=${TAG}
 
 elif [[ "${CMD}" == "bash" ]]; then
   checkInNeptune
