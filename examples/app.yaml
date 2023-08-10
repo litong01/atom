@@ -1,0 +1,7 @@
+apiVersion: management.astra.netapp.io/v1alpha1
+kind: Application
+metadata:
+  name: test-app1
+spec:
+  includedNamespaces:
+    - namespace: default

@@ -29,8 +29,11 @@ function printHelp() {
   echo "     clean    - Remove all astra including k8s cluster"
   echo "     cleanall - Remove all astra including k8s cluster, proxy, local registry"
   echo "     update   - update this tool"
+  echo "     trident  - Set up trident"
   echo "     refresh  - restart a deployment and its image"
-  echo "     make     - run polaris make command"
+  echo "     test     - run neptune tests"
+  echo "     rmtest   - remove neptune tests"
+  echo "     make     - run neptune make command"
   echo "     bash     - run bash interactively"
   echo ""
   echo -e "Parameters for ${Green}refresh${ColorOff} command:"
@@ -42,7 +45,7 @@ function printHelp() {
 function validateCMD() {
   cmd=$1
   allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" \
-    "update" "k8stool" "bash" "addon")
+    "update" "k8stool" "bash" "addon" "trident" "test" "rmtest")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -196,25 +199,32 @@ function wait_for_pod() {
 
 function deployNeptune() {
   echo -e "${Green}Deploying Neptune...${ColorOff}"
-  export IMG=kind-registry:5001/controller:latest
+  export IMG=kind-registry:5001/controller:${TAG}
   export NEPTUNE_BIN=${LOCALBIN}
   make install
   make deploy
+
+  # Wait for 10 seconds for neptune controller to come up
+  sleep 10
+  # We need to make better deployers, here we need to set the environment variable
+  # for NEPTUNE_REGISTRY, NEPTUNE_REPOSITORY and NEPTUNE_TAG
+  kubectl set env --context ${CONTEXT} -n ${NAMESPACE} deployment/neptune-controller-manager \
+  NEPTUNE_REGISTRY=kind-registry:5001 NEPTUNE_REPOSITORY= NEPTUNE_TAG=${TAG}
 }
 
 function doNeptuneImage() {
   echo -e "${Green}Setting up Neptune Manager image...${ColorOff}"
-  img=$(docker image ls controller:latest --quiet)
-  if [[ -z "${img}" ]]; then
-    img=$(docker image ls kind-registry:5001/controller:latest --quiet)
-    if [[ -z "${img}" ]]; then
-      echo -e "${Red}No local image exist, do a docker build first${ColorOff}"
-      return
+  allimages=(controller execjob resourcebackup resourcedelete resourcerestore)
+  tag=${TAG:-latest}
+  for img in ${allimages[@]}; do
+    localImg=$(docker image ls ${img}:${tag} --quiet)
+    if [[ -z "${localImg}" ]]; then
+      echo -e "${Red}${img}:${tag} local image does not exist, do a docker build first${ColorOff}"
+      continue
     fi
-  fi
-
-  docker tag ${img} localhost:5001/controller:latest
-  docker push localhost:5001/controller:latest
+    docker tag ${img}:${tag} localhost:5001/${img}:${tag}
+    docker push localhost:5001/${img}:${tag}
+  done
 }
 
 function refreshDeployment() {
@@ -251,12 +261,58 @@ function refreshDeployment() {
   fi
 }
 
+
+
+function setupTrident() {
+  set +e
+  tridentns="trident"
+  kubectl get namespace ${tridentns} --context "${CONTEXT}" >/dev/null 2>&1
+  # namespace does not exist, create it
+  if [[ $? == 1 ]]; then
+    echo "Creating namespace ${tridentns}"
+    set -e
+    kubectl create ns ${tridentns} --context "${CONTEXT}"
+  else
+    echo "Namespace ${tridentns} already exists"
+  fi
+  set -e
+
+  # Getting trident images
+  tridentImages=("netapp/trident:23.01.1" "netapp/trident-autosupport:23.01" "netapp/trident-operator:23.01.1" \
+    "registry.k8s.io/sig-storage/csi-provisioner:v3.4.0" "registry.k8s.io/sig-storage/csi-attacher:v4.1.0" \
+    "registry.k8s.io/sig-storage/csi-resizer:v1.7.0" "registry.k8s.io/sig-storage/csi-snapshotter:v3.0.3" \
+    "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.7.0")
+
+  for item in ${tridentImages[@]}; do
+    echo -e "${Green}Pulling image ${item}...${ColorOff}"
+    docker pull --platform=linux/amd64 ${item}
+    ${SCRIPTDIR}/k8stool image --load-or-push true --source-tag "${item}" --context ${CONTEXT}
+  done
+
+  echo -e "${Green}Deploying trident onto kubernetes cluster...${ColorOff}"
+  kubectl --context "${CONTEXT}" apply -f /home/trident/tridentorchestrator.yaml -n ${tridentns}
+  echo "Trident CRDs are deployed"
+  ARCH=$(uname -m) && if [[ "${ARCH}" == "aarch64" ]]; then ARCH=arm64; fi
+  if [[ "${ARCH}" == "x86_64" ]]; then ARCH="amd64"; fi
+
+  # Now make sure that the node using right architecture node label
+  ARCH=$ARCH yq e '.spec.controllerPluginNodeSelector."kubernetes.io/arch" = env(ARCH)' -i /home/trident/tridentorchestrator_cr.yaml
+  ARCH=$ARCH yq e '.spec.nodePluginNodeSelector."kubernetes.io/arch" = env(ARCH)' -i /home/trident/tridentorchestrator_cr.yaml
+
+  # Deploy the orchestrator
+  kubectl --context ${CONTEXT} apply -f /home/trident/tridentorchestrator_cr.yaml -n ${tridentns}
+}
+
 function doAddon() {
 
   # This section deploys hashcorp vault onto the cluster
+  echo -e "${Green}Deploying Hashicorp Vault...${ColorOff}"
   helm repo add hashicorp https://helm.releases.hashicorp.com >/dev/null 2>&1
-  kubectl create namespace vault >/dev/null 2>&1
-  helm install vault hashicorp/vault --namespace vault >/dev/null 2>&1
+
+  kubectl create namespace vault --dry-run=client -o yaml \
+    | kubectl apply -f -
+
+  helm install vault hashicorp/vault --namespace vault >/dev/null 2>&1 || true
   # wait_for_pod vault vault Initialized
   sleep 20
   kubectl exec -ti -n vault statefulset/vault -- vault operator init --format json > /home/work/astra3/vault.key.json
@@ -265,9 +321,65 @@ function doAddon() {
     kubectl exec -ti -n vault statefulset/vault -- vault operator unseal ${key} >/dev/null 2>&1
   done
 
+  echo -e "${Green}Deploying MinIO...${ColorOff}"
   # This section setup minio onto the cluster
-  kubectl apply -f /home/work/addon/minio-dev.yaml
+  kubectl apply -n ${NAMESPACE} -f /home/addon/minio-dev.yaml
+
+  # Wait for minio to be up running
+  sleep 10
+
+  # Now we setup alias named minio and create bucket for test using the default userid and password
+  kubectl exec -ti -n ${NAMESPACE} pod/minio -- mc config host add minio http://minio.neptune-system.svc:9000 minioadmin minioadmin
+
+  # Create the test app bucket
+  kubectl exec -ti -n ${NAMESPACE} pod/minio -- mc mb minio/test-appvault1
+
 }
+
+function setupTest() {
+  workloadns=$1
+  neptunens=$2
+  echo -e "${Green}Creating workload namespace ${workloadns}...${ColorOff}"
+  # Create a namespace for the workload to run
+  kubectl create namespace ${workloadns} --dry-run=client -o yaml \
+    | kubectl apply -f -
+
+  # Now deploy the workload
+  echo -e "${Green}Deploying workload...${ColorOff}"
+  kubectl apply -n ${workloadns} -f /home/examples/workload.yaml
+
+  # Now create a namespace to hold all the neptune resources
+  echo -e "${Green}Creating namespace ${neptunens} for neptune resources...${ColorOff}"
+  kubectl create namespace ${neptunens} --dry-run=client -o yaml \
+    | kubectl apply -f -
+
+  allfiles=(app-vault.yaml app.yaml snapshot.yaml backup.yaml)
+  # fixup the app namespace attribute
+  echo -e "${Green}Creating app for namespace ${workloadns}...${ColorOff}"
+  ns="${workloadns}" yq '.spec.includedNamespaces[0].namespace = env(ns)' \
+    -i /home/examples/app.yaml
+
+  for afile in ${allfiles[@]}; do
+    echo -e "${Green}Creating ${afile} in namespace ${neptunens}...${ColorOff}"
+    kubectl apply -n ${neptunens} -f /home/examples/${afile}
+  done
+}
+
+function removeTest() {
+  workloadns=$1
+  neptunens=$2
+  # Now remove the workload
+  kubectl delete -n ${workloadns} -f /home/examples/workload.yaml
+
+  # delete the namespace for the workload
+  kubectl delete namespace ${workloadns} >/dev/null 2>&1
+
+  allfiles=(backup.yaml  snapshot.yaml app.yaml app-vault.yaml)
+  for afile in ${allfiles[@]}; do
+    kubectl delete -n ${neptunens} -f /home/examples/${afile}
+  done
+}
+
 
 #=================Start main process=========================
 
@@ -288,6 +400,9 @@ if [[ "${CMD}" == "up" ]]; then
   
   doNeptuneImage
   deployNeptune
+
+  setupTrident
+  doAddon
 
 elif [[ "${CMD}" == "prepare" ]]; then
   echo ""
@@ -348,6 +463,18 @@ elif [[ "${CMD}" == "update" ]]; then
 elif [[ "${CMD}" == "addon" ]]; then
   doAddon
 
+elif [[ "${CMD}" == "trident" ]]; then
+  validateContext
+  setupTrident
+
+elif [[ "${CMD}" == "test" ]]; then
+  validateContext
+  setupTest test1 neptune-system
+
+elif [[ "${CMD}" == "rmtest" ]]; then
+  validateContext
+  removeTest test1 neptune-system
+
 elif [[ "${CMD}" == "make" ]]; then
   checkInNeptune
 
@@ -366,8 +493,14 @@ elif [[ "${CMD}" == "make" ]]; then
     fi
   fi
 
+  if [[ -z ${PLATFORMS} ]]; then
+    ARCH=$(uname -m)
+    if [[ "${ARCH}" == "aarch64" ]]; then ARCH=arm64; fi
+    if [[ "${ARCH}" == "x86_64" ]]; then ARCH="amd64"; fi
+    PLATFORMS=linux/${ARCH}
+  fi
   # We are ready to execute,
-  REGISTRY=${REGISTRY} PLATFORMS=${PLATFORMS} make ${REST}
+  make ${REST} REGISTRY=${REGISTRY} PLATFORMS=${PLATFORMS} 
 
 elif [[ "${CMD}" == "bash" ]]; then
   checkInNeptune

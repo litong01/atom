@@ -1,0 +1,7 @@
+apiVersion: management.astra.netapp.io/v1alpha1
+kind: Snapshot
+metadata:
+  name: test-snapshot1
+spec:
+  applicationRef: test-app1
+  appVaultRef: test-appvault1
