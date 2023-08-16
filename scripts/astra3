@@ -200,17 +200,7 @@ function wait_for_pod() {
 
 function deployNeptune() {
   echo -e "${Green}Deploying Neptune...${ColorOff}"
-  export IMG=kind-registry:5001/controller:${TAG}
-  export NEPTUNE_BIN=${LOCALBIN}
-  make install
-  make deploy
-
-  # Wait for 10 seconds for neptune controller to come up
-  sleep 10
-  # We need to make better deployers, here we need to set the environment variable
-  # for NEPTUNE_REGISTRY, NEPTUNE_REPOSITORY and NEPTUNE_TAG
-  kubectl set env --context ${CONTEXT} -n ${NAMESPACE} deployment/neptune-controller-manager \
-  NEPTUNE_REGISTRY=kind-registry:5001 NEPTUNE_REPOSITORY= NEPTUNE_TAG=${TAG}
+  IMG="kind-registry:5001/controller:${TAG}" REGISTRY="kind-restiry:5001" TAG=${TAG} make deploy
 }
 
 function doNeptuneImage() {
@@ -262,8 +252,6 @@ function refreshDeployment() {
   fi
 }
 
-
-
 function setupTrident() {
   set +e
   tridentns="trident"
@@ -279,7 +267,7 @@ function setupTrident() {
   set -e
 
   # Getting trident images
-  tridentImages=("netapp/trident:23.01.1" "netapp/trident-autosupport:23.01" "netapp/trident-operator:23.01.1" \
+  tridentImages=("netapp/trident:23.07.0" "netapp/trident-autosupport:23.07.0" "netapp/trident-operator:23.07.0" \
     "registry.k8s.io/sig-storage/csi-provisioner:v3.4.0" "registry.k8s.io/sig-storage/csi-attacher:v4.1.0" \
     "registry.k8s.io/sig-storage/csi-resizer:v1.7.0" "registry.k8s.io/sig-storage/csi-snapshotter:v3.0.3" \
     "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.7.0")
