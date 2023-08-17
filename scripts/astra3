@@ -46,7 +46,7 @@ function printHelp() {
 function validateCMD() {
   cmd=$1
   allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" \
-    "update" "k8stool" "bash" "addon" "trident" "hostpath" "test" "rmtest")
+    "update" "k8stool" "bash" "addon" "trident" "hostpath" "test" "rmtest" "testhostpath")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -128,9 +128,11 @@ function validateContext() {
 }
 
 function installStorageCRDs() {
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/release-5.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/release-5.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/release-5.0/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml
 }
 
 
@@ -252,16 +254,63 @@ function refreshDeployment() {
   fi
 }
 
-function setupHostpath() {
+function testHostpathSnapshot() {
+  testns="testhostpath"
+  # Create a namespace to test hostpath snapshot
+  kubectl create namespace ${testns} --dry-run=client -o yaml \
+    | kubectl apply -f -
 
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml
+  # Create persistent volume
+  kubectl apply -n ${testns} -f /home/hostpath/test/csi-pvc.yaml
+  sleep 1
+  # Check pvc
+  name=$(kubectl get -n ${testns} pvc -o jsonpath --template={.items[0].metadata.name})
+  if [[ "${name}" == "csi-pvc" ]]; then
+    echo -e "${Green}pvc created successfully${ColorOff}"
+  else
+    echo -e "${Red}pvc creation failed${ColorOff}"
+  fi
+
+  # Create volume snapshot
+  kubectl apply -n ${testns} -f /home/hostpath/test/csi-snapshot-v1.yaml
+  sleep 1
+
+  # Check volume snapshot
+  name=$(kubectl get -n ${testns} volumesnapshot -o jsonpath --template={.items[0].metadata.name})
+  if [[ "${name}" == "new-snapshot-demo" ]]; then
+    echo -e "${Green}snapshot created successfully${ColorOff}"
+  else
+    echo -e "${Red}snapshot creation failed${ColorOff}"
+  fi
+
+  # Check volume snapshot content
+  name=$(kubectl get -n ${testns} volumesnapshotcontent -o jsonpath --template={.items[0].status.readyToUse})
+  if [[ "${name}" == "true" ]]; then
+    echo -e "${Green}snapshot content is ready${ColorOff}"
+  else
+    echo -e "${Red}snapshot content was not ready${ColorOff}"
+  fi
+
+  # Now restore the snapshot
+  kubectl apply -n ${testns} -f /home/hostpath/test/csi-restore.yaml
+  sleep 1
+  # There should be two pvcs
+  # Use this to get all the names
+  #    name=$(kubectl get -n ${testns} pvc -o jsonpath --template={.items[*].metadata.name})
+  # Get the 2nd pvc name
+  name=$(kubectl get -n ${testns} pvc -o jsonpath --template={.items[1].metadata.name})
+  if [[ ! -z ${name} ]]; then
+    echo -e "${Green}pvc restore was successful${ColorOff}"
+  else
+    echo -e "${Red}pvc restore failed${ColorOff}"
+  fi
+}
+
+function setupHostpath() {
 
   /home/hostpath/deploy.sh
 
+  # Create storage class
   kubectl apply -f /home/hostpath/storageclass/csi-storageclass.yaml
 }
 
@@ -401,7 +450,7 @@ if [[ "${CMD}" == "up" ]]; then
   
   doNeptuneImage
 
-  # setupTrident
+  # Setup hostpath csi driver without test
   setupHostpath
   doAddon
 
@@ -473,6 +522,10 @@ elif [[ "${CMD}" == "trident" ]]; then
 elif [[ "${CMD}" == "hostpath" ]]; then
   validateContext
   setupHostpath
+
+elif [[ "${CMD}" == "testhostpath" ]]; then
+  validateContext
+  testHostpathSnapshot
 
 elif [[ "${CMD}" == "test" ]]; then
   validateContext
