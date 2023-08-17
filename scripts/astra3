@@ -207,7 +207,7 @@ function deployNeptune() {
 
 function doNeptuneImage() {
   echo -e "${Green}Setting up Neptune Manager image...${ColorOff}"
-  allimages=(controller execjob resourcebackup resourcedelete resourcerestore)
+  allimages=(controller exechookjob resourcebackup resourcedelete resourcerestore)
   tag=${TAG:-latest}
   for img in ${allimages[@]}; do
     localImg=$(docker image ls ${img}:${tag} --quiet)
