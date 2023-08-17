@@ -46,7 +46,7 @@ function printHelp() {
 function validateCMD() {
   cmd=$1
   allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" \
-    "update" "k8stool" "bash" "addon" "trident" "test" "rmtest")
+    "update" "k8stool" "bash" "addon" "trident" "hostpath" "test" "rmtest")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -252,6 +252,19 @@ function refreshDeployment() {
   fi
 }
 
+function setupHostpath() {
+
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml
+
+  /home/hostpath/deploy.sh
+
+  kubectl apply -f /home/hostpath/storageclass/csi-storageclass.yaml
+}
+
 function setupTrident() {
   set +e
   tridentns="trident"
@@ -322,7 +335,6 @@ function doAddon() {
 
   # Create the test app bucket
   kubectl exec -ti -n ${NAMESPACE} pod/minio -- mc mb minio/test-appvault1
-
 }
 
 function setupTest() {
@@ -388,10 +400,12 @@ if [[ "${CMD}" == "up" ]]; then
   ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --context ${CONTEXT} --workdir "${WORKDIR}"
   
   doNeptuneImage
-  deployNeptune
 
-  setupTrident
+  # setupTrident
+  setupHostpath
   doAddon
+
+  deployNeptune
 
 elif [[ "${CMD}" == "prepare" ]]; then
   echo ""
@@ -455,6 +469,10 @@ elif [[ "${CMD}" == "addon" ]]; then
 elif [[ "${CMD}" == "trident" ]]; then
   validateContext
   setupTrident
+
+elif [[ "${CMD}" == "hostpath" ]]; then
+  validateContext
+  setupHostpath
 
 elif [[ "${CMD}" == "test" ]]; then
   validateContext

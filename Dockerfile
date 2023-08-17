@@ -5,7 +5,8 @@ COPY ./scripts/astra3 /home/bin
 COPY ./scripts/k8stool /home/bin
 COPY ./addon /home/addon
 COPY ./examples /home/examples
-COPY ./trident /home/trident
+COPY ./hostpath /home/hostpath
+RUN apk add curl
 RUN mkdir -p /home/neptune
 ENV PATH /home/bin:$PATH
 ENV LOCALBIN=/home/bin
