@@ -308,6 +308,11 @@ function testHostpathSnapshot() {
 
 function setupHostpath() {
 
+  csins="hostpath"
+  # Create a namespace to test hostpath snapshot
+  kubectl create namespace ${csins} --dry-run=client -o yaml \
+    | kubectl apply -f -
+
   /home/hostpath/deploy.sh
 
   # Create storage class

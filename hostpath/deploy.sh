@@ -203,6 +203,8 @@ commonLabels:
   app.kubernetes.io/instance: hostpath.csi.k8s.io
   app.kubernetes.io/part-of: csi-driver-host-path
 
+namespace: hostpath
+
 resources:
 - ./rbac.yaml
 EOF
@@ -253,7 +255,7 @@ for i in $(ls ${BASE_DIR}/hostpath/*.yaml | sort); do
         fi
         echo "$line"
     done)"
-    if ! echo "$modified" | kubectl apply -f -; then
+    if ! echo "$modified" | kubectl apply -n hostpath -f -; then
         echo "modified version of $i:"
         echo "$modified"
         exit 1
@@ -261,7 +263,7 @@ for i in $(ls ${BASE_DIR}/hostpath/*.yaml | sort); do
 done
 
 check_statefulset () (
-    ready=$(kubectl get "statefulset/$1" -o jsonpath="{.status.readyReplicas}")
+    ready=$(kubectl get -n hostpath "statefulset/$1" -o jsonpath="{.status.readyReplicas}")
     if [ "$ready" ] && [ "$ready" -gt 0 ]; then
         return 0
     fi
@@ -280,7 +282,7 @@ check_statefulsets () (
 
 # Wait until all StatefulSets of the deployment are ready.
 # The assumption is that we use one or more of those.
-statefulsets="$(kubectl get statefulsets -l app.kubernetes.io/instance=hostpath.csi.k8s.io -o jsonpath='{range .items[*]}{" "}{.metadata.name}{end}')"
+statefulsets="$(kubectl get -n hostpath statefulsets -l app.kubernetes.io/instance=hostpath.csi.k8s.io -o jsonpath='{range .items[*]}{" "}{.metadata.name}{end}')"
 cnt=0
 while ! check_statefulsets $statefulsets; do
     if [ $cnt -gt 30 ]; then
@@ -302,17 +304,3 @@ while ! check_statefulsets $statefulsets; do
     cnt=$(($cnt + 1))
     sleep 10
 done
-
-# Create a test driver configuration in the place where the prow job
-# expects it?
-if [ "${CSI_PROW_TEST_DRIVER}" ]; then
-    cp "${BASE_DIR}/test-driver.yaml" "${CSI_PROW_TEST_DRIVER}"
-
-    # When testing late binding, pods must be forced to run on the
-    # same node as the hostpath driver. external-provisioner currently
-    # doesn't handle the case when the "wrong" node is chosen and gets
-    # stuck permanently with:
-    # error generating accessibility requirements: no topology key found on CSINode csi-prow-worker2
-    node="$(kubectl get pods/csi-hostpathplugin-0 -o jsonpath='{.spec.nodeName}')"
-    echo >>"${CSI_PROW_TEST_DRIVER}" "ClientNodeName: $node"
-fi
