@@ -202,7 +202,7 @@ function wait_for_pod() {
 
 function deployNeptune() {
   echo -e "${Green}Deploying Neptune...${ColorOff}"
-  IMG="kind-registry:5001/controller:${TAG}" REGISTRY="kind-restiry:5001" TAG=${TAG} make deploy
+  IMG="kind-registry:5001/controller:${TAG}" REGISTRY="kind-registry:5001" TAG=${TAG} make deploy
 }
 
 function doNeptuneImage() {
