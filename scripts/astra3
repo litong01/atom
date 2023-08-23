@@ -237,22 +237,19 @@ function refreshDeployment() {
     exit 1
   else
     # Now need to get the tag and the actual image name
-    IFS=$'/' parts=($(echo "${dep}"|rev))
-    imagename=$(echo "${parts[0]}"|rev)
-    IFS=$OLDIFS
-    if [[ "${imagename}" != "" ]]; then
-      echo "Ready to update ${imagename}"
-      if [[ "${dep}" =~ "${IMAGE_HOST}" ]]; then
-        # astra image, push the newer image
-        ${SCRIPTDIR}/k8stool image --source-tag "${imagename}"
-        # Remove the cached image
-        docker exec astra-control-plane crictl rmi "${dep}" 2>/dev/null || true
-      else
-        # other images
-        ${SCRIPTDIR}/k8stool image --load-or-push true --source-tag "${imagename}"
+    for anImage in ${dep[@]}; do
+      IFS=$'/' parts=($(echo "$anImage"|rev))
+      imagename=$(echo "${parts[0]}"|rev)
+      IFS=$OLDIFS
+      if [[ "${imagename}" != "" ]] && [[ "${anImage}" =~ "kind-registry:5001" ]]; then
+          echo -e "Ready to update ${Green}${imagename}${ColorOff}"
+          # astra image, push the newer image
+          ${SCRIPTDIR}/k8stool image --source-tag "${imagename}"
+          # Remove the cached image
+          docker exec astra-control-plane crictl rmi "${anImage}" >/dev/null 2>&1 || true
       fi
-      kubectl --context ${CONTEXT} rollout restart -n ${NAMESPACE} deployment ${DEPLOYMENT}
-    fi
+    done
+    kubectl --context ${CONTEXT} rollout restart -n ${NAMESPACE} deployment ${DEPLOYMENT}
   fi
 }
 
