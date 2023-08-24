@@ -137,23 +137,23 @@ function installStorageCRDs() {
 
 
 function doADTUpdate() {
-  adtimage=$(docker inspect astra3 --format "{{.Config.Image}}" 2>/dev/null || true)
+  adtimage=$(sudo docker inspect astra3 --format "{{.Config.Image}}" 2>/dev/null || true)
   if [[ ! -z "${adtimage}" ]]; then
     # Using the github token and id to login
-    echo $GITHUB_TOKEN | docker login -u ${GITHUB_ID} --password-stdin ghcr.io >/dev/null 2>&1
+    echo $GITHUB_TOKEN | sudo docker login -u ${GITHUB_ID} --password-stdin ghcr.io >/dev/null 2>&1
     # Pull the image
-    docker pull "${adtimage}"
-    docker pull ghcr.io/netapp-polaris/polaris/astra/acc-operator:astradt
-    docker tag ghcr.io/netapp-polaris/polaris/astra/acc-operator:astradt acc-operator:astradt
+    sudo docker pull "${adtimage}"
+    sudo docker pull ghcr.io/netapp-polaris/polaris/astra/acc-operator:astradt
+    sudo docker tag ghcr.io/netapp-polaris/polaris/astra/acc-operator:astradt acc-operator:astradt
     # Try to clean up dangling images, use a variable to avoid none 0 return
-    notuseval=$(docker rmi -f $(docker images -f "dangling=true") >/dev/null 2>&1 || true)
+    notuseval=$(sudo docker rmi -f $(sudo docker images -f "dangling=true") >/dev/null 2>&1 || true)
   fi
 }
 
 function loginToDockerHub() {
   if [[ ! -z "${GITHUB_ID}" ]] && [[ ! -z "${GITHUB_TOKEN}" ]]; then
     echo -e "${Green}Logging into docker hub...${ColorOff}"
-    echo $DH_TOKEN | docker login -u $DH_ID --password-stdin docker.io >/dev/null 2>&1
+    echo $DH_TOKEN | sudo docker login -u $DH_ID --password-stdin docker.io >/dev/null 2>&1
   fi
 }
 
@@ -212,13 +212,13 @@ function doNeptuneImage() {
   allimages=(controller exechookjob resourcebackup resourcedelete resourcerestore)
   tag=${TAG:-latest}
   for img in ${allimages[@]}; do
-    localImg=$(docker image ls ${img}:${tag} --quiet)
+    localImg=$(sudo docker image ls ${img}:${tag} --quiet)
     if [[ -z "${localImg}" ]]; then
       echo -e "${Red}${img}:${tag} local image does not exist, do a docker build first${ColorOff}"
       continue
     fi
-    docker tag ${img}:${tag} localhost:5001/${img}:${tag}
-    docker push localhost:5001/${img}:${tag}
+    sudo docker tag ${img}:${tag} localhost:5001/${img}:${tag}
+    sudo docker push localhost:5001/${img}:${tag}
   done
 }
 
@@ -246,7 +246,7 @@ function refreshDeployment() {
           # astra image, push the newer image
           ${SCRIPTDIR}/k8stool image --source-tag "${imagename}"
           # Remove the cached image
-          docker exec astra-control-plane crictl rmi "${anImage}" >/dev/null 2>&1 || true
+          sudo docker exec astra-control-plane crictl rmi "${anImage}" >/dev/null 2>&1 || true
       fi
     done
     kubectl --context ${CONTEXT} rollout restart -n ${NAMESPACE} deployment ${DEPLOYMENT}
@@ -340,7 +340,7 @@ function setupTrident() {
 
   for item in ${tridentImages[@]}; do
     echo -e "${Green}Pulling image ${item}...${ColorOff}"
-    docker pull --platform=linux/amd64 ${item}
+    sudo docker pull --platform=linux/amd64 ${item}
     ${SCRIPTDIR}/k8stool image --load-or-push true --source-tag "${item}" --context ${CONTEXT}
   done
 
@@ -493,10 +493,10 @@ elif [[ "${CMD}" == "cleanall" ]]; then
   echo -e "${Green}Removing everything...${ColorOff}"
   ${SCRIPTDIR}/k8stool cluster -d
   # Remove the proxy and the local registry as well
-  docker rm -f kubeproxy &> /dev/null || true
-  docker rm -f kind-registry &> /dev/null || true
+  sudo docker rm -f kubeproxy &> /dev/null || true
+  sudo docker rm -f kind-registry &> /dev/null || true
   # Need to clean up docker volumes
-  docker volume prune -f &> /dev/null || true
+  sudo docker volume prune -f &> /dev/null || true
 
 elif [[ "${CMD}" == "deploy" ]]; then
   checkInNeptune
@@ -549,10 +549,10 @@ elif [[ "${CMD}" == "make" ]]; then
     if [[ ! -z $REGISTRY_USERID ]] && [[ ! -z $REGISTRY_TOKEN ]]; then
       # Login to the registry only to allow multiarch image built and push easier
       if [[ -z "$REGISTRY" ]]; then
-        echo ${REGISTRY_TOKEN} | docker login docker.io -u ${REGISTRY_USERID} --password-stdin >/dev/null 2>&1
+        echo ${REGISTRY_TOKEN} | sudo docker login docker.io -u ${REGISTRY_USERID} --password-stdin >/dev/null 2>&1
         REGISTRY="${REGISTRY_USERID}/"
       else
-        echo ${REGISTRY_TOKEN} | docker login ${REGISTRY} -u ${REGISTRY_USERID} --password-stdin >/dev/null 2>&1
+        echo ${REGISTRY_TOKEN} | sudo docker login ${REGISTRY} -u ${REGISTRY_USERID} --password-stdin >/dev/null 2>&1
       fi
     fi
   fi

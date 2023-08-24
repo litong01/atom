@@ -303,7 +303,7 @@ ipv4Prefix=""
 ipv6Prefix=""
 
 # Get both ipv4 and ipv6 gateway for the cluster
-gatewaystr=$(docker network inspect -f '{{range .IPAM.Config }}{{ .Gateway }} {{end}}' kind | cut -f1,2)
+gatewaystr=$(sudo docker network inspect -f '{{range .IPAM.Config }}{{ .Gateway }} {{end}}' kind | cut -f1,2)
 gateways=($(echo ${gatewaystr}))
 for gateway in "${gateways[@]}"; do
   if [[ "$gateway" == *"."* ]]; then
@@ -406,7 +406,7 @@ function setupkind() {
 # Create k8s cluster using the giving release and name, do not format the following code
 # because it creates a yaml file.
 if [[ -z "${K8SRELEASE}" ]]; then
-  cat << EOF | kind create cluster --config -
+  cat << EOF | sudo kind create cluster --config -
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 ${FEATURES}
@@ -424,7 +424,7 @@ nodes:
 ${MOREROLE}
 EOF
 else
-  cat << EOF | kind create cluster "${K8SRELEASE}" --config -
+  cat << EOF | sudo kind create cluster "${K8SRELEASE}" --config -
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 ${FEATURES}
@@ -473,17 +473,17 @@ fi
 #=================begin clusters modules=====================
 function deleteMCS() {
   # delete every cluster
-  allnames=$(kind get clusters)
+  allnames=$(sudo kind get clusters)
   allclusters=($(echo ${allnames}))
   for acluster in "${allclusters[@]}"; do
-    kind delete cluster --name "${acluster}"
+    sudo kind delete cluster --name "${acluster}"
   done
   # check if the registry container exists
-  registry=$(docker ps -a | grep ${REGISTRY_NAME} || true)
+  registry=$(sudo docker ps -a | grep ${REGISTRY_NAME} || true)
   if [[ ! -z $registry ]]; then
-    docker rm -f ${REGISTRY_NAME}
+    sudo docker rm -f ${REGISTRY_NAME}
   fi
-  docker volume prune -f
+  sudo docker volume prune -f
 }
 
 function getTopology() {
@@ -504,13 +504,13 @@ function getTopology() {
 
 function setup_kind_registry() {
   # create a registry container if it not running already
-  running="$(docker inspect -f '{{.State.Running}}' "${REGISTRY_NAME}" 2>/dev/null || true)"
+  running="$(sudo docker inspect -f '{{.State.Running}}' "${REGISTRY_NAME}" 2>/dev/null || true)"
   if [[ "${running}" != 'true' ]]; then
-      docker run -d --restart=always -p "127.0.0.1:${REGISTRY_PORT}:5000" \
+      sudo docker run -d --restart=always -p "127.0.0.1:${REGISTRY_PORT}:5000" \
         --name "${REGISTRY_NAME}" registry:2
 
     # Allow kind nodes to reach the registry
-    docker network connect "kind" "${REGISTRY_NAME}" 2>/dev/null || true
+    sudo docker network connect "kind" "${REGISTRY_NAME}" 2>/dev/null || true
   fi
 }
 
@@ -536,7 +536,7 @@ function createCluster() {
     fi
     targetfile=$(echo ${targetfile}|xargs)
     cname=$(echo ${cname}|xargs)
-    kind export kubeconfig --name "${cname}" --kubeconfig "${targetfile}"
+    sudo kind export kubeconfig --name "${cname}" --kubeconfig "${targetfile}"
 
     ss="$(($ss-1))"
   done
@@ -559,13 +559,13 @@ function addRoutes() {
         # strip the double quotes
         thename=$(echo ${allsubs[j]}|xargs)
         # Now get the IP address of the changing cluster public IP
-        ip=$(docker inspect -f '{{ .NetworkSettings.Networks.kind.IPAddress }}' "${thename}-control-plane" 2>/dev/null)
+        ip=$(sudo docker inspect -f '{{ .NetworkSettings.Networks.kind.IPAddress }}' "${thename}-control-plane" 2>/dev/null)
         if [[ ! -z "${ip}" ]]; then
           sub1=$(echo ${allsubs[j+1]}|xargs)
           sub2=$(echo ${allsubs[j+2]}|xargs)
-          docker exec "${cn}-control-plane" ip route add "${sub1}" via "${ip}"
+          sudo docker exec "${cn}-control-plane" ip route add "${sub1}" via "${ip}"
           echo -e "   Route ${Green}${allsubs[j+1]}${ColorOff} via ${Green}${ip}${ColorOff} for cluster ${allsubs[j]} added"
-          docker exec "${cn}-control-plane" ip route add "${sub2}" via "${ip}"
+          sudo docker exec "${cn}-control-plane" ip route add "${sub2}" via "${ip}"
           echo -e "   Route ${Green}${allsubs[j+2]}${ColorOff} via ${Green}${ip}${ColorOff} for cluster ${allsubs[j]} added"
         fi
       done
@@ -608,7 +608,7 @@ EOF
 #=================end clusters modules=======================
 #=================begin image modules========================
 function getImageTag() {
-  aTag=$(docker images "$1" --format "{{.Repository}}:{{.Tag}}")
+  aTag=$(sudo docker images "$1" --format "{{.Repository}}:{{.Tag}}")
   if [[ ! -z "${aTag}" ]]; then
     SOURCETAGS+=($(echo ${aTag}))
   fi
@@ -618,15 +618,15 @@ function loadImagesToNodes() {
   CLUSTERNAME=$1
   for image in "${SOURCETAGS[@]}"; do
     echo "push image ${image}"
-    kind load docker-image -n ${CLUSTERNAME} "${image}"
+    sudo kind load docker-image -n ${CLUSTERNAME} "${image}"
   done
 }
 
 function pushImagesToRepo() {
   for image in "${SOURCETAGS[@]}"; do
     echo "push image ${image}"
-    docker tag "${image}" "${REGISTRY_NAME}${image}"
-    docker push "${REGISTRY_NAME}${image}"
+    sudo docker tag "${image}" "${REGISTRY_NAME}${image}"
+    sudo docker push "${REGISTRY_NAME}${image}"
   done
 }
 
@@ -647,7 +647,7 @@ function doAllClusters() {
   fi
 
   if [[ "${LOAD}" == "true" ]]; then
-    allnames=$(kind get clusters)
+    allnames=$(sudo kind get clusters)
     allclusters=($(echo ${allnames}))
     for acluster in "${allclusters[@]}"; do
       loadImagesToNodes ${acluster}
@@ -916,7 +916,7 @@ function doTargets() {
 
 function doProxyClusters() {
   if [[ -z "${CLUSTERNAME}" ]]; then
-    allnames=$(kind get clusters)
+    allnames=$(sudo kind get clusters)
   else
     allnames=($(echo "${CLUSTERNAME}"))
   fi
@@ -940,7 +940,7 @@ function processProxy() {
   MSG=""
 
   # Remove the running docker if there is one
-  docker rm -f kubeproxy &> /dev/null || true
+  sudo docker rm -f kubeproxy &> /dev/null || true
   
   # Generate nginx configuration and messages
   doProxyClusters
@@ -965,7 +965,7 @@ EOF
   fi
   PORTMAP=$(echo ${PORTMAP})
   # Now start up the proxy container
-  docker run --name kubeproxy -d --network=kind ${PORTMAP} \
+  sudo docker run --name kubeproxy -d --network=kind ${PORTMAP} \
     -v ${configpath}:/etc/nginx/nginx.conf:ro nginx:1.23.4
   echo "${MSG}"
 }
@@ -997,21 +997,21 @@ elif [[ "${CMD}" == "cluster" ]]; then
   if [[ "$ACTION" == "DEL" ]]; then
     if [[ -z "${CLUSTERNAME}" ]]; then
       # delete every cluster
-      allnames=$(kind get clusters)
+      allnames=$(sudo kind get clusters)
       allclusters=($(echo ${allnames}))
       for acluster in "${allclusters[@]}"; do
-        kind delete cluster --name "${acluster}"
+        sudo kind delete cluster --name "${acluster}"
       done
     else
       # delete specified cluster
-      kind delete cluster --name "${CLUSTERNAME}"
+      sudo kind delete cluster --name "${CLUSTERNAME}"
     fi
     exit 0
   fi
   setupkind
 elif [[ "${CMD}" == "cert" ]]; then
   if [[ -z "${CLUSTERNAME}" ]]; then
-    allnames=$(kind get clusters)
+    allnames=$(sudo kind get clusters)
     allclusters=($(echo ${allnames}))
     CLUSTERNAME="${allclusters[0]}"
     if [[ -z "${CLUSTERNAME}" ]]; then
@@ -1031,7 +1031,7 @@ elif [[ "${CMD}" == "image" ]]; then
 elif [[ "${CMD}" == "proxy" ]]; then
   # If it is a remove command
   if [[ "${ACTION}" == "DEL" ]]; then
-    docker rm -f kubeproxy &> /dev/null || true
+    sudo docker rm -f kubeproxy &> /dev/null || true
     exit 0
   fi
 

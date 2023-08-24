@@ -142,11 +142,11 @@ function GetACComponentImageTag() {
 function loginToImageHub() {
   if [[ ! -z "${DH_ID}" ]] && [[ ! -z "${DH_TOKEN}" ]]; then
     echo -e "${Green}Logging into docker hub...${ColorOff}"
-    echo $DH_TOKEN | docker login -u $DH_ID --password-stdin docker.io >/dev/null 2>&1
+    echo $DH_TOKEN | sudo docker login -u $DH_ID --password-stdin docker.io >/dev/null 2>&1
   fi
   if [[ ! -z "${GITHUB_ID}" ]] && [[ ! -z "${GITHUB_TOKEN}" ]]; then
     echo -e "${Green}Logging into git hub...${ColorOff}"
-    echo $GITHUB_TOKEN | docker login -u $GITHUB_ID --password-stdin ghcr.io >/dev/null 2>&1
+    echo $GITHUB_TOKEN | sudo docker login -u $GITHUB_ID --password-stdin ghcr.io >/dev/null 2>&1
   fi
 }
 
@@ -161,35 +161,35 @@ function imagePullTagPush() {
   # We first check the local image without repository, it may be just built locally, we always use
   # that, we are a development tool after all.
 
-  anImage=$(docker images "${iname}:${itag}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
+  anImage=$(sudo docker images "${iname}:${itag}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
   if [[ -z "${anImage}" ]]; then
     # no local image without repository, now check if has been downloaded before and tagged as localhost:5001
-    anImage=$(docker images "localhost:5001/${iname}:${itag}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
+    anImage=$(sudo docker images "localhost:5001/${iname}:${itag}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
     # The image already exists locally, do not need to pull
     if [[ -z "${anImage}" ]]; then
-      docker pull "${IMAGE_REPOSITORY}/${iname}:${itag}"
-      docker tag "${IMAGE_REPOSITORY}/${iname}:${itag}" "localhost:5001/${iname}:${itag}"
+      sudo docker pull "${IMAGE_REPOSITORY}/${iname}:${itag}"
+      sudo docker tag "${IMAGE_REPOSITORY}/${iname}:${itag}" "localhost:5001/${iname}:${itag}"
       if [[ "${TYPE}" == "acs" ]]; then
         # If this is ACS deployment, we need to tag the image to be the original repo
-        docker tag "${IMAGE_REPOSITORY}/${iname}:${itag}" "${ifullname}:${itag}"
+        sudo docker tag "${IMAGE_REPOSITORY}/${iname}:${itag}" "${ifullname}:${itag}"
       fi
     else
       echo -e "   ${Green}Already exists locally, skip pulling${ColorOff}"
     fi
   else
-    docker tag "${iname}:${itag}" "localhost:5001/${iname}:${itag}"
+    sudo docker tag "${iname}:${itag}" "localhost:5001/${iname}:${itag}"
   fi
 
   if [[ "${TYPE}" == "acc" ]] || [[ "${isexternal}" == "false" ]]; then
-    docker push "localhost:5001/${iname}:${itag}"
+    sudo docker push "localhost:5001/${iname}:${itag}"
   elif [[ "${TYPE}" == "acs" ]]; then
     # It is possible that the image was pulled from astra image repo, the actual full named image may have not be
     # tagged. so we check that as well.
-    anImage=$(docker images "${ifullname}:${itag}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
+    anImage=$(sudo docker images "${ifullname}:${itag}" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null || true)
     if [[ -z "${anImage}" ]]; then
-      docker tag "localhost:5001/${iname}:${itag}" "${ifullname}:${itag}"
+      sudo docker tag "localhost:5001/${iname}:${itag}" "${ifullname}:${itag}"
     fi
-    kind load docker-image -n astra "${ifullname}:${itag}"
+    sudo kind load docker-image -n astra "${ifullname}:${itag}"
   else
     echo "The deployment type can only to be either acc or acs"
     exit 1
@@ -205,9 +205,9 @@ function tagOneImage() {
   PART2=$(echo "${PARTS[2]}" | xargs)
   if [[ ! -z "${PART1}" && ! -z "${PART2}" ]]; then
     echo -e "${Green}Ready to tag ${PART1}:${PART2}${ColorOff}"
-    docker tag "${PART1}:${PART2}" "localhost:5001/${PART1}:${PART2}"
+    sudo docker tag "${PART1}:${PART2}" "localhost:5001/${PART1}:${PART2}"
     # docker tag "${PART1}:${PART2}" "${IMAGE_REPOSITORY}/${PART1}:${PART2}"
-    docker push "localhost:5001/${PART1}:${PART2}"
+    sudo docker push "localhost:5001/${PART1}:${PART2}"
   else
     echo -e "${Red}The image cannot be processed, missing name or tag${ColorOff}"
     exit 1
@@ -222,7 +222,7 @@ function loadUpReleaseImages() {
   for relimage in "/home/work/astra/releasebundle/acc/images"/*.tar
   do
     echo -e "${Green}${relimage}${ColorOff}..."
-    result=$(docker load --input ${relimage})
+    result=$(sudo docker load --input ${relimage})
     tagOneImage "${result}"
   done
 }
@@ -287,18 +287,18 @@ function PullTagPushOneExtImage() {
   # Login to the various hub if configured.
   loginToImageHub
   # Pull the image
-  docker pull "${1}"
+  sudo docker pull "${1}"
   # Load to astra cluster nodes
   # kind load docker-image -n astra "${1}"
   anImage=$(echo ${1} | rev | cut -d '/' -f 1|rev)
   imageName=$(echo ${anImage} | cut -d ':' -f 1)
   imageTag=$(echo ${anImage} | cut -d ':' -f 2)
   imageFullname=$(echo ${1} | cut -d ':' -f 1)
-  docker tag "${1}" "localhost:5001/${imageName}:${imageTag}"
-  docker push "localhost:5001/${imageName}:${imageTag}"
+  sudo docker tag "${1}" "localhost:5001/${imageName}:${imageTag}"
+  sudo docker push "localhost:5001/${imageName}:${imageTag}"
 }
 
 function doTagNK() {
   itag="${EXTImageNameTag['nk']}"
-  docker tag "localhost:5001/nk:${itag}" "${IMAGE_HOST}/nk:${itag}" >/dev/null 2>&1
+  sudo docker tag "localhost:5001/nk:${itag}" "${IMAGE_HOST}/nk:${itag}" >/dev/null 2>&1
 }

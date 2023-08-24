@@ -6,7 +6,7 @@ COPY ./scripts/k8stool /home/bin
 COPY ./addon /home/addon
 COPY ./examples /home/examples
 COPY ./hostpath /home/hostpath
-RUN apk add curl
+RUN apk add curl sudo
 RUN mkdir -p /home/neptune
 ENV PATH /home/bin:$PATH
 ENV LOCALBIN=/home/bin
@@ -17,9 +17,10 @@ ENV REGISTRY=
 ENV REGISTRY_USERID=
 ENV REGISTRY_TOKEN=
 ENV TAG=latest
-# RUN adduser -D astra && mkdir /etc/sudoers.d && \
-#     echo "astra ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/astra && \
-#     chmod 0440 /etc/sudoers.d/astra
+RUN adduser -D neptune && mkdir -p /etc/sudoers.d && \
+    echo "neptune ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/neptune && \
+    chmod 0440 /etc/sudoers.d/neptune
 
+USER neptune
 WORKDIR /home/neptune
 CMD /home/bin/astra3
