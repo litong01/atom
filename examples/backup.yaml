@@ -4,4 +4,4 @@ metadata:
   name: test-backup1
 spec:   
   applicationRef: test-app1
-  appVaultRef: test-appvault1 
+  appVaultRef: test-appvault1
