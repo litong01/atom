@@ -209,7 +209,7 @@ function deployNeptune() {
 
 function doNeptuneImage() {
   echo -e "${Green}Setting up Neptune Manager image...${ColorOff}"
-  allimages=(controller exechookjob resourcebackup resourcedelete resourcerestore)
+  allimages=(controller exechookjob resourcebackup resourcedelete resourcerestore resourcesummaryupload)
   tag=${TAG:-latest}
   for img in ${allimages[@]}; do
     localImg=$(docker image ls ${img}:${tag} --quiet)
@@ -364,30 +364,57 @@ function doAddon() {
   echo -e "${Green}Deploying Hashicorp Vault...${ColorOff}"
   helm repo add hashicorp https://helm.releases.hashicorp.com >/dev/null 2>&1
 
-  kubectl create namespace vault --dry-run=client -o yaml \
-    | kubectl apply -f -
+  kubectl --context ${CONTEXT} create namespace vault --dry-run=client -o yaml \
+    | kubectl --context ${CONTEXT} apply -f -
 
-  helm install vault hashicorp/vault --namespace vault >/dev/null 2>&1 || true
-  # wait_for_pod vault vault Initialized
-  sleep 20
-  kubectl exec -ti -n vault statefulset/vault -- vault operator init --format json > /home/work/astra3/vault.key.json
+  # Try to uninstall it if there is one already there
+  helm --kube-context ${CONTEXT} uninstall vault -n vault >/dev/nul 2>&1 || true
+  sleep 3
+  # Try to remove the pvc if there is one there
+  kubectl --context ${CONTEXT} delete pvc -n vault data-vault-0 >/dev/nul 2>&1 || true
+  sleep 3
+
+  # Try to install
+  helm --kube-context ${CONTEXT} install vault hashicorp/vault --namespace vault >/dev/null 2>&1 || true
+  # Wait for vault to be ready to initialize
+  while : ; do
+    isready=$(kubectl --context ${CONTEXT} logs -n vault vault-0 2>/dev/null | grep 'seal configuration missing, not initialized' | head -n1)
+    if [[ ! -z $isready ]]; then
+      break
+    fi
+    echo 'Waiting for vault to be available...'
+    sleep 3
+  done
+
+  kubectl --context ${CONTEXT} exec -ti -n vault statefulset/vault -- vault operator init --format json > /home/work/astra3/vault.key.json
   allkeys=($(cat /home/work/astra3/vault.key.json | jq -r '.unseal_keys_b64 | join(" ")'))
   for key in ${allkeys[@]}; do
-    kubectl exec -ti -n vault statefulset/vault -- vault operator unseal ${key} >/dev/null 2>&1
+    kubectl --context ${CONTEXT} exec -ti -n vault statefulset/vault -- vault operator unseal ${key} >/dev/null 2>&1
   done
 
   echo -e "${Green}Deploying MinIO...${ColorOff}"
   # This section setup minio onto the cluster
-  kubectl apply -n ${NAMESPACE} -f /home/addon/minio-dev.yaml
+  kubectl --context ${CONTEXT} apply -n ${NAMESPACE} -f /home/addon/minio-dev.yaml
 
-  # Wait for minio to be up running
-  sleep 10
+  # Wait for minio to be ready
+  while : ; do
+    isready=$(kubectl --context ${CONTEXT} logs -n ${NAMESPACE} minio 2>/dev/null | grep '1 Online, 0 Offline' | head -n1)
+    if [[ ! -z $isready ]]; then
+      break
+    fi
+    echo 'Waiting for minio to be available...'
+    sleep 3
+  done
 
   # Now we setup alias named minio and create bucket for test using the default userid and password
-  kubectl exec -ti -n ${NAMESPACE} pod/minio -- mc config host add minio http://minio.neptune-system.svc:9000 minioadmin minioadmin
+  kubectl --context ${CONTEXT} exec -ti -n ${NAMESPACE} pod/minio \
+    -- chmod +x /opt/bin/mc
+  kubectl --context ${CONTEXT} exec -ti -n ${NAMESPACE} pod/minio \
+    -- mc config host add minio http://minio.neptune-system.svc:9000 minioadmin minioadmin
 
   # Create the test app bucket
-  kubectl exec -ti -n ${NAMESPACE} pod/minio -- mc mb minio/test-appvault1
+  kubectl --context ${CONTEXT} exec -ti -n ${NAMESPACE} pod/minio \
+    -- mc mb minio/test-appvault1 >/dev/nul 2>&1 || true
 }
 
 function setupTest() {
@@ -517,6 +544,7 @@ elif [[ "${CMD}" == "update" ]]; then
   doADTUpdate
 
 elif [[ "${CMD}" == "addon" ]]; then
+  validateContext
   doAddon
 
 elif [[ "${CMD}" == "trident" ]]; then
