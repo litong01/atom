@@ -309,13 +309,25 @@ function setupHostpath() {
 
   csins="hostpath"
   # Create a namespace to test hostpath snapshot
-  kubectl create namespace ${csins} --dry-run=client -o yaml \
+  kubectl --context ${CONTEXT} create namespace ${csins} --dry-run=client -o yaml \
     | kubectl apply -f -
 
   /home/hostpath/deploy.sh
 
   # Create storage class
-  kubectl apply -f /home/hostpath/storageclass/csi-storageclass.yaml
+  kubectl --context ${CONTEXT} apply -f /home/hostpath/storageclass/csi-storageclass.yaml
+
+  # Set the standard not to be the default sc
+  kubectl --context ${CONTEXT} patch storageclass standard --type=merge -p \
+   '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+
+  # Set the hostpath to be the default
+  kubectl --context ${CONTEXT} patch storageclass csi-hostpath-sc --type=merge -p \
+   '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+
+  # Set the default snapshot sc for volumesnapshot class
+  kubectl --context ${CONTEXT} patch volumesnapshotclass csi-hostpath-snapclass --type=merge -p \
+   '{"metadata": {"annotations":{"snapshot.storage.kubernetes.io/is-default-class":"true"}}}'
 }
 
 function setupTrident() {
@@ -482,8 +494,8 @@ if [[ "${CMD}" == "up" ]]; then
   doNeptuneImage
 
   # Setup hostpath csi driver without test
-  setupHostpath
   doAddon
+  setupHostpath
 
   deployNeptune
 
