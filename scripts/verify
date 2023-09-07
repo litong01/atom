@@ -1,0 +1,117 @@
+#!/bin/bash
+# This is a tool to setup kubernetes cluster using kind
+# it does the following:
+#   1. Create k8s cluster or clusters based on configuration
+#   2. Add load balancer to your k8s cluster
+#   3. Create self signed certificate to a cluster in a given namespace
+#   4. Network your clusters if you decided to create multiple ones
+#   5. Setup k8s cluster image registry to load up your own images
+#   6. Create proxy to route traffic from your host machine to your k8s cluster
+#   7. Remove clusters
+ColorOff='\033[0m'        # Text Reset
+Black='\033[0;30m'        # Black
+Red='\033[0;31m'          # Red
+Green='\033[0;32m'        # Green
+
+
+function verifySnapshot() {
+  snapshotname=$1
+  workloadns=$2
+  neptunens=$3
+  context=$4
+
+  # Verify Snapshot
+  echo -e "Verify Snapshot ${Green}${snapshotname}${ColorOff}..."
+  res=$(kubectl --context ${context} get snapshot $snapshotname -n ${neptunens} -o jsonpath='{.status.completionTimestamp}')
+  if [[ ! -z ${res} ]]; then
+    echo -e "   ${Green}Snapshot $snapshotname has been verified${ColorOff}"
+  else
+    echo -e "   ${Red}Snapshot $snapshotnamehas not been completed, verify failed${ColorOff}"
+    # we probably should not fail this, because it may still be running
+  fi
+
+  # Verify ResourceBackup
+  echo "Verify ResourceBackup..."
+  res=$(kubectl --context ${context} -n ${neptunens} get resourcebackups -o jsonpath='{range .items[?(@.metadata.ownerReferences[0].name == "'$snapshotname'")]}{.status.result}{end}')
+  if [[ ${res} == 'Complete' ]]; then
+    echo -e "   ${Green}ResourceBackup for $snapshotname has been verified${ColorOff}"
+  else
+    echo -e "   ${Red}ResourceBackup for $snapshotname has not been completed, verify failed${ColorOff}"
+    # we probably should not fail this, because it may still be running
+  fi
+
+  # Verify VolumeSnapshot
+  echo "Verify VolumeSnapshot..."
+  res=$(kubectl --context ${context} -n ${workloadns} get volumesnapshots -o jsonpath='{range .items[?(@.metadata.labels.created-by-astra-snapshot-name == "'$snapshotname'")]}{.status.readyToUse}{end}')
+  if [[ ${res} == 'true' ]]; then
+    echo -e "   ${Green}VolumeSnapshot for $snapshotname has been verified${ColorOff}"
+  else
+    echo -e "   ${Red}VolumeSnapshot for $snapshotname is not ready to use, verify failed${ColorOff}"
+    # we probably should not fail this, because it may still be running
+  fi
+}
+
+function verifyBackup() {
+  backupname=$1
+  workloadns=$2
+  neptunens=$3
+  context=$4
+
+  # Verify Backup
+  echo -e "Verify Backup ${Green}${backupname}${ColorOff}..."
+  res=$(kubectl --context ${context} get backup $backupname -n ${neptunens} -o jsonpath='{.status.sourceSnapshotName}')
+  if [[ ! -z ${res} ]]; then
+    echo -e "   ${Green}Backup $backupname has been verified${ColorOff}"
+  else
+    echo -e "   ${Red}Backup $backupname not been completed, verify failed${ColorOff}"
+    # we probably should not fail this, because it may still be running
+  fi
+
+  verifySnapshot "$res" "$workloadns" "$neptunens" "$context"
+
+}
+
+function verifyTests() {
+  workloadns=$1
+  neptunens=$2
+  context=$3
+
+  # Now verify the workload
+  workloadname="networktools"
+  echo -e "Verify workload ${Green}${workloadname}${ColorOff}..."
+  res=$(kubectl --context ${context} wait deployment -n ${workloadns} ${workloadname} --for condition=Available --timeout=60s | grep "condition met")
+  if [[ -z ${res} ]]; then
+    echo -e "   ${Red}Workdload was not running, verify failed${ColorOff}"
+    exit 1
+  else
+    echo -e "   ${Green}Workload has been verified${ColorOff}"
+  fi
+
+  # Verify appVault
+  appvaultname="test-appvault1"
+  echo -e "Verify AppVault ${Green}${appvaultname}${ColorOff}..."
+  res=$(kubectl --context ${context} get appvault $appvaultname -n ${neptunens} -o jsonpath='{.status.state}')
+  if [[ ${res} == 'available' ]]; then
+    echo -e "   ${Green}AppVault $appvaultname has been verified${ColorOff}"
+  else
+    echo -e "   ${Red}AppVault $appvaultname status state was not available, verify failed${ColorOff}"
+    exit 1
+  fi
+
+  # Verify application
+  appname="test-app1"
+  echo -e "Verify Application ${Green}${appname}${ColorOff}..."
+  res=$(kubectl --context ${context} get application ${appname} -n ${neptunens} -o jsonpath='{.status.protectionState}')
+  if [[ ${res} == 'partial' ]] || [[ ${res} == 'protected' ]]; then
+    echo -e "   ${Green}Application ${appname} has been verified${ColorOff}"
+  else
+    echo -e "   ${Red}Application ${appname} status was not partial nor protected, verify failed${ColorOff}"
+    exit 1
+  fi
+
+  echo ""
+  verifySnapshot "test-snapshot1" "${workloadns}" "${neptunens}" "${context}"
+
+  echo ""
+  verifyBackup "test-backup1" "${workloadns}" "${neptunens}" "${context}"
+}

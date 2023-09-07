@@ -3,6 +3,7 @@ LABEL maintainer="litong01"
 
 COPY ./scripts/astra3 /home/bin
 COPY ./scripts/k8stool /home/bin
+COPY ./scripts/verify /home/bin
 COPY ./addon /home/addon
 COPY ./examples /home/examples
 COPY ./hostpath /home/hostpath

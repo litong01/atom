@@ -33,6 +33,7 @@ function printHelp() {
   echo "     trident  - Set up trident"
   echo "     refresh  - restart a deployment and its image"
   echo "     test     - run neptune tests"
+  echo "     vtest    - verify test results"
   echo "     rmtest   - remove neptune tests"
   echo "     make     - run neptune make command"
   echo "     bash     - run bash interactively"
@@ -46,7 +47,7 @@ function printHelp() {
 function validateCMD() {
   cmd=$1
   allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" \
-    "update" "k8stool" "bash" "addon" "trident" "hostpath" "test" "rmtest" "testhostpath")
+    "update" "k8stool" "bash" "addon" "trident" "hostpath" "test" "rmtest" "vtest" "testhostpath")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -473,6 +474,13 @@ function removeTest() {
   done
 }
 
+function verifyTest() {
+  workloadns=$1
+  neptunens=$2
+
+  source /home/bin/verify
+  verifyTests "${workloadns}" "${neptunens}" "${CONTEXT}"
+}
 
 #=================Start main process=========================
 
@@ -574,6 +582,10 @@ elif [[ "${CMD}" == "testhostpath" ]]; then
 elif [[ "${CMD}" == "test" ]]; then
   validateContext
   setupTest test1 neptune-system
+
+elif [[ "${CMD}" == "vtest" ]]; then
+  validateContext
+  verifyTest test1 neptune-system
 
 elif [[ "${CMD}" == "rmtest" ]]; then
   validateContext
