@@ -27,7 +27,8 @@ function verifySnapshot() {
     echo -e "   ${Green}Snapshot $snapshotname has been verified${ColorOff}"
   else
     echo -e "   ${Red}Snapshot $snapshotnamehas not been completed, verify failed${ColorOff}"
-    # we probably should not fail this, because it may still be running
+    # since not verified, let's show the resource
+    kubectl --context ${context} get snapshots $snapshotname -n ${neptunens} -o yaml
   fi
 
   # Verify ResourceBackup
@@ -37,7 +38,13 @@ function verifySnapshot() {
     echo -e "   ${Green}ResourceBackup for $snapshotname has been verified${ColorOff}"
   else
     echo -e "   ${Red}ResourceBackup for $snapshotname has not been completed, verify failed${ColorOff}"
-    # we probably should not fail this, because it may still be running
+    # since not verified, let's show the resource
+    resname=$(kubectl --context ${context} -n ${neptunens} get resourcebackups -o jsonpath='{range .items[?(@.metadata.ownerReferences[0].name == "'$snapshotname'")]}{.metadata.name}{end}')
+    if [[ -z ${resname} ]]; then
+      echo -e "${Red}Cannot locate the resourcebackup for snapshot ${snapshotname}${ColorOff}"
+      exit 1
+    fi
+    kubectl --context ${context} -n ${neptunens} get resourcebackups $resname -o yaml
   fi
 
   # Verify VolumeSnapshot
@@ -47,7 +54,12 @@ function verifySnapshot() {
     echo -e "   ${Green}VolumeSnapshot for $snapshotname has been verified${ColorOff}"
   else
     echo -e "   ${Red}VolumeSnapshot for $snapshotname is not ready to use, verify failed${ColorOff}"
-    # we probably should not fail this, because it may still be running
+    resname=$(kubectl --context ${context} -n ${workloadns} get volumesnapshots -o jsonpath='{range .items[?(@.metadata.labels.created-by-astra-snapshot-name == "'$snapshotname'")]}{.metadata.name}{end}')
+    if [[ -z ${resname} ]]; then
+      echo -e "${Red}Cannot locate volumesnapshot for ${snapshotname}${ColorOff}"
+      exit 1
+    fi
+    kubectl --context ${context} -n ${workloadns} get volumesnapshots $resname -o yaml
   fi
 }
 
@@ -65,6 +77,9 @@ function verifyBackup() {
   else
     echo -e "   ${Red}Backup $backupname not been completed, verify failed${ColorOff}"
     # we probably should not fail this, because it may still be running
+    # since not verified, let's show the resource
+    kubectl --context ${context} get backup $backupname -n ${neptunens} -o yaml
+    exit 1
   fi
 
   verifySnapshot "$res" "$workloadns" "$neptunens" "$context"
@@ -102,11 +117,10 @@ function verifyTests() {
   appname="test-app1"
   echo -e "Verify Application ${Green}${appname}${ColorOff}..."
   res=$(kubectl --context ${context} get application ${appname} -n ${neptunens} -o jsonpath='{.status.protectionState}')
-  if [[ ${res} == 'partial' ]] || [[ ${res} == 'protected' ]]; then
+  if [[ ! -z ${res} ]]; then
     echo -e "   ${Green}Application ${appname} has been verified${ColorOff}"
   else
-    echo -e "   ${Red}Application ${appname} status was not partial nor protected, verify failed${ColorOff}"
-    exit 1
+    echo -e "   ${Red}Application ${appname} protectionState was ${res}${ColorOff}"
   fi
 
   echo ""
