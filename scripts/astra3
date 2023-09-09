@@ -32,6 +32,7 @@ function printHelp() {
   echo "     update   - update this tool"
   echo "     trident  - Set up trident"
   echo "     refresh  - restart a deployment and its image"
+  echo "     minio    - expose minio console"
   echo "     test     - run neptune tests"
   echo "     vtest    - verify test results"
   echo "     rmtest   - remove neptune tests"
@@ -46,7 +47,7 @@ function printHelp() {
 
 function validateCMD() {
   cmd=$1
-  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" \
+  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "minio" \
     "update" "k8stool" "bash" "addon" "trident" "hostpath" "test" "rmtest" "vtest" "testhostpath")
   ccmd=""
   for item in "${allCommands[@]}"; do
@@ -410,6 +411,7 @@ function doAddon() {
   echo -e "${Green}Deploying MinIO...${ColorOff}"
   # This section setup minio onto the cluster
   kubectl --context ${CONTEXT} apply -n ${NAMESPACE} -f /home/addon/minio-dev.yaml
+  kubectl --context ${CONTEXT} apply -n ${NAMESPACE} -f /home/addon/minio-lb.yaml
 
   # Wait for minio to be ready
   while : ; do
@@ -428,6 +430,13 @@ function doAddon() {
   # Create the test app bucket
   kubectl --context ${CONTEXT} exec -ti -n ${NAMESPACE} pod/minio \
     -- mc mb minio/test-appvault1 >/dev/nul 2>&1 || true
+
+}
+
+function exposeMinio() {
+  export HOSTWORKDIR=/tmp/astra3
+  ${SCRIPTDIR}/k8stool proxy --workdir "/home/work/astra3" \
+    --targetports "minio-lb 9090"
 }
 
 function setupTest() {
@@ -590,6 +599,10 @@ elif [[ "${CMD}" == "vtest" ]]; then
 elif [[ "${CMD}" == "rmtest" ]]; then
   validateContext
   removeTest test1 neptune-system
+
+elif [[ "${CMD}" == "minio" ]]; then
+  validateContext
+  exposeMinio
 
 elif [[ "${CMD}" == "make" ]]; then
   checkInNeptune
