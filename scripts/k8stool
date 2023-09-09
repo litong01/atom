@@ -848,7 +848,7 @@ EOF
 )
       MSG=$(cat << EOF
 ${MSG}
-${sv[0]}@${CLUSTERNAME} ${sv[1]}:${port} ==> ${NEXTPORT}
+${sv[0]}@${CLUSTERNAME} ${sv[1]}:${port} ==> http://localhost:${NEXTPORT}
 EOF
 )
        STARTPORT=$((NEXTPORT+1))

@@ -32,7 +32,7 @@ function printHelp() {
   echo "     update   - update this tool"
   echo "     trident  - Set up trident"
   echo "     refresh  - restart a deployment and its image"
-  echo "     minio    - expose minio console"
+  echo "     webui    - expose minio and vault console"
   echo "     test     - run neptune tests"
   echo "     vtest    - verify test results"
   echo "     rmtest   - remove neptune tests"
@@ -47,7 +47,7 @@ function printHelp() {
 
 function validateCMD() {
   cmd=$1
-  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "ui" \
+  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "webui" \
     "update" "k8stool" "bash" "addon" "trident" "hostpath" "test" "rmtest" "vtest" "testhostpath")
   ccmd=""
   for item in "${allCommands[@]}"; do
@@ -437,7 +437,8 @@ function doAddon() {
 function exposeUI() {
   hostWorkDir=$(docker inspect astra3 | jq -r '.[].Mounts | .[] |select( .Destination == "/home/work/astra3") | .Source')
   export HOSTWORKDIR=${hostWorkDir}
-  # ${SCRIPTDIR}/k8stool proxy --workdir "/home/work/astra3" --targetports "minio-lb 9090 vault-lb 8200"
+  # If only expose one service
+  # ${SCRIPTDIR}/k8stool proxy --workdir "/home/work/astra3" --targetports "minio-ui 9090"
   ${SCRIPTDIR}/k8stool proxy --workdir "/home/work/astra3"
 }
 
@@ -602,7 +603,7 @@ elif [[ "${CMD}" == "rmtest" ]]; then
   validateContext
   removeTest test1 neptune-system
 
-elif [[ "${CMD}" == "ui" ]]; then
+elif [[ "${CMD}" == "webui" ]]; then
   validateContext
   exposeUI
 

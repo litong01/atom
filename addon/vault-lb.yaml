@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: vault-lb
+  name: vault-ui
 spec:
   selector:
     app.kubernetes.io/name: vault
