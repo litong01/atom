@@ -136,10 +136,16 @@ function installStorageCRDs() {
   kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml
 }
 
-
 function doADTUpdate() {
   adtimage=$(docker inspect astra3 --format "{{.Config.Image}}" 2>/dev/null || true)
   if [[ ! -z "${adtimage}" ]]; then
+    if [[ ! -z $REGISTRY_USERID ]] && [[ ! -z $REGISTRY_TOKEN ]]; then
+      if [[ -z $REGISTRY ]]; then
+        echo ${REGISTRY_TOKEN} | docker login docker.io -u ${REGISTRY_USERID} --password-stdin >/dev/null 2>&1
+      else
+        echo ${REGISTRY_TOKEN} | docker login $REGISTRY -u ${REGISTRY_USERID} --password-stdin >/dev/null 2>&1
+      fi
+    fi
     # Pull the image
     docker pull "${adtimage}"
     # Try to clean up dangling images, use a variable to avoid none 0 return
