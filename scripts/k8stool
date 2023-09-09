@@ -132,6 +132,7 @@ function validateCMD() {
 # May not be used by all commands, each of the value should be override by command line
 # parameters
 function setupDefaults() {
+  STARTPORT=9340
   TARGETDIR="$(pwd)"
   TOPOLOGY="$(pwd)/topology.json"
   TOPOLOGYCONTENT=""
@@ -811,7 +812,7 @@ function createK8SSecret() {
 function getNextPort() {
   PORT=$1
   while
-    ret=$(lsof -i :"${PORT}")
+    ret=$(nc -zv localhost "${PORT}")
     if [[ -z ${ret} ]]; then
        NEXTPORT=${PORT}
        break
@@ -827,6 +828,8 @@ function getLBServices() {
     jsonpath='{range .items[?(@.spec.type == "LoadBalancer")]}{.metadata.name}{","}{.status.loadBalancer.ingress[0].ip}{","}{.spec.ports[*].port}{"\n"}{end}')
   # get lbservice list
   IFS=$'\n' lbservices=($(echo "${lbservices}"))
+  echo -e "${Green}Retrieved load balancer services:${ColorOff}"
+  echo -e "   ${Green}${lbservices[@]}${ColorOff}"
   for lbs in "${lbservices[@]}"; do
     # split each service to servie name in index 1, external ip in index 2, and ports in index 3
     IFS=$',' sv=($(echo "${lbs}"))

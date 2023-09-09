@@ -47,7 +47,7 @@ function printHelp() {
 
 function validateCMD() {
   cmd=$1
-  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "minio" \
+  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "ui" \
     "update" "k8stool" "bash" "addon" "trident" "hostpath" "test" "rmtest" "vtest" "testhostpath")
   ccmd=""
   for item in "${allCommands[@]}"; do
@@ -391,7 +391,7 @@ function doAddon() {
   sleep 3
 
   # Try to install
-  helm --kube-context ${CONTEXT} install vault hashicorp/vault --namespace vault >/dev/null 2>&1 || true
+  helm --kube-context ${CONTEXT} install vault hashicorp/vault --namespace vault --set ui.enable=true >/dev/null 2>&1 || true
   # Wait for vault to be ready to initialize
   while : ; do
     isready=$(kubectl --context ${CONTEXT} logs -n vault vault-0 2>/dev/null | grep 'seal configuration missing, not initialized' | head -n1)
@@ -407,6 +407,7 @@ function doAddon() {
   for key in ${allkeys[@]}; do
     kubectl --context ${CONTEXT} exec -ti -n vault statefulset/vault -- vault operator unseal ${key} >/dev/null 2>&1
   done
+  kubectl --context ${CONTEXT} apply -n vault -f /home/addon/vault-lb.yaml
 
   echo -e "${Green}Deploying MinIO...${ColorOff}"
   # This section setup minio onto the cluster
@@ -433,10 +434,11 @@ function doAddon() {
 
 }
 
-function exposeMinio() {
+function exposeUI() {
   hostWorkDir=$(docker inspect astra3 | jq -r '.[].Mounts | .[] |select( .Destination == "/home/work/astra3") | .Source')
   export HOSTWORKDIR=${hostWorkDir}
-  ${SCRIPTDIR}/k8stool proxy --workdir "/home/work/astra3" --targetports "minio-lb 9090"
+  # ${SCRIPTDIR}/k8stool proxy --workdir "/home/work/astra3" --targetports "minio-lb 9090 vault-lb 8200"
+  ${SCRIPTDIR}/k8stool proxy --workdir "/home/work/astra3"
 }
 
 function setupTest() {
@@ -600,9 +602,9 @@ elif [[ "${CMD}" == "rmtest" ]]; then
   validateContext
   removeTest test1 neptune-system
 
-elif [[ "${CMD}" == "minio" ]]; then
+elif [[ "${CMD}" == "ui" ]]; then
   validateContext
-  exposeMinio
+  exposeUI
 
 elif [[ "${CMD}" == "make" ]]; then
   checkInNeptune
