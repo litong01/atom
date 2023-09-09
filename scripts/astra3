@@ -434,9 +434,9 @@ function doAddon() {
 }
 
 function exposeMinio() {
-  export HOSTWORKDIR=/tmp/astra3
-  ${SCRIPTDIR}/k8stool proxy --workdir "/home/work/astra3" \
-    --targetports "minio-lb 9090"
+  hostWorkDir=$(docker inspect astra3 | jq -r '.[].Mounts | .[] |select( .Destination == "/home/work/astra3") | .Source')
+  export HOSTWORKDIR=${hostWorkDir}
+  ${SCRIPTDIR}/k8stool proxy --workdir "/home/work/astra3" --targetports "minio-lb 9090"
 }
 
 function setupTest() {
