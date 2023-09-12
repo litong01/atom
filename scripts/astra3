@@ -482,7 +482,7 @@ function removeTest() {
   # delete the namespace for the workload
   kubectl delete namespace ${workloadns} >/dev/null 2>&1
 
-  allfiles=(backup.yaml  snapshot.yaml app.yaml app-vault.yaml)
+  allfiles=(resoucesummaryupload.yaml backup.yaml snapshot.yaml app.yaml app-vault.yaml)
   for afile in ${allfiles[@]}; do
     kubectl delete -n ${neptunens} -f /home/examples/${afile}
   done
