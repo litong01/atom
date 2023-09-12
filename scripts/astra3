@@ -461,7 +461,7 @@ function setupTest() {
   kubectl create namespace ${neptunens} --dry-run=client -o yaml \
     | kubectl apply -f -
 
-  allfiles=(app-vault.yaml app.yaml snapshot.yaml backup.yaml)
+  allfiles=(app-vault.yaml app.yaml snapshot.yaml backup.yaml resoucesummaryupload.yaml)
   # fixup the app namespace attribute
   echo -e "${Green}Creating app for namespace ${workloadns}...${ColorOff}"
   ns="${workloadns}" yq '.spec.includedNamespaces[0].namespace = env(ns)' \
