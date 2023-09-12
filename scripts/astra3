@@ -432,6 +432,8 @@ function doAddon() {
   kubectl --context ${CONTEXT} exec -ti -n ${NAMESPACE} pod/minio \
     -- mc mb minio/test-appvault1 >/dev/nul 2>&1 || true
 
+  # Now setup the pathecho for test post summary
+  kubectl --context ${CONTEXT} -n ${NAMESPACE} apply -f /home/addon/pathecho.yaml
 }
 
 function exposeUI() {
