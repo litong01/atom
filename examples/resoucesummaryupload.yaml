@@ -17,8 +17,9 @@ metadata:
     app.kubernetes.io/created-by: neptune
   name: resourcesummaryupload-sample
 spec:
-  pushEndpoint: "http://pathecho-31056.neptune-system.svc:31056/post/"
+  pushEndpoint: "https://pathecho-31056.neptune-system.svc:31056/post/"
   secretRef: "neptune-resource-summary-upload-secret"
+  skipCertValidation: true
   dataSourceRef:
     apiGroup: management.astra.netapp.io
     kind: Snapshot

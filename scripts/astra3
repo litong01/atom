@@ -374,8 +374,7 @@ function setupTrident() {
   kubectl --context ${CONTEXT} apply -f /home/trident/tridentorchestrator_cr.yaml -n ${tridentns}
 }
 
-function doAddon() {
-
+function deployVault() {
   # This section deploys hashcorp vault onto the cluster
   echo -e "${Green}Deploying Hashicorp Vault...${ColorOff}"
   helm repo add hashicorp https://helm.releases.hashicorp.com >/dev/null 2>&1
@@ -409,6 +408,15 @@ function doAddon() {
   done
   kubectl --context ${CONTEXT} apply -n vault -f /home/addon/vault-lb.yaml
 
+  # Get root token
+  # roottoken=$(cat /home/work/astra3/vault.key.json | jq -r '.root_token')
+  # Here we use the root token login first, then enable username password login,then create a admin user with root access
+  # kubectl --context ${CONTEXT} exec -n vault statefulset/vault -- \
+  #  /bin/sh -c "echo ${roottoken} | vault login -; vault auth enable userpass; vault write auth/userpass/users/admin policies=root password=admin;"
+
+}
+
+function deployMinio() {
   echo -e "${Green}Deploying MinIO...${ColorOff}"
   # This section setup minio onto the cluster
   kubectl --context ${CONTEXT} apply -n ${NAMESPACE} -f /home/addon/minio-dev.yaml
@@ -431,9 +439,12 @@ function doAddon() {
   # Create the test app bucket
   kubectl --context ${CONTEXT} exec -ti -n ${NAMESPACE} pod/minio \
     -- mc mb minio/test-appvault1 >/dev/nul 2>&1 || true
+}
 
+function doAddon() {
+  deployMinio
   # Now setup the pathecho for test post summary
-  kubectl --context ${CONTEXT} -n ${NAMESPACE} apply -f /home/addon/pathecho.yaml
+  kubectl --context ${CONTEXT} -n ${NAMESPACE} apply -f /home/addon/pathecho-tls.yaml
 }
 
 function exposeUI() {

@@ -44,6 +44,8 @@ spec:
           value: "/etc/mytls/tls.crt"
         - name: TLS_KEY
           value: "/etc/mytls/tls.key"
+        - name: DOLOG
+          value: "true"
         volumeMounts:
         - name: tlskeys
           mountPath: "/etc/mytls"
