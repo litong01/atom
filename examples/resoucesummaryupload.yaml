@@ -4,7 +4,7 @@ metadata:
   name: neptune-resource-summary-upload-secret
 type: Opaque
 data:
-  token: bXlzZWNyZXQK
+  token: bXlzZWNyZXQ=
 ---
 apiVersion: management.astra.netapp.io/v1alpha1
 kind: ResourceSummaryUpload
