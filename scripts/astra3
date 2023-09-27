@@ -36,6 +36,7 @@ function printHelp() {
   echo "     test     - run neptune tests"
   echo "     vtest    - verify test results"
   echo "     rmtest   - remove neptune tests"
+  echo "     rstest   - test restore of a backup"
   echo "     make     - run neptune make command"
   echo "     bash     - run bash interactively"
   echo ""
@@ -48,7 +49,7 @@ function printHelp() {
 function validateCMD() {
   cmd=$1
   allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "webui" \
-    "update" "k8stool" "bash" "addon" "trident" "hostpath" "test" "rmtest" "vtest" "testhostpath")
+    "update" "k8stool" "bash" "addon" "trident" "hostpath" "test" "rmtest" "vtest" "rstest" "testhostpath")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -458,6 +459,8 @@ function exposeUI() {
 function setupTest() {
   workloadns=$1
   neptunens=$2
+  targetns=$3
+
   echo -e "${Green}Creating workload namespace ${workloadns}...${ColorOff}"
   # Create a namespace for the workload to run
   kubectl create namespace ${workloadns} --dry-run=client -o yaml \
@@ -482,6 +485,9 @@ function setupTest() {
     echo -e "${Green}Creating ${afile} in namespace ${neptunens}...${ColorOff}"
     kubectl apply -n ${neptunens} -f /home/examples/${afile}
   done
+
+  
+
 }
 
 function removeTest() {
@@ -505,6 +511,29 @@ function verifyTest() {
 
   source /home/bin/verify
   verifyTests "${workloadns}" "${neptunens}" "${CONTEXT}"
+}
+
+function restoreTest() {
+  workloadns=$1
+  neptunens=$2
+  targetns=$3
+  backupname="test-backup1"
+
+  appArchivePath=$(kubectl --context ${CONTEXT} -n ${neptunens} get backups -o jsonpath='{range .items[?(@.metadata.name == "'$backupname'")]}{.status.appArchivePath}{end}')
+  if [[ -z "${appArchivePath}" ]]; then
+    echo -e "${Red}Cannot find the backup ${backupname}${ColorOff}"
+    exit 1
+  fi
+
+  SNS=$appArchivePath yq e '.spec.appArchivePath = env(SNS)' -i /home/examples/backuprestore.yaml
+  SNS=$workloadns yq e '.spec.namespaceMapping[0].source = env(SNS)' -i /home/examples/backuprestore.yaml
+  SNS=$targetns yq e '.spec.namespaceMapping[0].target = env(SNS)' -i /home/examples/backuprestore.yaml
+
+  echo -e "${Green}Ready to create the restore CR${ColorOff}"
+  cat /home/examples/backuprestore.yaml
+  # Now create this backup restore CR
+  kubectl apply --context ${CONTEXT} -n ${neptunens} -f /home/examples/backuprestore.yaml
+
 }
 
 #=================Start main process=========================
@@ -615,6 +644,10 @@ elif [[ "${CMD}" == "vtest" ]]; then
 elif [[ "${CMD}" == "rmtest" ]]; then
   validateContext
   removeTest test1 neptune-system
+
+elif [[ "${CMD}" == "rstest" ]]; then
+  validateContext
+  restoreTest test1 neptune-system test2
 
 elif [[ "${CMD}" == "webui" ]]; then
   validateContext

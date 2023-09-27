@@ -1,0 +1,10 @@
+apiVersion: management.astra.netapp.io/v1alpha1
+kind: BackupRestore
+metadata:
+  name: test-backup-restore1
+spec:   
+  appVaultRef: test-appvault1
+  appArchivePath: toBeReplaced
+  namespaceMapping:
+  - source: sourcens
+    target: targetns
