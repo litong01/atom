@@ -456,6 +456,11 @@ function exposeUI() {
   ${SCRIPTDIR}/k8stool proxy --workdir "/home/work/astra3"
 }
 
+function isClusterOCP() {
+  res=$(kubectl --context ${CONTEXT} get crd securitycontextconstraints.security.openshift.io --no-headers 2>/dev/null)
+  echo ${res}
+}
+
 function setupTest() {
   workloadns=$1
   neptunens=$2
@@ -463,16 +468,22 @@ function setupTest() {
 
   echo -e "${Green}Creating workload namespace ${workloadns}...${ColorOff}"
   # Create a namespace for the workload to run
-  kubectl create namespace ${workloadns} --dry-run=client -o yaml \
+  kubectl --context ${CONTEXT} create namespace ${workloadns} --dry-run=client -o yaml \
     | kubectl apply -f -
 
   # Now deploy the workload
   echo -e "${Green}Deploying workload...${ColorOff}"
-  kubectl apply -n ${workloadns} -f /home/examples/workload.yaml
+  isOCP=$(isClusterOCP) # empty means not OCP, non empty means OCP
+  if [[ -z ${isOCP} ]]; then
+    kubectl --context ${CONTEXT} apply -n ${workloadns} -f /home/examples/workload.yaml
+  else
+    ns="${workloadns}" yq 'select(.metadata.name == "test-scc-binding").subjects[0].namespace = env(ns)' -i /home/examples/ocpworkload.yaml
+    kubectl --context ${CONTEXT} apply -n ${workloadns} -f /home/examples/ocpworkload.yaml
+  fi
 
   # Now create a namespace to hold all the neptune resources
   echo -e "${Green}Creating namespace ${neptunens} for neptune resources...${ColorOff}"
-  kubectl create namespace ${neptunens} --dry-run=client -o yaml \
+  kubectl --context ${CONTEXT} create namespace ${neptunens} --dry-run=client -o yaml \
     | kubectl apply -f -
 
   allfiles=(app-vault.yaml app.yaml snapshot.yaml backup.yaml resoucesummaryupload.yaml)
@@ -483,26 +494,30 @@ function setupTest() {
 
   for afile in ${allfiles[@]}; do
     echo -e "${Green}Creating ${afile} in namespace ${neptunens}...${ColorOff}"
-    kubectl apply -n ${neptunens} -f /home/examples/${afile}
+    kubectl --context ${CONTEXT} apply -n ${neptunens} -f /home/examples/${afile}
   done
-
-  
-
 }
 
 function removeTest() {
   workloadns=$1
   neptunens=$2
-  # Now remove the workload
-  kubectl delete -n ${workloadns} -f /home/examples/workload.yaml
 
+  # Now remove the workload
+  isOCP=$(isClusterOCP) # empty means not OCP, non empty means OCP
+  if [[ -z ${isOCP} ]]; then
+    kubectl --context ${CONTEXT} delete -n ${workloadns} -f /home/examples/workload.yaml
+  else
+    ns="${workloadns}" yq 'select(.metadata.name == "test-scc-binding").subjects[0].namespace = env(ns)' -i /home/examples/ocpworkload.yaml
+    kubectl --context ${CONTEXT} delete -n ${workloadns} -f /home/examples/ocpworkload.yaml
+  fi
   # delete the namespace for the workload
-  kubectl delete namespace ${workloadns} >/dev/null 2>&1
+  kubectl --context ${CONTEXT} delete namespace ${workloadns} >/dev/null 2>&1
 
   allfiles=(resoucesummaryupload.yaml backup.yaml snapshot.yaml app.yaml app-vault.yaml)
   for afile in ${allfiles[@]}; do
-    kubectl delete -n ${neptunens} -f /home/examples/${afile}
+    kubectl --context ${CONTEXT} delete -n ${neptunens} -f /home/examples/${afile} || true
   done
+
 }
 
 function verifyTest() {

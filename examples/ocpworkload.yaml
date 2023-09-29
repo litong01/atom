@@ -1,5 +1,48 @@
 ---
 apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-account
+---
+kind: SecurityContextConstraints
+apiVersion: security.openshift.io/v1
+metadata:
+  name: test-scc
+allowPrivilegedContainer: true
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+fsGroup:
+  type: RunAsAny
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: test-role
+rules:
+- apiGroups:
+  - security.openshift.io
+  resourceNames:
+  - test-scc
+  resources:
+  - securitycontextconstraints
+  verbs:
+  - use
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: test-scc-binding
+subjects:
+- kind: ServiceAccount
+  name: test-account
+  namespace: test1
+roleRef:
+  kind: Role
+  name: test-role
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: pvcdata
@@ -59,7 +102,6 @@ data:
             ssl_certificate_key /certs/server.key;
         }
     }
-
 ---
 apiVersion: v1
 kind: Service
@@ -96,10 +138,13 @@ spec:
       labels:
         app: networktools
     spec:
+      serviceAccountName: test-account
       containers:
       - image: email4tong/network-tools
         imagePullPolicy: IfNotPresent
         name: network-tools
+        securityContext:
+          runAsUser: 0
         volumeMounts:
         - name: storage
           mountPath: "/var/log/nginx"
