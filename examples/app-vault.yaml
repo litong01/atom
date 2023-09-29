@@ -1,3 +1,13 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: test-appvault-secret1
+type: Opaque
+data:
+  accessKeyId: bWluaW9hZG1pbg==
+  secretAccessKey: bWluaW9hZG1pbg==
+---
 apiVersion: management.astra.netapp.io/v1alpha1
 kind: AppVault
 metadata:
@@ -6,7 +16,14 @@ spec:
   providerType: generic-s3
   providerConfig:
     endpoint: minio.neptune-system.svc:9000
-    accessKeyId: minioadmin
-    secretAccessKey: minioadmin
     bucketName: test-appvault1
     secure: "false"
+  providerCredentials:
+    accessKeyID:
+      valueFromSecret:
+        name: test-appvault-secret1
+        key: accessKeyId
+    secretAccessKey:
+      valueFromSecret:
+        name: test-appvault-secret1
+        key: secretAccessKey
