@@ -168,6 +168,20 @@ function setupWithParameters() {
 REGISTRY_NAME="${REGISTRY_NAME:-kind-registry}"
 REGISTRY_PORT="${REGISTRY_PORT:-5001}"
 
+if [[ ! -z ${REGISTRY} ]] && [[ ! -z ${REGISTRY_USERID} ]] && [[ ! -z ${REGISTRY_TOKEN} ]]; then
+REGISTRYCONFIG=$(cat << EOF
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."${REGISTRY}"]
+      endpoint = ["https://registry-1.docker.io"]
+      [plugins."io.containerd.grpc.v1.cri".registry.mirrors."${REGISTRY}".auth]
+        username = "${REGISTRY_USERID}"
+        password = "${REGISTRY_TOKEN}"
+        auth = ""
+EOF
+)
+else
+REGISTRYCONFIG=""
+fi
+
 FEATURES=$(cat << EOF
 featureGates:
   MixedProtocolLBService: true
@@ -411,6 +425,7 @@ if [[ -z "${K8SRELEASE}" ]]; then
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 ${FEATURES}
+${REGISTRYCONFIG}
 name: ${CLUSTERNAME}
 networking:
   ipFamily: ${IPFAMILY}
@@ -429,6 +444,7 @@ else
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 ${FEATURES}
+${REGISTRYCONFIG}
 name: ${CLUSTERNAME}
 networking:
   ipFamily: ${IPFAMILY}
