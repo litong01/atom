@@ -18,7 +18,10 @@ metadata:
   name: resourcesummaryupload-sample
 spec:
   pushEndpoint: "https://pathecho-31056.neptune-system.svc:31056/post/"
-  secretRef: "neptune-resource-summary-upload-secret"
+  pushToken:
+    valueFromSecret:
+      name: "neptune-resource-summary-upload-secret"
+      key: "token"
   skipCertValidation: true
   dataSourceRef:
     apiGroup: management.astra.netapp.io
