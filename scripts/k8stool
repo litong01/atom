@@ -171,7 +171,7 @@ REGISTRY_PORT="${REGISTRY_PORT:-5001}"
 if [[ ! -z ${REGISTRY} ]] && [[ ! -z ${REGISTRY_USERID} ]] && [[ ! -z ${REGISTRY_TOKEN} ]]; then
 REGISTRYCONFIG=$(cat << EOF
     [plugins."io.containerd.grpc.v1.cri".registry.mirrors."${REGISTRY}"]
-      endpoint = ["https://registry-1.docker.io"]
+      endpoint = ["https://registry.${REGISTRY}"]
       [plugins."io.containerd.grpc.v1.cri".registry.mirrors."${REGISTRY}".auth]
         username = "${REGISTRY_USERID}"
         password = "${REGISTRY_TOKEN}"
