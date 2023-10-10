@@ -1,0 +1,13 @@
+apiVersion: management.astra.netapp.io/v1alpha1
+kind: SnapshotInplaceRestore
+metadata:
+  labels:
+    app.kubernetes.io/name: snapshotinplacerestore
+    app.kubernetes.io/instance: snapshotinplacerestore-sample
+    app.kubernetes.io/part-of: neptune
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: neptune
+  name: snapshotinplacerestore-test
+spec:
+  appVaultRef: test-appvault1
+  appArchivePath: test-app1_cad13ff2-5eb2-4e89-9d18-559fc47d15b8/snapshots/test-snapshot1_6f75251b-f736-4f28-ac46-23908220ecf0

@@ -179,7 +179,11 @@ REGISTRYCONFIG=$(cat << EOF
 EOF
 )
 else
-REGISTRYCONFIG=""
+REGISTRYCONFIG=$(cat << EOF
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+      endpoint = ["http://${REGISTRY_NAME}:5000", "https://registry-1.docker.io"]
+EOF
+)
 fi
 
 FEATURES=$(cat << EOF
