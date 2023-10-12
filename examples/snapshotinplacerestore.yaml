@@ -10,4 +10,4 @@ metadata:
   name: snapshotinplacerestore-test
 spec:
   appVaultRef: test-appvault1
-  appArchivePath: test-app1_cad13ff2-5eb2-4e89-9d18-559fc47d15b8/snapshots/test-snapshot1_6f75251b-f736-4f28-ac46-23908220ecf0
+  appArchivePath: test-app1_68e177ed-bd32-4997-8ced-1d9e8b78d5f6/snapshots/test-snapshot1_07461e35-4c91-4e54-890c-b156f7068f5b
