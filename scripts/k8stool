@@ -150,10 +150,10 @@ function setupDefaults() {
   WORKERNODES=0
   LOADBALANCER="false"
 
-  CLUSTERNAME="astra"
+  CLUSTERNAME="neptune"
   NAMESPACE="neptune-system"
   CERTNAME="secure-testing-cert"
-  WORKDIR=${WORKDIR:-/tmp/astra}
+  WORKDIR=${WORKDIR:-/tmp/astra3}
   CERTDOMAINNAME="integration.astra.netapp.io"
 
   SOURCETAG=""
@@ -179,11 +179,7 @@ REGISTRYCONFIG=$(cat << EOF
 EOF
 )
 else
-REGISTRYCONFIG=$(cat << EOF
-    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
-      endpoint = ["http://${REGISTRY_NAME}:5000", "https://registry-1.docker.io"]
-EOF
-)
+REGISTRYCONFIG=""
 fi
 
 FEATURES=$(cat << EOF
@@ -215,6 +211,10 @@ containerdConfigPatches:
       endpoint = ["http://${REGISTRY_NAME}:5000"]
     [plugins."io.containerd.grpc.v1.cri".registry.mirrors."${REGISTRY_NAME}:${REGISTRY_PORT}"]
       endpoint = ["http://${REGISTRY_NAME}:5000"]
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."quay.io"]
+      endpoint = ["http://${REGISTRY_NAME}:5000", "https://quay.io"]
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+      endpoint = ["http://${REGISTRY_NAME}:5000", "https://registry-1.docker.io"]
 EOF
 )
 }
@@ -388,7 +388,7 @@ function waitForPods() {
 # setupkind creates one kind k8s cluster
 function setupkind() {
   if [[ -z "${CLUSTERNAME}" ]]; then
-    CLUSTERNAME="astra"
+    CLUSTERNAME="neptune"
   fi
 
   netExtra=""
@@ -439,7 +439,7 @@ networking:
 nodes:
 - role: control-plane
   extraMounts:
-  - hostPath: /tmp/astra
+  - hostPath: /tmp/astra3
     containerPath: /work
 ${MOREROLE}
 EOF
@@ -458,7 +458,7 @@ networking:
 nodes:
 - role: control-plane
   extraMounts:
-  - hostPath: /tmp/astra
+  - hostPath: /tmp/astra3
     containerPath: /work
 ${MOREROLE}
 EOF
@@ -604,12 +604,12 @@ TOPOLOGYCONTENT=$(cat << EOF
 [
   {
     "kind": "Kubernetes",
-    "clusterName": "astra",
+    "clusterName": "${CLUSTERNAME}",
     "podSubnet": "10.10.0.0/16",
     "svcSubnet": "10.255.10.0/24",
     "network": "network",
     "meta": {
-      "kubeconfig": "${TARGETDIR}/kubeconfig/astra"
+      "kubeconfig": "${TARGETDIR}/kubeconfig/neptune"
     }
   }
 ]

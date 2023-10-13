@@ -12,7 +12,6 @@ WORKDIR=${WORKDIR:-/tmp/astra3}
 COMPONENT="all"
 NAMESPACE="${NAMESPACE:-neptune-system}"
 DEPLOYMENT="${DEPLOYMENT:-neptune-controller-manager}"
-IMAGE_REPOSITORY=${IMAGE_REPOSITORY:-docker.repo.eng.netapp.com/globalcicd/astra}
 IMAGENAME=""
 TAG=${TAG:-latest}
 
@@ -251,7 +250,7 @@ function refreshDeployment() {
           # astra image, push the newer image
           ${SCRIPTDIR}/k8stool image --source-tag "${imagename}"
           # Remove the cached image
-          docker exec astra-control-plane crictl rmi "${anImage}" >/dev/null 2>&1 || true
+          docker exec neptune-control-plane crictl rmi "${anImage}" >/dev/null 2>&1 || true
       fi
     done
     kubectl --context ${CONTEXT} rollout restart -n ${NAMESPACE} deployment ${DEPLOYMENT}
@@ -603,11 +602,11 @@ elif [[ "${CMD}" == "down" ]]; then
 
 elif [[ "${CMD}" == "clean" ]]; then
   echo -e "${Green}Removing Astra and cluster...${ColorOff}"
-  ${SCRIPTDIR}/k8stool cluster -d
+  ${SCRIPTDIR}/k8stool cluster -d --cluster-name neptune
 
 elif [[ "${CMD}" == "cleanall" ]]; then
   echo -e "${Green}Removing everything...${ColorOff}"
-  ${SCRIPTDIR}/k8stool cluster -d
+  ${SCRIPTDIR}/k8stool cluster -d --cluster-name neptune
   # Remove the proxy and the local registry as well
   docker rm -f kubeproxy &> /dev/null || true
   docker rm -f kind-registry &> /dev/null || true
