@@ -13,5 +13,5 @@ spec:
     cloudBridgeURL: <ASTRA_HOST_URL>
     hostAliasIP: <ASTRA_HOST_ALIAS_IP>
   imageRegistry:
-    name: netappdownloads.jfrog.io/docker-astra-control-staging/arch30/neptune
-    secret: regcred
+    name:
+    secret:

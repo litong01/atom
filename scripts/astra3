@@ -45,9 +45,9 @@ function printHelp() {
   echo "     -n|--namespace        - the namespace where the deployment is, default neptune-system"
   echo ""
   echo -e "Parameters for ${Green}deploy${ColorOff} command:"
-  echo "     -t|--apitoken         - astra token deployment name such as neptune-controller-manager"
+  echo "     -a|--astra-account-id - astra account id"
+  echo "     -t|--apitoken         - astra api token"
   echo "     -s|--secretname       - image pulling secret name"
-  echo "     -t|--apitoken         - astra token deployment name such as neptune-controller-manager"
   echo "     --bridgeurl           - astra endpoint"
   echo "     --aliasip             - astra alias ip address"
   echo ""
@@ -241,8 +241,12 @@ function deployConnector() {
           exit 1
         fi
       fi
-      REGISTRY=$REGISTRY yq e '.spec.imageRegistry.name = env(REGISTRY)' -i /home/addon/connector.yaml
-      SECRETNAME=$SECRETNAME yq e '.spec.imageRegistry.secret = env(SECRETNAME)' -i /home/addon/connector.yaml
+      if [[ ! -z "${REGISTRY}" ]]; then
+        REGISTRY="${REGISTRY}" yq e '.spec.imageRegistry.name = env(REGISTRY)' -i /home/addon/connector.yaml
+      fi
+      if [[ ! -z "${SECRETNAME}" ]]; then
+        SECRETNAME="${SECRETNAME}" yq e '.spec.imageRegistry.secret = env(SECRETNAME)' -i /home/addon/connector.yaml
+      fi
 
       # Create the connector CR
       kubectl --context ${CONTEXT} -n neptune-system apply -f /home/addon/connector.yaml

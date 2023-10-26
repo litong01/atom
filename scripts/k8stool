@@ -550,8 +550,9 @@ function createCluster() {
 
     setupkind
 
+    mkdir -p ${WORKDIR}/kubeconfig
     if [[ -z "${cInfo[i+4]}" ]]; then
-      targetfile="${TARGETDIR}/${cInfo[i]}"
+      targetfile="${WORKDIR}/kubeconfig/${cInfo[i]}"
     else
       targetfile="${cInfo[i+4]}"
     fi
