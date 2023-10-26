@@ -6,14 +6,14 @@ Red='\033[0;31m'          # Red
 Green='\033[0;32m'        # Green
 SCRIPTDIR=$(dirname $0)
 APPNAME=$(basename "$0")
-TYPE="acc"
 CURDIR=$(pwd)
 WORKDIR=${WORKDIR:-/tmp/astra3}
 COMPONENT="all"
 NAMESPACE="${NAMESPACE:-neptune-system}"
 DEPLOYMENT="${DEPLOYMENT:-neptune-controller-manager}"
-IMAGENAME=""
 TAG=${TAG:-latest}
+SECRETNAME=${SECRETNAME:-regcred}
+APITOKEN=${APITOKEN:-""}
 
 function printHelp() {
   echo ""
@@ -43,6 +43,14 @@ function printHelp() {
   echo "     -d|--deployment-name  - a deployment name such as neptune-controller-manager"
   echo "     -n|--namespace        - the namespace where the deployment is, default neptune-system"
   echo ""
+  echo -e "Parameters for ${Green}deploy${ColorOff} command:"
+  echo "     -t|--apitoken         - astra token deployment name such as neptune-controller-manager"
+  echo "     -s|--secretname       - image pulling secret name"
+  echo "     -t|--apitoken         - astra token deployment name such as neptune-controller-manager"
+  echo "     --bridgeurl           - astra endpoint"
+  echo "     --aliasip             - astra alias ip address"
+  echo ""
+
 }
 
 function validateCMD() {
@@ -95,16 +103,18 @@ else
         NAMESPACE="$2";shift 2;;
       -w|--workdir)
         WORKDIR="$2";shift 2;;
-      -a|--astra-name)
-        COMPONENT="$2";shift 2;;
+      -a|--astra-account-id)
+        ACCOUNTID="$2";shift 2;;
       -d|--deployment-name)
         DEPLOYMENT="$2";shift 2;;
-      -i|--imagename)
-        IMAGENAME="$2";shift 2;;
-      -r|--releaseimage)
-        RELEASEIMAGE="$2";shift 2;;
-      -t|--type)
-        TYPE="$2";shift 2;;
+      -s|--secretname)
+        SECRETNAME="$2";shift 2;;
+      -t|--apitoken)
+        APITOKEN="$2";shift 2;;
+      --bridgeurl)
+        BRIDGEURL="$2";shift 2;;
+      --aliasip)
+        ALIASIP="$2";shift 2;;
       *) # unknown option
         echo "parameter $1 is not supported"; exit 1;;
     esac
@@ -187,7 +197,7 @@ function wait_for_pod() {
   condition=$3
   while : ; do
     waitresult=$(kubectl wait pod --context ${CONTEXT} -n ${namespace} --for=condition=${condition} \
-      -l "app.kubernetes.io/name in (${podlabel})" --timeout=60s 2>/dev/null || true)
+      -l "${podlabel}" --timeout=60s 2>/dev/null || true)
     # If the wait returns, it can only be either timed out or condition met. We check if there is
     # timedout, we continue to wait. Since the timeout is an error, and it goes to /dev/null, only
     # condition met will have anything in waitresult, in any other condition, the waitresult is empty.
@@ -201,12 +211,45 @@ function wait_for_pod() {
     fi
   done
   echo ""
-  echo -e "${Green}AC pods are ready now${ColorOff}"
+  echo -e "${Green}Astra pods are ready now${ColorOff}"
+}
+
+function deployConnector() {
+  # Only deploy connector when apitoken is provided.
+  if [[ ! -z "${APITOKEN}" ]]; then
+    #1. deploy the connector operator and wait for it to become ready
+    kubectl --context ${CONTEXT} apply -f https://github.com/NetApp/astra-connector-operator/releases/latest/download/astraconnector_operator.yaml
+    wait_for_pod 'astra-connector-operator' 'control-plane=controller-manager' 'ready'
+
+    #2. Create secret in neptune-system namespace
+    kubectl --context ${CONTEXT} create secret generic astra-token --from-literal=apiToken=${APITOKEN} -n neptune-system
+
+    #3. Now create connector CR.
+    if [[ ! -z "${ACCOUNTID}" ]] && [[ ! -z "${BRIDGEURL}" ]] && [[ ! -z "${ALIASIP}" ]]; then
+      ACCOUNTID=$ACCOUNTID yq e '.spec.astra.accountId = env(ACCOUNTID)' -i /home/addon/connector.yaml
+      APITOKEN=$APITOKEN yq e '.spec.astra.tokenRef = env(APITOKEN)' -i /home/addon/connector.yaml
+      BRIDGEURL=$BRIDGEURL yq e '.spec.natsSyncClient.cloudBridgeURL = env(BRIDGEURL)' -i /home/addon/connector.yaml
+      ALIASIP=$ALIASIP yq e '.spec.natsSyncClient.hostAliasIP = env(ALIASIP)' -i /home/addon/connector.yaml
+      REGISTRY=$REGISTRY yq e '.spec.imageRegistry.name = env(REGISTRY)' -i /home/addon/connector.yaml
+      SECRETNAME=$SECRETNAME yq e '.spec.imageRegistry.secret = env(SECRETNAME)' -i /home/addon/connector.yaml
+
+      # Create the connector CR
+      kubectl --context ${CONTEXT} -n neptune-system apply -f /home/addon/connector.yaml
+    fi
+  fi
 }
 
 function deployNeptune() {
-  echo -e "${Green}Deploying Neptune...${ColorOff}"
-  IMG="kind-registry:5001/controller:${TAG}" REGISTRY="kind-registry:5001" TAG=${TAG} make deploy
+  echo -e "${Green}Deploying Neptune and Connector...${ColorOff}"
+  echo -e "Target Kubernetes context: ${Green}${CONTEXT}${ColorOff}" 
+  if [[ "${CONTEXT}" == "kind-neptune" ]]; then
+    IMG="kind-registry:5001/controller:${TAG}" REGISTRY="kind-registry:5001" TAG=${TAG} make deploy
+  else
+    # fix up registry missing trailing slash
+    reg=$(echo ${REGISTRY%/})
+    SECRET=${SECRETNAME} REGISTRY="${reg}/" TAG=${TAG} make deploy
+  fi
+  deployConnector
 
   echo -e "${Green}Neptune is ready!!!${ColorOff}"
 }

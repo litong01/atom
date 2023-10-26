@@ -594,19 +594,58 @@ function addRoutes() {
   done
 }
 
+# connect all the clusters on the same docker network
+# assume that each k8s pod subnet follows this pattern
+#
+# abigno=$(cksum <<< ${CLUSTERNAME} | cut -f 1 -d ' ')
+# asmallno=$((abigno % 256))
+#
+#   "clusterName": "${CLUSTERNAME}",
+#   "podSubnet": "10.${asmallno}.0.0/16",
+#   "svcSubnet": "10.255.${asmallno}.0/24",
+#
+# the clustername gets used to calculate the podSubnet
+function connectClusters() {
+  allnames=$(kind get clusters)
+  allclusters=($(echo ${allnames}))
+  for acluster in "${allclusters[@]}"; do
+    # Now figuring out podSubnet and svcSubnet
+    abigno=$(cksum <<< ${acluster} | cut -f 1 -d ' ')
+    asmallno=$((abigno % 256))
+    podSubnet="10.${asmallno}.0.0/16"
+    svcSubnet="10.255.${asmallno}.0/24"
+    otherclusters=$(echo "${allnames/"${acluster}"/}")
+    otherclusters=($(echo ${otherclusters}))
+    # For every other cluster, we need to go through adding the route process
+    for otherc in "${otherclusters[@]}"; do
+      allnodes=$(kind get nodes -n "${otherc}")
+      allnodes=($(echo ${allnodes}))
+      for anode in "${allnodes[@]}"; do
+        ip=$(docker inspect -f '{{ .NetworkSettings.Networks.kind.IPAddress }}' "${anode}" 2>/dev/null)
+        docker exec "${anode}" ip route add "${podSubnet}" via "${ip}" 2>/dev/null
+        docker exec "${anode}" ip route add "${svcSubnet}" via "${ip}" 2>/dev/null
+      done
+    done
+  done
+}
+
 function processTopologyContent() {
 # content did not come from stdin or pipe, try the topology file
   if [[ -z "${TOPOLOGYCONTENT}" ]]; then
     if [[ ! -f "${TOPOLOGY}" ]]; then
       # "Topology file ${TOPOLOGY} cannot be found, Use embedded topology file"
 
+echo -e "Creating cluster ${Green}${CLUSTERNAME}${ColorOff}..."
+abigno=$(cksum <<< ${CLUSTERNAME} | cut -f 1 -d ' ')
+asmallno=$((abigno % 256))
+
 TOPOLOGYCONTENT=$(cat << EOF
 [
   {
     "kind": "Kubernetes",
     "clusterName": "${CLUSTERNAME}",
-    "podSubnet": "10.10.0.0/16",
-    "svcSubnet": "10.255.10.0/24",
+    "podSubnet": "10.${asmallno}.0.0/16",
+    "svcSubnet": "10.255.${asmallno}.0/24",
     "network": "network",
     "meta": {
       "kubeconfig": "${TARGETDIR}/kubeconfig/neptune"
@@ -1009,7 +1048,7 @@ if [[ "${CMD}" == "clusters" ]]; then
   cInfoLength=0
   getTopology
   createCluster
-  addRoutes
+  connectClusters
 
   # push localhost images to local image repo if set to do so
   if [[ "${LOADIMAGE}" == "true" ]]; then
@@ -1032,6 +1071,7 @@ elif [[ "${CMD}" == "cluster" ]]; then
     exit 0
   fi
   setupkind
+  connectClusters
 elif [[ "${CMD}" == "cert" ]]; then
   if [[ -z "${CLUSTERNAME}" ]]; then
     allnames=$(kind get clusters)
