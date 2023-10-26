@@ -222,7 +222,11 @@ function deployConnector() {
     wait_for_pod 'astra-connector-operator' 'control-plane=controller-manager' 'ready'
 
     #2. Create secret in neptune-system namespace
-    kubectl --context ${CONTEXT} create secret generic astra-token --from-literal=apiToken=${APITOKEN} -n neptune-system
+    exists=$(kubectl --context ${CONTEXT} get -n ${NAMESPACE} secrets astra-token --no-headers 2>/dev/null)
+    if [[ ! -z ${exists} ]]; then
+      kubectl --context ${CONTEXT} delete -n ${NAMESPACE} secrets astra-token >/dev/null 2>&1
+    fi
+    kubectl --context ${CONTEXT} create secret generic astra-token --from-literal=apiToken=${APITOKEN} -n neptune-system || true
 
     #3. Now create connector CR.
     if [[ ! -z "${ACCOUNTID}" ]]; then
@@ -231,10 +235,11 @@ function deployConnector() {
         BRIDGEURL=$BRIDGEURL yq e '.spec.natsSyncClient.cloudBridgeURL = env(BRIDGEURL)' -i /home/addon/connector.yaml
         ALIASIP=$ALIASIP yq e '.spec.natsSyncClient.hostAliasIP = env(ALIASIP)' -i /home/addon/connector.yaml
       else
-        # Trying to get the astra cluster IP address
-        ip=$(docker inspect -f '{{ .NetworkSettings.Networks.kind.IPAddress }}' "astra-control-plane" 2>/dev/null)
+        # Trying to get the astra cluster IP address, best effort, assume that the cluster where astra is running on
+        # has context named kind-astra, this can fail very easily when the cluster is not called kind-astra
+        ip=$(kubectl --context kind-astra -n pcloud get services traefik -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
         if [[ ! -z ${ip} ]]; then
-          BRIDGEURL="https://${ip}" yq e '.spec.natsSyncClient.cloudBridgeURL = env(BRIDGEURL)' -i /home/addon/connector.yaml
+          BRIDGEURL="https://integration.astra.netapp.io" yq e '.spec.natsSyncClient.cloudBridgeURL = env(BRIDGEURL)' -i /home/addon/connector.yaml
           ALIASIP=$ip yq e '.spec.natsSyncClient.hostAliasIP = env(ALIASIP)' -i /home/addon/connector.yaml
         else
           echo -e "${Red}Missing cloudBridgeURL and/or hostAliasIP, cannot create connector.${ColorOff}"
