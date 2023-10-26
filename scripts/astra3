@@ -37,6 +37,7 @@ function printHelp() {
   echo "     rmtest   - remove neptune tests"
   echo "     rstest   - test restore of a backup"
   echo "     make     - run neptune make command"
+  echo "     conn     - deploy connector"
   echo "     bash     - run bash interactively"
   echo ""
   echo -e "Parameters for ${Green}refresh${ColorOff} command:"
@@ -55,7 +56,7 @@ function printHelp() {
 
 function validateCMD() {
   cmd=$1
-  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "webui" \
+  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "webui" "conn" \
     "update" "k8stool" "bash" "addon" "trident" "hostpath" "test" "rmtest" "vtest" "rstest" "testhostpath")
   ccmd=""
   for item in "${allCommands[@]}"; do
@@ -120,7 +121,6 @@ else
     esac
   done
 fi
-
 
 function validateContext() {
   # Context was not set, trying to use current context
@@ -225,11 +225,22 @@ function deployConnector() {
     kubectl --context ${CONTEXT} create secret generic astra-token --from-literal=apiToken=${APITOKEN} -n neptune-system
 
     #3. Now create connector CR.
-    if [[ ! -z "${ACCOUNTID}" ]] && [[ ! -z "${BRIDGEURL}" ]] && [[ ! -z "${ALIASIP}" ]]; then
+    if [[ ! -z "${ACCOUNTID}" ]]; then
       ACCOUNTID=$ACCOUNTID yq e '.spec.astra.accountId = env(ACCOUNTID)' -i /home/addon/connector.yaml
-      # APITOKEN=$APITOKEN yq e '.spec.astra.tokenRef = env(APITOKEN)' -i /home/addon/connector.yaml
-      BRIDGEURL=$BRIDGEURL yq e '.spec.natsSyncClient.cloudBridgeURL = env(BRIDGEURL)' -i /home/addon/connector.yaml
-      ALIASIP=$ALIASIP yq e '.spec.natsSyncClient.hostAliasIP = env(ALIASIP)' -i /home/addon/connector.yaml
+      if [[ ! -z "${BRIDGEURL}" ]] && [[ ! -z "${ALIASIP}" ]]; then
+        BRIDGEURL=$BRIDGEURL yq e '.spec.natsSyncClient.cloudBridgeURL = env(BRIDGEURL)' -i /home/addon/connector.yaml
+        ALIASIP=$ALIASIP yq e '.spec.natsSyncClient.hostAliasIP = env(ALIASIP)' -i /home/addon/connector.yaml
+      else
+        # Trying to get the astra cluster IP address
+        ip=$(docker inspect -f '{{ .NetworkSettings.Networks.kind.IPAddress }}' "astra-control-plane" 2>/dev/null)
+        if [[ ! -z ${ip} ]]; then
+          BRIDGEURL="https://${ip}" yq e '.spec.natsSyncClient.cloudBridgeURL = env(BRIDGEURL)' -i /home/addon/connector.yaml
+          ALIASIP=$ip yq e '.spec.natsSyncClient.hostAliasIP = env(ALIASIP)' -i /home/addon/connector.yaml
+        else
+          echo -e "${Red}Missing cloudBridgeURL and/or hostAliasIP, cannot create connector.${ColorOff}"
+          exit 1
+        fi
+      fi
       REGISTRY=$REGISTRY yq e '.spec.imageRegistry.name = env(REGISTRY)' -i /home/addon/connector.yaml
       SECRETNAME=$SECRETNAME yq e '.spec.imageRegistry.secret = env(SECRETNAME)' -i /home/addon/connector.yaml
 
@@ -709,6 +720,10 @@ elif [[ "${CMD}" == "rstest" ]]; then
 elif [[ "${CMD}" == "webui" ]]; then
   validateContext
   exposeUI
+
+elif [[ "${CMD}" == "conn" ]]; then
+  validateContext
+  deployConnector
 
 elif [[ "${CMD}" == "make" ]]; then
   checkInNeptune
