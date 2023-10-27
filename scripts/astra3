@@ -214,27 +214,6 @@ function wait_for_pod() {
   echo -e "${Green}Astra pods are ready now${ColorOff}"
 }
 
-function getConnectorImages() {
-  prefix="netappdownloads.jfrog.io/docker-astra-control-staging/arch30/neptune/"
-  if [[ -f /home/work/astra3/images ]]; then
-    filecontent=$(cat /home/work/astra3/images)
-    cimages=($(echo $filecontent))
-  else
-    cimages=(
-      'nats:2.10.1-alpine3.18'
-      'natssync-client:2.1.202309262120'
-      'astra-connector:1.0.202309201645'
-    )
-  fi
-
-  # These are the best effort, since these can change quite a lot, also assumed that
-  # the jfrog images have already been downloaded
-  for cimage in "${cimages[@]}"; do
-    docker tag ${prefix}${cimage} localhost:5001/${cimage} >/dev/null 2>&1 || null
-    docker push localhost:5001/${cimage} >/dev/null 2>&1 || null
-  done
-}
-
 function deployConnector() {
   # Only deploy connector when apitoken is provided.
   if [[ ! -z "${APITOKEN}" ]]; then
@@ -271,7 +250,6 @@ function deployConnector() {
       if [[ ! -z "${REGISTRY}" ]]; then
         REGISTRY="${REGISTRY}" yq e '.spec.imageRegistry.name = env(REGISTRY)' -i /home/addon/connector.yaml
       else
-        getConnectorImages
         REGISTRY="kind-registry:5001" yq e '.spec.imageRegistry.name = env(REGISTRY)' -i /home/addon/connector.yaml
       fi
       if [[ ! -z "${SECRETNAME}" ]]; then
@@ -299,18 +277,63 @@ function deployNeptune() {
   echo -e "${Green}Neptune is ready!!!${ColorOff}"
 }
 
+function loginToRepo() {
+  reg=$1
+  # the login file should be one line with id:token, expect the
+  # file login be in /tmp/astra3/ directory for this to work
+  if [[ ! -f /home/work/astra3/login ]]; then
+    keyPair=$(cat /home/work/astra3/login)
+    id=$(echo $keyPair | cut -d ":" -f 1)
+    pw=$(echo $keyPair | cut -d ":" -f 2)
+    echo ${pw} | docker login ${reg} -u ${id} --password-stdin >/dev/null 2>&1 || true
+  fi
+}
+
 function doNeptuneImage() {
+  # The assumption is that this repo has all necessary neptune needed images
   echo -e "${Green}Setting up Neptune Manager image...${ColorOff}"
-  allimages=(controller exechookjob resourcebackup resourcedelete resourcerestore resourcesummaryupload restic)
-  tag=${TAG:-latest}
+
+  prefix="netappdownloads.jfrog.io/docker-astra-control-staging/arch30/neptune/"
+  if [[ ! -f /home/work/astra3/images ]]; then
+    cp /home/addon/neptune-images.list /home/work/astra3/neptune-images.list
+  fi
+
+  # this image list file should only contain the image name and tag.
+  filecontent=$(cat /home/work/astra3/neptune-images.list)
+  allimages=($(echo $filecontent))
+
+  loggedIn="false"
   for img in ${allimages[@]}; do
-    localImg=$(docker image ls ${img}:${tag} --quiet)
-    if [[ -z "${localImg}" ]]; then
-      echo -e "${Red}${img}:${tag} local image does not exist, do a docker build first${ColorOff}"
+    img=$(echo "${img%:}")  # this is to remove the possible trailing colon
+    if [[ -z "${img}" ]]; then
       continue
     fi
-    docker tag ${img}:${tag} localhost:5001/${img}:${tag}
-    docker push localhost:5001/${img}:${tag}
+    # Get the fullname of the image
+    fullname=$(echo $img | cut -d ":" -f 1)
+    # Get the name of the image
+    name=$(echo ${fullname##*/})
+    #handle the tag
+    tag=$(echo $img | cut -d ":" -f 2)
+    if [[ -z ${tag} ]] || [[ "${tag}" == "${fullname}" ]]; then
+      tag=${TAG:-latest}
+    fi
+    # check if the image is already available locally
+    localImg=$(docker image ls ${name}:${tag} --quiet)
+    if [[ -z "${localImg}" ]]; then
+      # Since the local image does not exist, we will try to retrieve it from jfrog
+      if [[ "${loggedIn}" == "false" ]]; then
+        loginToRepo $prefix
+        loggedIn="true"
+      fi
+      echo -e "${Red}${name}:${tag} local image does not exist, try to pull from ${prefix}${ColorOff}"
+      docker pull ${prefix}${name}:${tag} 
+      docker tag ${prefix}${name}:${tag} ${name}:${tag}
+      docker tag ${prefix}${name}:${tag} localhost:5001/${name}:${tag}
+    else
+      # local image exists, we tag them to the localhost one, then push
+      docker tag ${name}:${tag} localhost:5001/${name}:${tag}
+    fi
+    docker push localhost:5001/${name}:${tag}
   done
 }
 
