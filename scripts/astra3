@@ -214,6 +214,27 @@ function wait_for_pod() {
   echo -e "${Green}Astra pods are ready now${ColorOff}"
 }
 
+function getConnectorImages() {
+  prefix="netappdownloads.jfrog.io/docker-astra-control-staging/arch30/neptune/"
+  if [[ -f /home/work/astra3/images ]]; then
+    filecontent=$(cat /home/work/astra3/images)
+    cimages=($(echo $filecontent))
+  else
+    cimages=(
+      'nats:2.10.1-alpine3.18'
+      'natssync-client:2.1.202309262120'
+      'astra-connector:1.0.202309201645'
+    )
+  fi
+
+  # These are the best effort, since these can change quite a lot, also assumed that
+  # the jfrog images have already been downloaded
+  for cimage in "${cimages[@]}"; do
+    docker tag ${prefix}${cimage} localhost:5001/${cimage} >/dev/null 2>&1 || null
+    docker push localhost:5001/${cimage} >/dev/null 2>&1 || null
+  done
+}
+
 function deployConnector() {
   # Only deploy connector when apitoken is provided.
   if [[ ! -z "${APITOKEN}" ]]; then
@@ -249,6 +270,9 @@ function deployConnector() {
       fi
       if [[ ! -z "${REGISTRY}" ]]; then
         REGISTRY="${REGISTRY}" yq e '.spec.imageRegistry.name = env(REGISTRY)' -i /home/addon/connector.yaml
+      else
+        getConnectorImages
+        REGISTRY="kind-registry:5001" yq e '.spec.imageRegistry.name = env(REGISTRY)' -i /home/addon/connector.yaml
       fi
       if [[ ! -z "${SECRETNAME}" ]]; then
         SECRETNAME="${SECRETNAME}" yq e '.spec.imageRegistry.secret = env(SECRETNAME)' -i /home/addon/connector.yaml

@@ -332,6 +332,10 @@ for gateway in "${gateways[@]}"; do
   fi
 done
 
+abigno=$(cksum <<< ${CLUSTERNAME} | cut -f 1 -d ' ')
+asmallno=$((abigno % 256))
+IPSPACE=${asmallno}
+
 if [[ "${IPFAMILY}" == "ipv4" ]]; then
   addrName="IPAddress"
   ipv4Range="- ${ipv4Prefix}.$IPSPACE.200-${ipv4Prefix}.$IPSPACE.240"
@@ -1049,7 +1053,7 @@ if [[ "${CMD}" == "clusters" ]]; then
   cInfoLength=0
   getTopology
   createCluster
-  connectClusters
+  # connectClusters
 
   # push localhost images to local image repo if set to do so
   if [[ "${LOADIMAGE}" == "true" ]]; then
@@ -1072,7 +1076,7 @@ elif [[ "${CMD}" == "cluster" ]]; then
     exit 0
   fi
   setupkind
-  connectClusters
+  # connectClusters
 elif [[ "${CMD}" == "cert" ]]; then
   if [[ -z "${CLUSTERNAME}" ]]; then
     allnames=$(kind get clusters)
