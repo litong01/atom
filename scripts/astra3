@@ -222,11 +222,12 @@ function deployConnector() {
     wait_for_pod 'astra-connector-operator' 'control-plane=controller-manager' 'ready'
 
     #2. Create secret in neptune-system namespace
-    exists=$(kubectl --context ${CONTEXT} get -n ${NAMESPACE} secrets astra-token --no-headers 2>/dev/null)
+    exists=$(kubectl --context ${CONTEXT} get -n ${NAMESPACE} secrets astra-token --no-headers 2>/dev/null || true)
     if [[ ! -z ${exists} ]]; then
-      kubectl --context ${CONTEXT} delete -n ${NAMESPACE} secrets astra-token >/dev/null 2>&1
+      kubectl --context ${CONTEXT} delete -n ${NAMESPACE} secrets astra-token >/dev/null 2>&1 || null
     fi
-    kubectl --context ${CONTEXT} create secret generic astra-token --from-literal=apiToken=${APITOKEN} -n neptune-system || true
+    kubectl --context ${CONTEXT} create secret generic astra-token \
+      --from-literal=apiToken=${APITOKEN} -n ${NAMESPACE} || true
 
     #3. Now create connector CR.
     if [[ ! -z "${ACCOUNTID}" ]]; then
