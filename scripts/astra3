@@ -260,6 +260,9 @@ function deployConnector() {
       if [[ ! -z "${SECRETNAME}" ]]; then
         SECRETNAME="${SECRETNAME}" yq e '.spec.imageRegistry.secret = env(SECRETNAME)' -i /home/addon/connector.yaml
       fi
+      if [[ ! -z "${CLUSTERNAME}" ]]; then
+        CLUSTERNAME="${CLUSTERNAME}" yq e '.spec.astra.clusterName = env(CLUSTERNAME)' -i /home/addon/connector.yaml
+      fi
 
       # Create the connector CR
       kubectl --context ${CONTEXT} -n neptune-system apply -f /home/addon/connector.yaml
