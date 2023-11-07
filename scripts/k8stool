@@ -653,7 +653,7 @@ TOPOLOGYCONTENT=$(cat << EOF
     "svcSubnet": "10.255.${asmallno}.0/24",
     "network": "network",
     "meta": {
-      "kubeconfig": "${TARGETDIR}/kubeconfig/neptune"
+      "kubeconfig": "${TARGETDIR}/kubeconfig/${CLUSTERNAME}"
     }
   }
 ]

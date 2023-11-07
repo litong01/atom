@@ -14,6 +14,7 @@ DEPLOYMENT="${DEPLOYMENT:-neptune-controller-manager}"
 TAG=${TAG:-latest}
 SECRETNAME=${SECRETNAME:-regcred}
 APITOKEN=${APITOKEN:-""}
+CLUSTERNAME=${CLUSTERNAME:-"neptune"}
 
 function printHelp() {
   echo ""
@@ -40,6 +41,9 @@ function printHelp() {
   echo "     conn     - deploy connector"
   echo "     bash     - run bash interactively"
   echo ""
+  echo -e "Parameters for ${Green}up or prepare${ColorOff} command:"
+  echo "       --cluster-name   - name of the k8s cluster to be created"
+  echo ""
   echo -e "Parameters for ${Green}refresh${ColorOff} command:"
   echo "     -d|--deployment-name  - a deployment name such as neptune-controller-manager"
   echo "     -n|--namespace        - the namespace where the deployment is, default neptune-system"
@@ -51,7 +55,6 @@ function printHelp() {
   echo "     --bridgeurl           - astra endpoint"
   echo "     --aliasip             - astra alias ip address"
   echo ""
-
 }
 
 function validateCMD() {
@@ -112,6 +115,8 @@ else
         SECRETNAME="$2";shift 2;;
       -t|--apitoken)
         APITOKEN="$2";shift 2;;
+      --cluster-name)
+        CLUSTERNAME="$2";shift 2;;
       --bridgeurl)
         BRIDGEURL="$2";shift 2;;
       --aliasip)
@@ -140,11 +145,11 @@ function validateContext() {
 }
 
 function installStorageCRDs() {
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml
+  kubectl --context ${CONTEXT} apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
+  kubectl --context ${CONTEXT} apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
+  kubectl --context ${CONTEXT} apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
+  kubectl --context ${CONTEXT} apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml
+  kubectl --context ${CONTEXT} apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml
 }
 
 function doADTUpdate() {
@@ -265,7 +270,7 @@ function deployConnector() {
 function deployNeptune() {
   echo -e "${Green}Deploying Neptune and Connector...${ColorOff}"
   echo -e "Target Kubernetes context: ${Green}${CONTEXT}${ColorOff}" 
-  if [[ "${CONTEXT}" == "kind-neptune" ]]; then
+  if [[ ${CONTEXT} =~ kind-* ]]; then
     IMG="kind-registry:5001/controller:${TAG}" REGISTRY="kind-registry:5001" TAG=${TAG} make deploy
   else
     # fix up registry missing trailing slash
@@ -281,7 +286,7 @@ function loginToRepo() {
   reg=$1
   # the login file should be one line with id:token, expect the
   # file login be in /tmp/astra3/ directory for this to work
-  if [[ ! -f /home/work/astra3/login ]]; then
+  if [[ -f /home/work/astra3/login ]]; then
     keyPair=$(cat /home/work/astra3/login)
     id=$(echo $keyPair | cut -d ":" -f 1)
     pw=$(echo $keyPair | cut -d ":" -f 2)
@@ -371,14 +376,14 @@ function refreshDeployment() {
 function testHostpathSnapshot() {
   testns="testhostpath"
   # Create a namespace to test hostpath snapshot
-  kubectl create namespace ${testns} --dry-run=client -o yaml \
+  kubectl --context ${CONTEXT} create namespace ${testns} --dry-run=client -o yaml \
     | kubectl apply -f -
 
   # Create persistent volume
-  kubectl apply -n ${testns} -f /home/hostpath/test/csi-pvc.yaml
+  kubectl --context ${CONTEXT} apply -n ${testns} -f /home/hostpath/test/csi-pvc.yaml
   sleep 1
   # Check pvc
-  name=$(kubectl get -n ${testns} pvc -o jsonpath --template={.items[0].metadata.name})
+  name=$(kubectl --context ${CONTEXT} get -n ${testns} pvc -o jsonpath --template={.items[0].metadata.name})
   if [[ "${name}" == "csi-pvc" ]]; then
     echo -e "${Green}pvc created successfully${ColorOff}"
   else
@@ -386,11 +391,11 @@ function testHostpathSnapshot() {
   fi
 
   # Create volume snapshot
-  kubectl apply -n ${testns} -f /home/hostpath/test/csi-snapshot-v1.yaml
+  kubectl --context ${CONTEXT} apply -n ${testns} -f /home/hostpath/test/csi-snapshot-v1.yaml
   sleep 1
 
   # Check volume snapshot
-  name=$(kubectl get -n ${testns} volumesnapshot -o jsonpath --template={.items[0].metadata.name})
+  name=$(kubectl --context ${CONTEXT} get -n ${testns} volumesnapshot -o jsonpath --template={.items[0].metadata.name})
   if [[ "${name}" == "new-snapshot-demo" ]]; then
     echo -e "${Green}snapshot created successfully${ColorOff}"
   else
@@ -398,7 +403,7 @@ function testHostpathSnapshot() {
   fi
 
   # Check volume snapshot content
-  name=$(kubectl get -n ${testns} volumesnapshotcontent -o jsonpath --template={.items[0].status.readyToUse})
+  name=$(kubectl --context ${CONTEXT} get -n ${testns} volumesnapshotcontent -o jsonpath --template={.items[0].status.readyToUse})
   if [[ "${name}" == "true" ]]; then
     echo -e "${Green}snapshot content is ready${ColorOff}"
   else
@@ -406,13 +411,13 @@ function testHostpathSnapshot() {
   fi
 
   # Now restore the snapshot
-  kubectl apply -n ${testns} -f /home/hostpath/test/csi-restore.yaml
+  kubectl --context ${CONTEXT} apply -n ${testns} -f /home/hostpath/test/csi-restore.yaml
   sleep 1
   # There should be two pvcs
   # Use this to get all the names
   #    name=$(kubectl get -n ${testns} pvc -o jsonpath --template={.items[*].metadata.name})
   # Get the 2nd pvc name
-  name=$(kubectl get -n ${testns} pvc -o jsonpath --template={.items[1].metadata.name})
+  name=$(kubectl --context ${CONTEXT} get -n ${testns} pvc -o jsonpath --template={.items[1].metadata.name})
   if [[ ! -z ${name} ]]; then
     echo -e "${Green}pvc restore was successful${ColorOff}"
   else
@@ -425,7 +430,7 @@ function setupHostpath() {
   csins="hostpath"
   # Create a namespace to test hostpath snapshot
   kubectl --context ${CONTEXT} create namespace ${csins} --dry-run=client -o yaml \
-    | kubectl apply -f -
+    | kubectl --context ${CONTEXT} apply -f -
 
   /home/hostpath/deploy.sh
 
@@ -448,12 +453,12 @@ function setupHostpath() {
 function setupTrident() {
   set +e
   tridentns="trident"
-  kubectl get namespace ${tridentns} --context "${CONTEXT}" >/dev/null 2>&1
+  kubectl --context ${CONTEXT} get namespace ${tridentns} >/dev/null 2>&1
   # namespace does not exist, create it
   if [[ $? == 1 ]]; then
     echo "Creating namespace ${tridentns}"
     set -e
-    kubectl create ns ${tridentns} --context "${CONTEXT}"
+    kubectl --context ${CONTEXT} create ns ${tridentns}
   else
     echo "Namespace ${tridentns} already exists"
   fi
@@ -579,7 +584,7 @@ function setupTest() {
   echo -e "${Green}Creating workload namespace ${workloadns}...${ColorOff}"
   # Create a namespace for the workload to run
   kubectl --context ${CONTEXT} create namespace ${workloadns} --dry-run=client -o yaml \
-    | kubectl apply -f -
+    | kubectl --context ${CONTEXT} apply -f -
 
   # Now deploy the workload
   echo -e "${Green}Deploying workload...${ColorOff}"
@@ -594,7 +599,7 @@ function setupTest() {
   # Now create a namespace to hold all the neptune resources
   echo -e "${Green}Creating namespace ${neptunens} for neptune resources...${ColorOff}"
   kubectl --context ${CONTEXT} create namespace ${neptunens} --dry-run=client -o yaml \
-    | kubectl apply -f -
+    | kubectl --context ${CONTEXT} apply -f -
 
   allfiles=(app-vault.yaml app.yaml snapshot.yaml backup.yaml resoucesummaryupload.yaml)
   # fixup the app namespace attribute
@@ -657,7 +662,7 @@ function restoreTest() {
   echo -e "${Green}Ready to create the restore CR${ColorOff}"
   cat /home/examples/backuprestore.yaml
   # Now create this backup restore CR
-  kubectl apply --context ${CONTEXT} -n ${neptunens} -f /home/examples/backuprestore.yaml
+  kubectl --context ${CONTEXT} apply -n ${neptunens} -f /home/examples/backuprestore.yaml
 
 }
 
@@ -672,7 +677,7 @@ if [[ "${CMD}" == "up" ]]; then
   checkInNeptune
 
   echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
-  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}"
+  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --target-dir "${WORKDIR}" --cluster-name "${CLUSTERNAME}"
   validateContext
   installStorageCRDs
 
@@ -713,11 +718,11 @@ elif [[ "${CMD}" == "down" ]]; then
 
 elif [[ "${CMD}" == "clean" ]]; then
   echo -e "${Green}Removing Astra and cluster...${ColorOff}"
-  ${SCRIPTDIR}/k8stool cluster -d --cluster-name neptune
+  ${SCRIPTDIR}/k8stool cluster -d --cluster-name ${CLUSTERNAME}
 
 elif [[ "${CMD}" == "cleanall" ]]; then
   echo -e "${Green}Removing everything...${ColorOff}"
-  ${SCRIPTDIR}/k8stool cluster -d --cluster-name neptune
+  ${SCRIPTDIR}/k8stool cluster -d --cluster-name ${CLUSTERNAME}
   # Remove the proxy and the local registry as well
   docker rm -f kubeproxy &> /dev/null || true
   docker rm -f kind-registry &> /dev/null || true
