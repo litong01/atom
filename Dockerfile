@@ -8,11 +8,6 @@ COPY ./addon /home/addon
 COPY ./examples /home/examples
 COPY ./hostpath /home/hostpath
 RUN apk add curl
-RUN ARCH=$(uname -m) && if [[ "${ARCH}" == "aarch64" ]]; then ARCH=arm64; fi && \
-    if [[ "${ARCH}" == "x86_64" ]]; then ARCH="amd64"; fi && \
-    echo "Download kind..." && \
-    curl -Lso kind "https://github.com/kubernetes-sigs/kind/releases/download/v0.20.0/kind-linux-${ARCH}" && \
-    chmod +x kind && mv kind /home/bin/kind
 
 RUN mkdir -p /home/neptune
 ENV PATH /home/bin:$PATH

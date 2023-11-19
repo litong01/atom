@@ -133,7 +133,6 @@ function validateCMD() {
 # parameters
 function setupDefaults() {
   STARTPORT=9340
-  TARGETDIR="$(pwd)"
   TOPOLOGY="$(pwd)/topology.json"
   TOPOLOGYCONTENT=""
   ACTION=""
@@ -249,8 +248,6 @@ while [[ $# -gt 0 ]]; do
       ACTION="DEL";shift;;
     -c|--config-file)
       TOPOLOGY="$2";shift 2;;
-    -t|--target-dir)
-      TARGETDIR="$2";shift 2;;
     -l|--image-repo)
       LOADIMAGE=$(echo "$2"|tr '[:upper:]' '[:lower:]');shift 2;;
     -w|--worker-nodes)
@@ -275,8 +272,6 @@ while [[ $# -gt 0 ]]; do
       CNI=$(echo "$2"|tr '[:upper:]' '[:lower:]');shift 2;;
     --load-balancer)
       LOADBALANCER=$(echo "$2"|tr '[:upper:]' '[:lower:]');shift 2;;
-    --context)
-      CONTEXT="$2";shift 2;;
     --targetports)
       TARGETPORTS="$2";shift 2;;
     -n|--namespace)
@@ -474,16 +469,6 @@ fi
   # Label the node to allow nginx ingress controller to be installed
   kubectl label nodes ${CLUSTERNAME}-control-plane ingress-ready="true"
   
-  # if CNI is calico, set it up now
-  if [[ "${CNI}" == "calico" ]]; then
-    # Now setup calico
-    kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.1/manifests/calico.yaml
-  
-    # Make sure that calico controller is running
-    waitForPods kube-system k8s-app=calico-kube-controllers 10
-    waitForPods kube-system k8s-app=calico-node 10
-  fi
-
   # wait for all nodes to be ready
   kubectl wait --for=condition=Ready nodes --all --timeout=600s
   # Try to untaint the control node
@@ -553,16 +538,6 @@ function createCluster() {
     LOADBALANCER="true"
 
     setupkind
-
-    mkdir -p ${WORKDIR}/kubeconfig
-    if [[ -z "${cInfo[i+4]}" ]]; then
-      targetfile="${WORKDIR}/kubeconfig/${cInfo[i]}"
-    else
-      targetfile="${cInfo[i+4]}"
-    fi
-    targetfile=$(echo ${targetfile}|xargs)
-    cname=$(echo ${cname}|xargs)
-    kind export kubeconfig --name "${cname}" --kubeconfig "${targetfile}"
 
     ss="$(($ss-1))"
   done
@@ -653,7 +628,7 @@ TOPOLOGYCONTENT=$(cat << EOF
     "svcSubnet": "10.255.${asmallno}.0/24",
     "network": "network",
     "meta": {
-      "kubeconfig": "${TARGETDIR}/kubeconfig/${CLUSTERNAME}"
+      "kubeconfig": ""
     }
   }
 ]
@@ -663,12 +638,7 @@ EOF
     else
       TOPOLOGYCONTENT=$(cat ${TOPOLOGY})
     fi
-  fi
-  
-  if [[ ! -d "${TARGETDIR}" ]]; then
-    echo "Target directory ${TARGETDIR} does not exist, try to create it"
-    mkdir -p "${TARGETDIR}"
-  fi
+  fi  
 }
 #=================end clusters modules=======================
 #=================begin image modules========================
@@ -676,49 +646,6 @@ function getImageTag() {
   aTag=$(docker images "$1" --format "{{.Repository}}:{{.Tag}}")
   if [[ ! -z "${aTag}" ]]; then
     SOURCETAGS+=($(echo ${aTag}))
-  fi
-}
-
-function loadImagesToNodes() {
-  CLUSTERNAME=$1
-  for image in "${SOURCETAGS[@]}"; do
-    echo "push image ${image}"
-    kind load docker-image -n ${CLUSTERNAME} "${image}"
-  done
-}
-
-function pushImagesToRepo() {
-  for image in "${SOURCETAGS[@]}"; do
-    echo "push image ${image}"
-    docker tag "${image}" "${REGISTRY_NAME}${image}"
-    docker push "${REGISTRY_NAME}${image}"
-  done
-}
-
-function doAllClusters() {
-  # The registry name has to be localhost with given port since we are
-  # setup the image repository locally
-  REGISTRY_NAME="localhost:${REGISTRY_PORT}/"
-
-  if [[ -z "${SOURCETAG}" ]]; then
-    getImageTag '*-integration'
-  else
-    SOURCETAGS+=($SOURCETAG)
-  fi
-  
-  if [[ "${#SOURCETAGS[@]}" == 0 ]]; then
-    echo "No image to load, probably build a docker image first?"
-    exit 0
-  fi
-
-  if [[ "${LOAD}" == "true" ]]; then
-    allnames=$(kind get clusters)
-    allclusters=($(echo ${allnames}))
-    for acluster in "${allclusters[@]}"; do
-      loadImagesToNodes ${acluster}
-    done
-  else 
-    pushImagesToRepo
   fi
 }
 
@@ -843,25 +770,25 @@ function createIntermediateKeyAndCert() {
 # Function to create k8s secret
 function createK8SSecret() {
   set +e
-  kubectl get namespace "${NAMESPACE}" --context "${CONTEXT}" >/dev/null 2>&1
+  kubectl get namespace "${NAMESPACE}" >/dev/null 2>&1
   # namespace does not exist, create it
   if [[ $? == 1 ]]; then
     echo "Creating namespace ${NAMESPACE}"
     set -e
-    kubectl create ns "${NAMESPACE}" --context "${CONTEXT}"
+    kubectl create ns "${NAMESPACE}"
   else
     echo "Namespace ${NAMESPACE} already exists"
   fi
 
   set +e
-  kubectl get secret -n "${NAMESPACE}" ${CERTNAME} --context "${CONTEXT}" >/dev/null 2>&1
+  kubectl get secret -n "${NAMESPACE}" ${CERTNAME} >/dev/null 2>&1
   if [[ $? == 1 ]]; then
     # secert does not exist in the namespace, create it
     set -e
     createRootKeyAndCert
     createIntermediateKeyAndCert
 
-    kubectl create secret generic ${CERTNAME} -n "${NAMESPACE}" --context "${CONTEXT}" \
+    kubectl create secret generic ${CERTNAME} -n "${NAMESPACE}" \
     --from-file="${WORKDIR}/${CLUSTERNAME}/tls.crt" \
     --from-file="${WORKDIR}/${CLUSTERNAME}/tls.key" \
     --from-file="${WORKDIR}/root-cert.pem" \
@@ -888,7 +815,7 @@ function getNextPort() {
 
 function getLBServices() {
   CLUSTERNAME=$1 #cluster name
-  lbservices=$(kubectl --context="${CONTEXT}" get services -A -o \
+  lbservices=$(kubectl get services -A -o \
     jsonpath='{range .items[?(@.spec.type == "LoadBalancer")]}{.metadata.name}{","}{.status.loadBalancer.ingress[0].ip}{","}{.spec.ports[*].port}{"\n"}{end}')
   # get lbservice list
   IFS=$'\n' lbservices=($(echo "${lbservices}"))
@@ -923,7 +850,7 @@ EOF
 function getLBService() {
   CLUSTERNAME=$1 #cluster name
   SERVICENAME=$2 #service name
-  lbservices=$(kubectl --context="${CONTEXT}" get services -A -o \
+  lbservices=$(kubectl get services -A -o \
     jsonpath='{range .items[?(@.spec.type == "LoadBalancer")]}{.metadata.name}{","}{.status.loadBalancer.ingress[0].ip}{","}{.spec.ports[*].port}{"\n"}{end}' | grep "^${SERVICENAME},")
   # get lbservice list
   IFS=$'\n' lbservices=($(echo "${lbservices}"))
@@ -992,7 +919,6 @@ function doProxyClusters() {
   for cluster in "${allclusters[@]}"; do
     echo "Processing cluster ${cluster}..."
     # We are setting specific port for services
-    if [[ -z "${CONTEXT}" ]]; then CONTEXT="kind-${cluster}"; fi
     if [[ ${#TARGETPORTS[@]} > 0 ]]; then
       doTargets $cluster
     else
@@ -1087,15 +1013,12 @@ elif [[ "${CMD}" == "cert" ]]; then
       exit 1
     fi
   fi
-  if [[ -z "${CONTEXT}" && -n "${CLUSTERNAME}" ]]; then CONTEXT="kind-${CLUSTERNAME}"; fi
   if [[ "${ACTION}" == "DEL" ]]; then
-    kubectl delete secret -n "${NAMESPACE}" ${CERTNAME} --context "${CONTEXT}" >/dev/null 2>&1 || true
+    kubectl delete secret -n "${NAMESPACE}" ${CERTNAME} >/dev/null 2>&1 || true
     echo "${CERTNAME} was removed"
   else
     createK8SSecret
   fi
-elif [[ "${CMD}" == "image" ]]; then
-  doAllClusters
 elif [[ "${CMD}" == "proxy" ]]; then
   # If it is a remove command
   if [[ "${ACTION}" == "DEL" ]]; then
