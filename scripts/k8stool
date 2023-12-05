@@ -933,7 +933,7 @@ function processProxy() {
   MSG=""
 
   # Remove the running docker if there is one
-  docker rm -f kubeproxy &> /dev/null || true
+  docker rm -f kubeproxyp &> /dev/null || true
   
   # Generate nginx configuration and messages
   doProxyClusters
@@ -958,7 +958,7 @@ EOF
   fi
   PORTMAP=$(echo ${PORTMAP})
   # Now start up the proxy container
-  docker run --name kubeproxy -d --network=kind ${PORTMAP} \
+  docker run --name kubeproxyp -d --network=kind ${PORTMAP} \
     -v ${configpath}:/etc/nginx/nginx.conf:ro nginx:1.23.4
   echo "${MSG}"
 }
@@ -1022,7 +1022,7 @@ elif [[ "${CMD}" == "cert" ]]; then
 elif [[ "${CMD}" == "proxy" ]]; then
   # If it is a remove command
   if [[ "${ACTION}" == "DEL" ]]; then
-    docker rm -f kubeproxy &> /dev/null || true
+    docker rm -f kubeproxyp &> /dev/null || true
     exit 0
   fi
 
