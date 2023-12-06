@@ -1,11 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: minio-ui
+  name: minio-services
 spec:
   selector:
     app: minio
   ports:
     - port: 9090
       targetPort: 9090
+      name: minio-ui
+    - port: 9000
+      targetPort: 9000
+      name: minio-api
   type: LoadBalancer
