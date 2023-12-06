@@ -792,9 +792,7 @@ elif [[ "${CMD}" == "bash" ]]; then
   echo 'alias k=kubectl' >> $HOME/.bashrc
   echo 'alias d=docker' >> $HOME/.bashrc
   echo 'source <(kubectl completion bash)' >> $HOME/.bashrc
-  echo 'source <(docker completion bash)' >> $HOME/.bashrc
-  echo 'source <(k completion bash)' >> $HOME/.bashrc
-  echo 'source <(d completion bash)' >> $HOME/.bashrc
+  echo 'complete -o default -F __start_kubectl k' >> $HOME/.bashrc
 
   echo -e "${Green}Entering bash session...${ColorOff}"
   bash --rcfile $HOME/.bashrc
