@@ -7,7 +7,7 @@ COPY ./scripts/verify /home/bin
 COPY ./addon /home/addon
 COPY ./examples /home/examples
 COPY ./hostpath /home/hostpath
-RUN apk add curl
+RUN apk add curl bash-completion
 
 RUN mkdir -p /home/neptune
 ENV PATH /home/bin:$PATH

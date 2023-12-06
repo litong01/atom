@@ -787,9 +787,16 @@ elif [[ "${CMD}" == "make" ]]; then
   make ${REST} REGISTRY=${REGISTRY} PLATFORMS=${PLATFORMS} REPOSITORY=${REPOSITORY} TAG=${TAG}
 
 elif [[ "${CMD}" == "bash" ]]; then
-  checkInNeptune
+
+  echo 'source /etc/bash/bashrc' > $HOME/.bashrc
+  echo 'alias k=kubectl' >> $HOME/.bashrc
+  echo 'alias d=docker' >> $HOME/.bashrc
+  echo 'source <(kubectl completion bash)' >> $HOME/.bashrc
+  echo 'source <(docker completion bash)' >> $HOME/.bashrc
+  echo 'source <(k completion bash)' >> $HOME/.bashrc
+  echo 'source <(d completion bash)' >> $HOME/.bashrc
+
   echo -e "${Green}Entering bash session...${ColorOff}"
-  # env IMG=kind-registry:5001/controller:latest bash
-  bash
+  bash --rcfile $HOME/.bashrc
 fi
 #=================End main process=========================
