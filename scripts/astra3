@@ -706,7 +706,7 @@ elif [[ "${CMD}" == "cleanall" ]]; then
   ${SCRIPTDIR}/k8stool cluster -d --cluster-name ${CLUSTERNAME}
   rm -rf ${HOME}/.kube/${CLUSTERNAME}.yaml
   # Remove the proxy and the local registry as well
-  docker rm -f kubeproxyp &> /dev/null || true
+  docker rm -f "kubeproxy-${CLUSTERNAME}" &> /dev/null || true
   docker rm -f kind-registry &> /dev/null || true
   # Need to clean up docker volumes
   docker volume prune -f &> /dev/null || true
