@@ -793,6 +793,7 @@ elif [[ "${CMD}" == "bash" ]]; then
   echo 'alias d=docker' >> $HOME/.bashrc
   echo 'source <(kubectl completion bash)' >> $HOME/.bashrc
   echo 'complete -o default -F __start_kubectl k' >> $HOME/.bashrc
+  echo 'export HISTCONTROL=ignoreboth:erasedups' >> $HOME/.bashrc
 
   echo -e "${Green}Entering bash session...${ColorOff}"
   bash --rcfile $HOME/.bashrc
