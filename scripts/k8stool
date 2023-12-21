@@ -151,7 +151,7 @@ function setupDefaults() {
   CLUSTERNAME="neptune"
   NAMESPACE="neptune-system"
   CERTNAME="secure-testing-cert"
-  WORKDIR=${WORKDIR:-/tmp/astra3}
+  WORKDIR=${WORKDIR:-/home/.kube}
   CERTDOMAINNAME="integration.astra.netapp.io"
 
   SOURCETAG=""
@@ -443,9 +443,6 @@ networking:
   ${netExtra}
 nodes:
 - role: control-plane
-  extraMounts:
-  - hostPath: /tmp/astra3
-    containerPath: /work
 ${MOREROLE}
 EOF
 else
@@ -461,9 +458,6 @@ networking:
   ${netExtra}
 nodes:
 - role: control-plane
-  extraMounts:
-  - hostPath: /tmp/astra3
-    containerPath: /work
 ${MOREROLE}
 EOF
 fi
@@ -503,7 +497,7 @@ function deleteMCS() {
 
 function getTopology() {
   allthings=$(echo ${TOPOLOGYCONTENT} | jq -c \
-    '.[] | .clusterName, .network, .podSubnet,.svcSubnet,.meta.kubeconfig')
+    '.[] | .clusterName, .network, .podSubnet,.svcSubnet')
 
   # Replace special characters with space
   # allthings="${allthings//[$'\t\r\n\"']/ }"
@@ -512,7 +506,7 @@ function getTopology() {
   # validate if we are getting null that means some fields were not specified
   if [[ "${allthings}" == *null* ]]; then
     echo "Your topology file missing critical information for a cluster."
-    echo "Each cluster must have clusterName, network, podSubnet, svcSubnet and meta.kubeconfig specified"
+    echo "Each cluster must have clusterName, network, podSubnet, and svcSubnet"
     exit 1
   fi
 }
@@ -531,7 +525,7 @@ function setup_kind_registry() {
 
 function createCluster() {
   ss=255
-  for i in $(seq 0 5 "${cInfoLength}"); do
+  for i in $(seq 0 4 "${cInfoLength}"); do
     cname="${cInfo[i]}"
     echo "Creating cluster ${cname} pod-subnet=${cInfo[i+2]} svc-subnet=${cInfo[i+3]} ..."
 
@@ -945,7 +939,7 @@ function processProxy() {
   
   mkdir -p "${WORKDIR}"
   # Create the the nginx configuration
-  cat <<EOF > ${WORKDIR}/proxy.conf
+  cat <<EOF > ${WORKDIR}/${CLUSTERNAME}.conf
 worker_processes  5;
 events {
   worker_connections  4096;
@@ -955,16 +949,11 @@ ${CONFIG}
 }
 EOF
 
-  # Consider when the script is running from inside of a container
-  if [[ ! -z "${HOSTWORKDIR}" ]]; then
-    configpath="${HOSTWORKDIR}/proxy.conf"
-  else
-    configpath="${WORKDIR}/proxy.conf"
-  fi
+  configpath=$(docker inspect astra | jq -r --arg WORKDIR "${WORKDIR}" '.[0].Mounts | .[] | select(.Destination == $WORKDIR).Source')
   PORTMAP=$(echo ${PORTMAP})
   # Now start up the proxy container
   docker run --name kubeproxy-${CLUSTERNAME} -d --network=kind ${PORTMAP} \
-    -v ${configpath}:/etc/nginx/nginx.conf:ro nginx:1.23.4
+    -v ${configpath}/${CLUSTERNAME}.conf:/etc/nginx/nginx.conf:ro nginx:1.23.4
   echo "${MSG}"
 }
 

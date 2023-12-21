@@ -7,7 +7,7 @@ Green='\033[0;32m'        # Green
 SCRIPTDIR=$(dirname $0)
 APPNAME=$(basename "$0")
 CURDIR=$(pwd)
-WORKDIR=${WORKDIR:-/tmp/astra3}
+WORKDIR=${WORKDIR:-/home/.kube}
 COMPONENT="all"
 NAMESPACE="${NAMESPACE:-neptune-system}"
 DEPLOYMENT="${DEPLOYMENT:-neptune-controller-manager}"
@@ -281,12 +281,12 @@ function doNeptuneImage() {
   echo -e "${Green}Setting up Neptune Manager image...${ColorOff}"
 
   prefix="netappdownloads.jfrog.io/docker-astra-control-staging/arch30/neptune/"
-  if [[ ! -f /home/work/astra3/images ]]; then
-    cp /home/addon/neptune-images.list /home/work/astra3/neptune-images.list
+  if [[ ! -f ${WORKDIR}/neptune-images.list ]]; then
+    cp /home/addon/neptune-images.list ${WORKDIR}/neptune-images.list
   fi
 
   # this image list file should only contain the image name and tag.
-  filecontent=$(cat /home/work/astra3/neptune-images.list)
+  filecontent=$(cat ${WORKDIR}/neptune-images.list)
   allimages=($(echo $filecontent))
 
   loggedIn="false"
@@ -546,11 +546,7 @@ function doAddon() {
 }
 
 function exposeUI() {
-  hostWorkDir=$(docker inspect astra3 | jq -r '.[].Mounts | .[] |select( .Destination == "/home/work/astra3") | .Source')
-  export HOSTWORKDIR=${hostWorkDir}
-  # If only expose one service
-  # ${SCRIPTDIR}/k8stool proxy --workdir "/home/work/astra3" --targetports "minio-ui 9090"
-  ${SCRIPTDIR}/k8stool proxy --workdir "/home/work/astra3"
+  ${SCRIPTDIR}/k8stool proxy --cluster-name ${CLUSTERNAME}
 }
 
 function isClusterOCP() {
@@ -699,12 +695,15 @@ elif [[ "${CMD}" == "down" ]]; then
 elif [[ "${CMD}" == "clean" ]]; then
   echo -e "${Green}Removing Neptune and cluster...${ColorOff}"
   ${SCRIPTDIR}/k8stool cluster -d --cluster-name ${CLUSTERNAME}
-  rm -rf ${HOME}/.kube/${CLUSTERNAME}.yaml
+  rm -rf ${WORKDIR}/${CLUSTERNAME}.yaml
+  rm -rf ${WORKDIR}/${CLUSTERNAME}
 
 elif [[ "${CMD}" == "cleanall" ]]; then
   echo -e "${Green}Removing everything...${ColorOff}"
   ${SCRIPTDIR}/k8stool cluster -d --cluster-name ${CLUSTERNAME}
   rm -rf ${HOME}/.kube/${CLUSTERNAME}.yaml
+  rm -rf ${WORKDIR}/${CLUSTERNAME}
+
   # Remove the proxy and the local registry as well
   docker rm -f "kubeproxy-${CLUSTERNAME}" &> /dev/null || true
   docker rm -f kind-registry &> /dev/null || true

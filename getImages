@@ -1,10 +1,11 @@
 #!/bin/bash
-
+# If the script fails to pull image from jfrog, most likely that you do not have
+# permission to pull from jfrog, you may contact Jeremy Harrod for access to jfrog
 function getConnectorImages() {
   echo "Ready to pull some images"
   prefix="netappdownloads.jfrog.io/docker-astra-control-staging/arch30/neptune/"
-  if [[ -f /tmp/astra3/neptune-images.list ]]; then
-    filecontent=$(cat /tmp/astra3/neptune-images.list)
+  if [[ -f ~/.astra3/neptune-images.list ]]; then
+    filecontent=$(cat ${WORKDIR}/neptune-images.list)
     cimages=($(echo $filecontent))
   else
     cimages=(
@@ -21,8 +22,6 @@ function getConnectorImages() {
     )
   fi
 
-  # These are the best effort, since these can change quite a lot, also assumed that
-  # the jfrog images have already been downloaded
   for cimage in "${cimages[@]}"; do
     echo "Pulling image ${prefix}${cimage}..."
     docker pull ${prefix}${cimage} >/dev/null 2>&1 || null

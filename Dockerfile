@@ -5,8 +5,12 @@ COPY ./scripts/astra3 /home/bin
 COPY ./scripts/k8stool /home/bin
 COPY ./scripts/verify /home/bin
 COPY ./addon /home/addon
+COPY ./trident /home/trident
 COPY ./examples /home/examples
 COPY ./hostpath /home/hostpath
+COPY ./astra3 /home/startscript/astra3
+COPY ./astra3.cmd /home/startscript/astra3.cmd
+
 RUN apk add curl bash-completion
 
 RUN mkdir -p /home/neptune
@@ -19,6 +23,7 @@ ENV REGISTRY=
 ENV REGISTRY_USERID=
 ENV REGISTRY_TOKEN=
 ENV TAG=latest
+ENV WORKDIR=/home/.kube
 # RUN adduser -D astra && mkdir /etc/sudoers.d && \
 #     echo "astra ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/astra && \
 #     chmod 0440 /etc/sudoers.d/astra
