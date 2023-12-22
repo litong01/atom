@@ -16,7 +16,7 @@ spec:
   providerType: generic-s3
   providerConfig:
     endpoint: minio.neptune-system.svc:9000
-    bucketName: test-appvault1
+    bucketName: minio-bucket
     secure: "false"
   providerCredentials:
     accessKeyID:

@@ -23,7 +23,7 @@ spec:
     volumeMounts:
     - mountPath: /data
       name: localvolume # Corresponds to the `spec.volumes` Persistent Volume
-    - mountPath: /root/nocerts
+    - mountPath: /root/certs
       name: secret-volume
   volumes:
   - name: localvolume

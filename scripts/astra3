@@ -532,11 +532,11 @@ function deployMinio() {
 
   # Now we setup alias named minio and create bucket for test using the default userid and password
   kubectl exec -ti -n ${NAMESPACE} pod/minio \
-    -- mc config host add minio http://minio.neptune-system.svc:9000 minioadmin minioadmin
+    -- mc config host add --insecure minio https://minio.neptune-system.svc:9000 minioadmin minioadmin
 
   # Create the test app bucket
   kubectl exec -ti -n ${NAMESPACE} pod/minio \
-    -- mc mb minio/test-appvault1 >/dev/nul 2>&1 || true
+    -- mc mb --insecure minio/minio-bucket >/dev/nul 2>&1 || true
 }
 
 function doAddon() {

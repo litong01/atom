@@ -8,5 +8,5 @@ spec:
     endpoint: minio.neptune-system.svc:9000
     accessKeyId: minioadmin
     secretAccessKey: minioadmin
-    bucketName: test-appvault1
+    bucketName: minio-bucket
     secure: "false"
