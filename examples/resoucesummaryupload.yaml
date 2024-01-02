@@ -6,7 +6,7 @@ type: Opaque
 data:
   token: bXlzZWNyZXQ=
 ---
-apiVersion: management.astra.netapp.io/v1alpha1
+apiVersion: astra.netapp.io/v1
 kind: ResourceSummaryUpload
 metadata:
   labels:

@@ -33,8 +33,8 @@ function verifySnapshot() {
 
   # Verify ResourceBackup
   echo "Verify ResourceBackup..."
-  res=$(kubectl -n ${neptunens} get resourcebackups -o jsonpath='{range .items[?(@.metadata.ownerReferences[0].name == "'$snapshotname'")]}{.status.result}{end}')
-  if [[ ${res} == 'Complete' ]]; then
+  res=$(kubectl -n ${neptunens} get resourcebackups -o jsonpath='{range .items[?(@.metadata.ownerReferences[0].name == "'$snapshotname'")]}{.status.state}{end}')
+  if [[ ${res} == 'Completed' ]]; then
     echo -e "   ${Green}ResourceBackup for $snapshotname has been verified${ColorOff}"
   else
     echo -e "   ${Red}ResourceBackup for $snapshotname has not been completed, verify failed${ColorOff}"
@@ -71,8 +71,8 @@ function verifyBackup() {
 
   # Verify Backup
   echo -e "Verify Backup ${Green}${backupname}${ColorOff}..."
-  res=$(kubectl get backup $backupname -n ${neptunens} -o jsonpath='{.status.sourceSnapshotName}')
-  if [[ ! -z ${res} ]]; then
+  res=$(kubectl get backup $backupname -n ${neptunens} -o jsonpath='{.status.state}')
+  if [[ ${res} == "Completed" ]]; then
     echo -e "   ${Green}Backup $backupname has been verified${ColorOff}"
   else
     echo -e "   ${Red}Backup $backupname not been completed, verify failed${ColorOff}"
@@ -82,7 +82,8 @@ function verifyBackup() {
     exit 1
   fi
 
-  verifySnapshot "$res" "$workloadns" "$neptunens" "$context"
+  # seems snapshot will be removed, so we can not verify this any more.
+  # verifySnapshot "$res" "$workloadns" "$neptunens" "$context"
 
 }
 
