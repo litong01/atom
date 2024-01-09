@@ -268,8 +268,8 @@ function loginToRepo() {
   reg=$1
   # the login file should be one line with id:token, expect the
   # file login be in /tmp/astra3/ directory for this to work
-  if [[ -f /home/work/astra3/login ]]; then
-    keyPair=$(cat /home/work/astra3/login)
+  if [[ -f ${WORKDIR}/login ]]; then
+    keyPair=$(cat ${WORKDIR}/login)
     id=$(echo $keyPair | cut -d ":" -f 1)
     pw=$(echo $keyPair | cut -d ":" -f 2)
     echo ${pw} | docker login ${reg} -u ${id} --password-stdin >/dev/null 2>&1 || true
