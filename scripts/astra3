@@ -346,9 +346,10 @@ function refreshDeployment() {
       if [[ "${imagename}" != "" ]] && [[ "${anImage}" =~ "kind-registry:5001" ]]; then
           echo -e "Ready to update ${Green}${imagename}${ColorOff}"
           # astra image, push the newer image
-          ${SCRIPTDIR}/k8stool image --source-tag "${imagename}"
+          docker tag ${imagename} localhost:5001/${imagename}
+          docker push localhost:5001/${imagename}
           # Remove the cached image
-          docker exec ${CLUSTERNAME}-control-plane crictl rmi "${anImage}" >/dev/null 2>&1 || true
+          docker exec ${CLUSTERNAME}-control-plane crictl rmi "${anImage}"
       fi
     done
     kubectl rollout restart -n ${NAMESPACE} deployment ${DEPLOYMENT}
