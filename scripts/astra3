@@ -136,6 +136,11 @@ function installStorageCRDs() {
   kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
   kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml
   kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v6.2.1/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml
+
+  # We will also install trident crds to avoid an connector issue which assumes whatever
+  # resource it looks for already have CRDs installed which is wrong. this can be removed
+  # once connector fixes the problems.
+  kubectl apply -f /home/addon/tridentcrds.yaml
 }
 
 function doADTUpdate() {
