@@ -20,3 +20,5 @@ spec:
   imageRegistry:
     name: kind-registry:5001
     secret:
+  neptune:
+    image: latest

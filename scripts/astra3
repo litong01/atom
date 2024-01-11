@@ -209,11 +209,7 @@ function wait_for_pod() {
 function deployConnector() {
   # Only deploy connector when apitoken is provided.
   if [[ ! -z "${APITOKEN}" ]]; then
-    #1. deploy the connector operator and wait for it to become ready
-    kubectl apply -f https://github.com/NetApp/astra-connector-operator/releases/latest/download/astraconnector_operator.yaml
-    wait_for_pod 'astra-connector-operator' 'control-plane=controller-manager' 'ready'
-
-    #2. Create secret in neptune-system namespace
+    #1. Create secret in neptune-system namespace
     exists=$(kubectl get -n ${NAMESPACE} secrets astra-token --no-headers 2>/dev/null || true)
     if [[ ! -z ${exists} ]]; then
       kubectl delete -n ${NAMESPACE} secrets astra-token >/dev/null 2>&1 || null
@@ -221,7 +217,7 @@ function deployConnector() {
     kubectl create secret generic astra-token \
       --from-literal=apiToken=${APITOKEN} -n ${NAMESPACE} || true
 
-    #3. Now create connector CR.
+    #2. Now create connector CR.
     if [[ ! -z "${ACCOUNTID}" ]] && [[ ! -z "${ALIASIP}" ]]; then
       ACCOUNTID=$ACCOUNTID yq e '.spec.astra.accountId = env(ACCOUNTID)' -i /home/addon/connector.yaml
       ALIASIP=$ALIASIP yq e '.spec.natsSyncClient.hostAliasIP = env(ALIASIP)' -i /home/addon/connector.yaml
@@ -249,17 +245,31 @@ function deployConnector() {
   fi
 }
 
+function downNeptune() {
+  echo -e "${Green}Uninstalling Neptune and Connector...${ColorOff}"
+  echo -e "Target Kubernetes onto cluster: ${Green}${CLUSTERNAME}${ColorOff}"
+
+  kubectl delete -f https://github.com/NetApp/astra-connector-operator/releases/latest/download/astraconnector_operator.yaml
+
+  kubectl delete namespace astra-connector-operator neptune-system
+
+  echo -e "${Green}Neptune has been removed ready!!!${ColorOff}"
+
+}
+
 function deployNeptune() {
   echo -e "${Green}Deploying Neptune and Connector...${ColorOff}"
-  echo -e "Target Kubernetes onto cluster: ${Green}${CLUSTERNAME}${ColorOff}" 
-  if [[ -z ${REGISTRY} ]]; then
-    IMG="kind-registry:5001/controller:${TAG}" REGISTRY="kind-registry:5001" TAG=${TAG} make deploy
-  else
-    # fix up registry missing trailing slash
-    reg=$(echo ${REGISTRY%/})
-    SECRET=${SECRETNAME} REGISTRY="${reg}/" TAG=${TAG} make deploy
-  fi
-  deployConnector
+  echo -e "Target Kubernetes onto cluster: ${Green}${CLUSTERNAME}${ColorOff}"
+  # if [[ -z ${REGISTRY} ]]; then
+  #   IMG="kind-registry:5001/controller:${TAG}" REGISTRY="kind-registry:5001" TAG=${TAG} make deploy
+  # else
+  #   # fix up registry missing trailing slash
+  #   reg=$(echo ${REGISTRY%/})
+  #   SECRET=${SECRETNAME} REGISTRY="${reg}/" TAG=${TAG} make deploy
+  # fi
+
+  kubectl apply -f https://github.com/NetApp/astra-connector-operator/releases/latest/download/astraconnector_operator.yaml
+  wait_for_pod 'astra-connector-operator' 'control-plane=controller-manager' 'ready'
 
   echo -e "${Green}Neptune is ready!!!${ColorOff}"
 }
@@ -687,11 +697,10 @@ elif [[ "${CMD}" == "prepare" ]]; then
 
 elif [[ "${CMD}" == "down" ]]; then
   echo ""
-  echo -e "${Green}Removing Neptune CRDs and Controller...${ColorOff}"
+  echo -e "${Green}Removing Neptune CRDs and Controllers...${ColorOff}"
   checkInNeptune
 
-  make undeploy
-  make uninstall
+  downNeptune
 
 elif [[ "${CMD}" == "clean" ]]; then
   echo -e "${Green}Removing Neptune and cluster...${ColorOff}"
