@@ -9,7 +9,7 @@ APPNAME=$(basename "$0")
 CURDIR=$(pwd)
 WORKDIR=${WORKDIR:-/home/.kube}
 COMPONENT="all"
-NAMESPACE="${NAMESPACE:-neptune-system}"
+NAMESPACE="${NAMESPACE:-astra-connector}"
 DEPLOYMENT="${DEPLOYMENT:-neptune-controller-manager}"
 TAG=${TAG:-latest}
 SECRETNAME=${SECRETNAME:-regcred}
@@ -46,7 +46,7 @@ function printHelp() {
   echo ""
   echo -e "Parameters for ${Green}refresh${ColorOff} command:"
   echo "     -d|--deployment-name  - a deployment name such as neptune-controller-manager"
-  echo "     -n|--namespace        - the namespace where the deployment is, default neptune-system"
+  echo "     -n|--namespace        - the namespace where the deployment is, default astra-connector"
   echo ""
   echo -e "Parameters for ${Green}deploy${ColorOff} command:"
   echo "     -a|--astra-account-id - astra account id"
@@ -214,7 +214,7 @@ function wait_for_pod() {
 function deployConnector() {
   # Only deploy connector when apitoken is provided.
   if [[ ! -z "${APITOKEN}" ]]; then
-    #1. Create secret in neptune-system namespace
+    #1. Create secret in astra-connector namespace
     exists=$(kubectl get -n ${NAMESPACE} secrets astra-token --no-headers 2>/dev/null || true)
     if [[ ! -z ${exists} ]]; then
       kubectl delete -n ${NAMESPACE} secrets astra-token >/dev/null 2>&1 || null
@@ -245,7 +245,7 @@ function deployConnector() {
       fi
 
       # Create the connector CR
-      kubectl -n neptune-system apply -f /home/addon/connector.yaml
+      kubectl -n astra-connector apply -f /home/addon/connector.yaml
     fi
   fi
 }
@@ -256,7 +256,7 @@ function downNeptune() {
 
   kubectl delete -f https://github.com/NetApp/astra-connector-operator/releases/latest/download/astraconnector_operator.yaml
 
-  kubectl delete namespace astra-connector-operator neptune-system
+  kubectl delete namespace astra-connector-operator astra-connector
 
   echo -e "${Green}Neptune has been removed ready!!!${ColorOff}"
 
@@ -349,7 +349,7 @@ function refreshDeployment() {
     jsonpath='{.spec.template.spec.containers[*].image}' 2>/dev/null||true)
   if [[ "${dep}" == "" ]]; then
     echo -e "${Red}Could not find the deployment ${DEPLOYMENT}${ColorOff}"
-    echo -e "${Green}If the deployment was not installed in neptune-system, you can use -n to specify${ColorOff}"
+    echo -e "${Green}If the deployment was not installed in astra-connector, you can use -n to specify${ColorOff}"
     IFS=$OLDIFS
     exit 1
   else
@@ -548,7 +548,7 @@ function deployMinio() {
 
   # Now we setup alias named minio and create bucket for test using the default userid and password
   kubectl exec -ti -n ${NAMESPACE} pod/minio \
-    -- mc config host add --insecure minio https://minio.neptune-system.svc:9000 minioadmin minioadmin
+    -- mc config host add --insecure minio https://minio.astra-connector.svc:9000 minioadmin minioadmin
 
   # Create the test app bucket
   kubectl exec -ti -n ${NAMESPACE} pod/minio \
@@ -755,16 +755,16 @@ elif [[ "${CMD}" == "testhostpath" ]]; then
   testHostpathSnapshot
 
 elif [[ "${CMD}" == "test" ]]; then
-  setupTest test1 neptune-system
+  setupTest test1 astra-connector
 
 elif [[ "${CMD}" == "vtest" ]]; then
-  verifyTest test1 neptune-system
+  verifyTest test1 astra-connector
 
 elif [[ "${CMD}" == "rmtest" ]]; then
-  removeTest test1 neptune-system
+  removeTest test1 astra-connector
 
 elif [[ "${CMD}" == "rstest" ]]; then
-  restoreTest test1 neptune-system test2
+  restoreTest test1 astra-connector test2
 
 elif [[ "${CMD}" == "webui" ]]; then
   exposeUI

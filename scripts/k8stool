@@ -149,7 +149,7 @@ function setupDefaults() {
   LOADBALANCER="false"
 
   CLUSTERNAME="neptune"
-  NAMESPACE="neptune-system"
+  NAMESPACE="astra-connector"
   CERTNAME="secure-testing-cert"
   WORKDIR=${WORKDIR:-/home/.kube}
   CERTDOMAINNAME="integration.astra.netapp.io"
