@@ -5,7 +5,7 @@ metadata:
 spec:
   providerType: generic-s3
   providerConfig:
-    endpoint: minio.neptune-system.svc:9000
+    endpoint: minio.astra-connector.svc:9000
     accessKeyId: minioadmin
     secretAccessKey: minioadmin
     bucketName: minio-bucket

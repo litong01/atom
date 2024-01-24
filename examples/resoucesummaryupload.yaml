@@ -17,7 +17,7 @@ metadata:
     app.kubernetes.io/created-by: neptune
   name: resourcesummaryupload-sample
 spec:
-  pushEndpoint: "https://pathecho-31056.neptune-system.svc:31056/post/"
+  pushEndpoint: "https://pathecho-31056.astra-connector.svc:31056/post/"
   pushToken:
     valueFromSecret:
       name: "neptune-resource-summary-upload-secret"
