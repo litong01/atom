@@ -1,0 +1,9 @@
+apiVersion: astra.netapp.io/v1
+kind: BackupInplaceRestore
+metadata:
+  name: bkp-ipr
+  namespace: astra-connector
+spec:
+  appArchivePath: test1-bb6065f9-e32f-44be-959a-a4c5e5c93115_57c03f7c-cde9-4b4f-bfe6-04f227f75098/backups/test1-backup-tong-4f2b3f9c-d1ee-4e3c-b35c-786165ab8bb8_9ac6f1e0-5119-4974-b44a-8b9b43721600
+  appVaultRef: gcp-tong-bucket
+  resourceFilter: {}
