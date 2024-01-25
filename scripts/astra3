@@ -40,6 +40,7 @@ function printHelp() {
   echo "     make     - run neptune make command"
   echo "     conn     - deploy connector"
   echo "     bash     - run bash interactively"
+  echo "     log      - display logs"
   echo ""
   echo -e "Parameters for ${Green}up or prepare${ColorOff} command:"
   echo "       --cluster-name   - name of the k8s cluster to be created"
@@ -59,7 +60,7 @@ function printHelp() {
 
 function validateCMD() {
   cmd=$1
-  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "webui" "conn" \
+  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "webui" "conn" "log" \
     "update" "k8stool" "bash" "addon" "trident" "hostpath" "test" "rmtest" "vtest" "rstest" "testhostpath")
   ccmd=""
   for item in "${allCommands[@]}"; do
@@ -660,6 +661,23 @@ function restoreTest() {
 
 }
 
+function setLogCmd() {
+
+myat='$@'
+LOGCMDS=$(cat << EOF
+
+nlog() {
+  jq -cr --raw-input 'import "logs" as logs; logs::nlog'
+}
+
+nlogs() {
+  stern --tail 100 -o json deploy/neptune-controller-manager -n astra-connector $myat | jq -cr --raw-input 'import "logs" as logs; logs::sternlog(logs::nlog)'
+}
+EOF
+)
+
+}
+
 #=================Start main process=========================
 
 set -e
@@ -800,6 +818,13 @@ elif [[ "${CMD}" == "make" ]]; then
   # We are ready to execute,
   make ${REST} REGISTRY=${REGISTRY} PLATFORMS=${PLATFORMS} REPOSITORY=${REPOSITORY} TAG=${TAG}
 
+elif [[ "${CMD}" == "log" ]]; then
+  if [[ -z $DEPLOYMENT ]]; then
+    DEPLOYMENT="neptune-controller-manager"
+  fi
+  stern --tail 100 -o json deploy/$DEPLOYMENT -n $NAMESPACE | \
+    jq -cr --raw-input 'import "logs" as logs; logs::sternlog(logs::nlog)'
+
 elif [[ "${CMD}" == "bash" ]]; then
 
   echo 'source /etc/bash/bashrc' > $HOME/.bashrc
@@ -808,6 +833,10 @@ elif [[ "${CMD}" == "bash" ]]; then
   echo 'source <(kubectl completion bash)' >> $HOME/.bashrc
   echo 'complete -o default -F __start_kubectl k' >> $HOME/.bashrc
   echo 'export HISTCONTROL=ignoreboth:erasedups' >> $HOME/.bashrc
+
+  setLogCmd
+  # The following code is to use treys log tool
+  echo "${LOGCMDS}" >> $HOME/.bashrc
 
   echo -e "${Green}Entering bash session...${ColorOff}"
   bash --rcfile $HOME/.bashrc
