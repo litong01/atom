@@ -1,0 +1,9 @@
+apiVersion: astra.netapp.io/v1
+kind: SnapshotInplaceRestore
+metadata:
+  name: snapshot-ipr
+  namespace: astra-connector
+spec:
+  appArchivePath: test1-bb6065f9-e32f-44be-959a-a4c5e5c93115_57c03f7c-cde9-4b4f-bfe6-04f227f75098/snapshots/20240125011432_test1-snapshot-test-fd5116dd-3407-463c-8512-750ef169f423_a8fd89c4-7cff-4afe-b54f-15f120585e8d
+  appVaultRef: gcp-tong-bucket
+  resourceFilter: {}    
