@@ -41,6 +41,7 @@ function printHelp() {
   echo "     conn     - deploy connector"
   echo "     bash     - run bash interactively"
   echo "     log      - display logs"
+  echo "     k9s      - run k9s tool"
   echo ""
   echo -e "Parameters for ${Green}up or prepare${ColorOff} command:"
   echo "       --cluster-name   - name of the k8s cluster to be created"
@@ -60,7 +61,7 @@ function printHelp() {
 
 function validateCMD() {
   cmd=$1
-  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "webui" "conn" "log" \
+  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "webui" "conn" "log" "k9s" \
     "update" "k8stool" "bash" "addon" "trident" "hostpath" "test" "rmtest" "vtest" "rstest" "testhostpath")
   ccmd=""
   for item in "${allCommands[@]}"; do
@@ -824,6 +825,10 @@ elif [[ "${CMD}" == "log" ]]; then
   fi
   stern --tail 100 -o json deploy/$DEPLOYMENT -n $NAMESPACE | \
     jq -cr --raw-input 'import "logs" as logs; logs::sternlog(logs::nlog)'
+
+elif [[ "${CMD}" == "k9s" ]]; then
+
+  k9s
 
 elif [[ "${CMD}" == "bash" ]]; then
 
