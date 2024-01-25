@@ -1,0 +1,10 @@
+apiVersion: astra.netapp.io/v1
+kind: SnapshotRestore
+metadata:
+  name: test-snapshot-restore1
+spec:
+  appVaultRef: test-appvault1
+  appArchivePath: toBeReplaced
+  namespaceMapping:
+  - source: sourcens
+    destination: targetns

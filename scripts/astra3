@@ -237,7 +237,7 @@ function deployConnector() {
       else
         REGISTRY="kind-registry:5001" yq e '.spec.imageRegistry.name = env(REGISTRY)' -i /home/addon/connector.yaml
       fi
-      if [[ ! -z "${SECRETNAME}" ]]; then
+      if [[ ! -z "${SECRETNAME}" ]] && [[ ! -z "${REGISTRY}" ]]; then
         SECRETNAME="${SECRETNAME}" yq e '.spec.imageRegistry.secret = env(SECRETNAME)' -i /home/addon/connector.yaml
       fi
       if [[ ! -z "${CLUSTERNAME}" ]]; then

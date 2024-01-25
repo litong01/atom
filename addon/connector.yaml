@@ -19,6 +19,5 @@ spec:
     image: natssync-client:2.1.202309262120
   imageRegistry:
     name: kind-registry:5001
-    secret:
   neptune:
     image: latest
