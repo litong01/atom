@@ -1,9 +1,12 @@
-def grey:   "\u001b[30m" + . + "\u001b[0m";
+def grey:   "\u001b[90m" + . + "\u001b[0m";
 def red:    "\u001b[31m" + . + "\u001b[0m";
 def green:  "\u001b[32m" + . + "\u001b[0m";
 def yellow: "\u001b[33m" + . + "\u001b[0m";
 def blue:   "\u001b[34m" + . + "\u001b[0m";
 def purple: "\u001b[35m" + . + "\u001b[0m";
+def white:  "\u001b[37m" + . + "\u001b[0m";
+def pink:   "\u001b[95m" + . + "\u001b[0m";
+def black:  "\u001b[30m" + . + "\u001b[0m";
 
 def displayLevel:
   . as $level |
