@@ -21,3 +21,4 @@ spec:
     name: kind-registry:5001
   neptune:
     image: latest
+  skipPreCheck: true
