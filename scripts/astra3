@@ -31,7 +31,6 @@ function printHelp() {
   echo "     clean    - Remove all astra including k8s cluster"
   echo "     cleanall - Remove all astra including k8s cluster, proxy, local registry"
   echo "     update   - update this tool"
-  echo "     trident  - Set up trident"
   echo "     refresh  - restart a deployment and its image"
   echo "     webui    - expose minio and vault console"
   echo "     test     - run neptune tests"
@@ -65,7 +64,7 @@ function printHelp() {
 function validateCMD() {
   cmd=$1
   allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "webui" "conn" "log" "k9s" \
-    "update" "k8stool" "bash" "addon" "trident" "hostpath" "test" "rmtest" "vtest" "rstest" "testhostpath")
+    "update" "k8stool" "bash" "addon" "hostpath" "test" "rmtest" "vtest" "rstest" "testhostpath")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -147,7 +146,7 @@ function installStorageCRDs() {
   # We will also install trident crds to avoid an connector issue which assumes whatever
   # resource it looks for already have CRDs installed which is wrong. this can be removed
   # once connector fixes the problems.
-  kubectl apply -f /home/addon/tridentcrds.yaml
+  # kubectl apply -f /home/addon/tridentcrds.yaml
 }
 
 function doADTUpdate() {
@@ -455,46 +454,6 @@ function setupHostpath() {
    '{"metadata": {"annotations":{"snapshot.storage.kubernetes.io/is-default-class":"true"}}}'
 }
 
-function setupTrident() {
-  set +e
-  tridentns="trident"
-  kubectl get namespace ${tridentns} >/dev/null 2>&1
-  # namespace does not exist, create it
-  if [[ $? == 1 ]]; then
-    echo "Creating namespace ${tridentns}"
-    set -e
-    kubectl create ns ${tridentns}
-  else
-    echo "Namespace ${tridentns} already exists"
-  fi
-  set -e
-
-  # Getting trident images
-  tridentImages=("netapp/trident:23.07.0" "netapp/trident-autosupport:23.07.0" "netapp/trident-operator:23.07.0" \
-    "registry.k8s.io/sig-storage/csi-provisioner:v3.4.0" "registry.k8s.io/sig-storage/csi-attacher:v4.1.0" \
-    "registry.k8s.io/sig-storage/csi-resizer:v1.7.0" "registry.k8s.io/sig-storage/csi-snapshotter:v3.0.3" \
-    "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.7.0")
-
-  for item in ${tridentImages[@]}; do
-    echo -e "${Green}Pulling image ${item}...${ColorOff}"
-    docker pull --platform=linux/amd64 ${item}
-    ${SCRIPTDIR}/k8stool image --load-or-push true --source-tag "${item}"
-  done
-
-  echo -e "${Green}Deploying trident onto kubernetes cluster...${ColorOff}"
-  kubectl apply -f /home/trident/tridentorchestrator.yaml -n ${tridentns}
-  echo "Trident CRDs are deployed"
-  ARCH=$(uname -m) && if [[ "${ARCH}" == "aarch64" ]]; then ARCH=arm64; fi
-  if [[ "${ARCH}" == "x86_64" ]]; then ARCH="amd64"; fi
-
-  # Now make sure that the node using right architecture node label
-  ARCH=$ARCH yq e '.spec.controllerPluginNodeSelector."kubernetes.io/arch" = env(ARCH)' -i /home/trident/tridentorchestrator_cr.yaml
-  ARCH=$ARCH yq e '.spec.nodePluginNodeSelector."kubernetes.io/arch" = env(ARCH)' -i /home/trident/tridentorchestrator_cr.yaml
-
-  # Deploy the orchestrator
-  kubectl apply -f /home/trident/tridentorchestrator_cr.yaml -n ${tridentns}
-}
-
 function deployVault() {
   # This section deploys hashcorp vault onto the cluster
   echo -e "${Green}Deploying Hashicorp Vault...${ColorOff}"
@@ -768,9 +727,6 @@ elif [[ "${CMD}" == "update" ]]; then
 
 elif [[ "${CMD}" == "addon" ]]; then
   doAddon
-
-elif [[ "${CMD}" == "trident" ]]; then
-  setupTrident
 
 elif [[ "${CMD}" == "hostpath" ]]; then
   setupHostpath
