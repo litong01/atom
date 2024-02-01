@@ -15,6 +15,7 @@ TAG=${TAG:-latest}
 SECRETNAME=${SECRETNAME:-regcred}
 APITOKEN=${APITOKEN:-""}
 CLUSTERNAME=${CLUSTERNAME:-"neptune"}
+K8SRELEASE=${K8SRELEASE:-"1.29.0"}
 
 function printHelp() {
   echo ""
@@ -43,8 +44,10 @@ function printHelp() {
   echo "     log      - display logs"
   echo "     k9s      - run k9s tool"
   echo ""
-  echo -e "Parameters for ${Green}up or prepare${ColorOff} command:"
-  echo "       --cluster-name   - name of the k8s cluster to be created"
+  echo -e "Parameters for ${Green}up, prepare${ColorOff} command:"
+  echo "     -r|--k8srelease     - a k8s release to be used to create k8s cluster"
+  echo -e "                           valid values are 1.21.14 ~ 1.29.0 default is ${Green}1.29.0${ColorOff}"
+  echo "        --cluster-name   - name of the k8s cluster to be created"
   echo ""
   echo -e "Parameters for ${Green}refresh${ColorOff} command:"
   echo "     -d|--deployment-name  - a deployment name such as neptune-controller-manager"
@@ -117,6 +120,8 @@ else
         APITOKEN="$2";shift 2;;
       --cluster-name)
         CLUSTERNAME="$2";shift 2;;
+      -r|--k8s-release)
+        K8SRELEASE="$2";shift 2;;
       --bridgeurl)
         BRIDGEURL="$2";shift 2;;
       --aliasip)
@@ -690,7 +695,7 @@ if [[ "${CMD}" == "up" ]]; then
   checkInNeptune
 
   echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
-  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --cluster-name "${CLUSTERNAME}"
+  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --cluster-name "${CLUSTERNAME}" --k8s-release ${K8SRELEASE}
   
   installStorageCRDs
 
@@ -710,7 +715,7 @@ elif [[ "${CMD}" == "prepare" ]]; then
 
   echo ""
   echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
-  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --cluster-name ${CLUSTERNAME}
+  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --cluster-name ${CLUSTERNAME} --k8s-release ${K8SRELEASE}
 
   installStorageCRDs
 

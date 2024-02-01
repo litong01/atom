@@ -1,4 +1,4 @@
-FROM email4tong/hammer3:v0.1.0
+FROM email4tong/hammer3:v0.2.0
 LABEL maintainer="litong01"
 
 COPY ./scripts/astra3 /home/bin

@@ -138,7 +138,7 @@ function setupDefaults() {
   LOADIMAGE="true"
   WORKERNODES=0
 
-  K8SRELEASE=""
+  K8SRELEASE="--image=kindest/node:v1.29.0"
   IPSPACE=255
   IPFAMILY="ipv4"
   PODSUBNET=""
@@ -198,9 +198,6 @@ EOF
 )
 
 FEATURES=$(cat << EOF
-featureGates:
-  MixedProtocolLBService: true
-  GRPCContainerProbe: true
 kubeadmConfigPatches:
   - |
     apiVersion: kubeadm.k8s.io/v1beta2
@@ -430,22 +427,6 @@ function setupkind() {
 
 # Create k8s cluster using the giving release and name, do not format the following code
 # because it creates a yaml file.
-if [[ -z "${K8SRELEASE}" ]]; then
-  cat << EOF | kind create cluster --config -
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-${FEATURES}
-name: ${CLUSTERNAME}
-networking:
-  ipFamily: ${IPFAMILY}
-  ${PODSUBNET}
-  ${SERVICESUBNET}
-  ${netExtra}
-nodes:
-- role: control-plane
-${MOREROLE}
-EOF
-else
   cat << EOF | kind create cluster "${K8SRELEASE}" --config -
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -460,7 +441,6 @@ nodes:
 - role: control-plane
 ${MOREROLE}
 EOF
-fi
 
   # Setup cluster context
   CLUSTERNAME=$(echo $CLUSTERNAME|xargs)
