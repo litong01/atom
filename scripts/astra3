@@ -27,7 +27,7 @@ function printHelp() {
   echo "     down     - Remove all astra but k8s cluster"
   echo "     image    - Update image to the local repo"
   echo "     prepare  - Get cluster and image ready"
-  echo "     deploy   - Deploy astra components"
+  echo "     deploy   - Deploy neptuen controller only"
   echo "     clean    - Remove all astra including k8s cluster"
   echo "     cleanall - Remove all astra including k8s cluster, proxy, local registry"
   echo "     update   - update this tool"
