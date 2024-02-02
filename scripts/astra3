@@ -256,7 +256,7 @@ function deployConnector() {
   fi
 }
 
-function downNeptune() {
+function downOperator() {
   echo -e "${Green}Uninstalling Neptune and Connector...${ColorOff}"
   echo -e "Target Kubernetes onto cluster: ${Green}${CLUSTERNAME}${ColorOff}"
 
@@ -264,13 +264,15 @@ function downNeptune() {
 
   kubectl delete namespace astra-connector-operator astra-connector
 
-  echo -e "${Green}Neptune has been removed ready!!!${ColorOff}"
+  echo -e "${Green}Neptune has been removed!!!${ColorOff}"
 
 }
 
 function deployNeptune() {
-  echo -e "${Green}Deploying Neptune and Connector...${ColorOff}"
-  echo -e "Target Kubernetes onto cluster: ${Green}${CLUSTERNAME}${ColorOff}"
+  echo -e "${Green}Deploying Neptune controller...${ColorOff}"
+  kubectl -n astra-connector apply -f /home/addon/neptune.yaml
+  wait_for_pod 'astra-connector' 'control-plane=controller-manager' 'ready'
+
   # if [[ -z ${REGISTRY} ]]; then
   #   IMG="kind-registry:5001/controller:${TAG}" REGISTRY="kind-registry:5001" TAG=${TAG} make deploy
   # else
@@ -278,6 +280,11 @@ function deployNeptune() {
   #   reg=$(echo ${REGISTRY%/})
   #   SECRET=${SECRETNAME} REGISTRY="${reg}/" TAG=${TAG} make deploy
   # fi
+}
+
+function deployOperator() {
+  echo -e "${Green}Deploying Neptune and Connector...${ColorOff}"
+  echo -e "Target Kubernetes onto cluster: ${Green}${CLUSTERNAME}${ColorOff}"
 
   kubectl apply -f https://github.com/NetApp/astra-connector-operator/releases/latest/download/astraconnector_operator.yaml
   wait_for_pod 'astra-connector-operator' 'control-plane=controller-manager' 'ready'
@@ -666,7 +673,7 @@ if [[ "${CMD}" == "up" ]]; then
   doAddon
   setupHostpath
 
-  deployNeptune
+  deployOperator
 
 elif [[ "${CMD}" == "prepare" ]]; then
   echo ""
@@ -679,7 +686,7 @@ elif [[ "${CMD}" == "prepare" ]]; then
   installStorageCRDs
 
   # echo -e "${Green}Create traefik certificate${ColorOff}"
-  ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --workdir "${WORKDIR}"
+  ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --workdir "${WORKDIR}" --cluster-name "${CLUSTERNAME}"
 
   echo -e "${Green}Ready to deploy Astra Neptune, please run deploy command${ColorOff}"
 
@@ -688,7 +695,7 @@ elif [[ "${CMD}" == "down" ]]; then
   echo -e "${Green}Removing Neptune CRDs and Controllers...${ColorOff}"
   checkInNeptune
 
-  downNeptune
+  downOperator
 
 elif [[ "${CMD}" == "clean" ]]; then
   echo -e "${Green}Removing Neptune and cluster...${ColorOff}"
@@ -711,8 +718,6 @@ elif [[ "${CMD}" == "cleanall" ]]; then
 elif [[ "${CMD}" == "deploy" ]]; then
   checkInNeptune
   
-  # Always check and recreate namespace and the cert in case it was removed
-  ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --workdir "${WORKDIR}"
   deployNeptune
 
 elif [[ "${CMD}" == "refresh" ]]; then
