@@ -24,16 +24,16 @@ jobs:
     runs-on: ubuntu-20.04
     
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         
       - name: set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: login to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.DH_REGISTRY }}
           username: ${{ secrets.DH_USER }}
@@ -46,14 +46,14 @@ jobs:
             --platform linux/amd64,linux/arm64 .
 
       - name: Docker Hub Description
-        uses: peter-evans/dockerhub-description@v3
+        uses: peter-evans/dockerhub-description@v4
         with:
           username: ${{ secrets.DH_USER }}
           password: ${{ secrets.DH_KEY }}
           repository: ${{env.DH_NAMESPACE }}/${{env.IMAGE_NAME}}
 
       - name: login to Github package
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.GH_REGISTRY }}
           username: ${{ secrets.GHP_USER }}
