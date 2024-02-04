@@ -4,6 +4,7 @@ LABEL maintainer="litong01"
 COPY ./scripts/astra3 /home/bin
 COPY ./scripts/k8stool /home/bin
 COPY ./scripts/verify /home/bin
+COPY ./scripts/utils /home/bin
 COPY ./addon /home/addon
 COPY ./jqlib /home/.jq
 COPY ./trident /home/trident

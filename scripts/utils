@@ -1,0 +1,34 @@
+#!/bin/bash
+function showTimer() {
+  key=$1
+  echo "false" > "/tmp/${key}"
+  SECONDS=0
+  while : ; do
+    echo -ne "   Time elapsed: ${Green}$SECONDS${ColorOff} seconds\r"
+    theflag=$(</tmp/${key})
+    if [[ "${theflag}" == "true" ]]; then
+      break
+    fi
+    sleep 1
+  done
+}
+
+function stopTimer() {
+  key=$1
+  echo "true" > "/tmp/${key}"
+  echo ""
+}
+
+function waitforpod() {
+  namespace=$1
+  podlabel=$2
+  showTimer 'neptunepod' &
+  while : ; do
+    waitresult=$(kubectl wait pod -n ${namespace} --for=condition=ready \
+      -l "${podlabel}" --timeout=3s 2>/dev/null || true)
+    if [[ "${waitresult}" == *"condition met"* ]]; then
+      break
+    fi
+  done
+  stopTimer 'neptunepod'
+}

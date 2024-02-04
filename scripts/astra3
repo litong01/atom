@@ -194,29 +194,6 @@ function checkEnvironmentVariables() {
   echo ""
 }
 
-function wait_for_pod() {
-  namespace=$1
-  podlabel=$2
-  condition=$3
-  while : ; do
-    waitresult=$(kubectl wait pod -n ${namespace} --for=condition=${condition} \
-      -l "${podlabel}" --timeout=60s 2>/dev/null || true)
-    # If the wait returns, it can only be either timed out or condition met. We check if there is
-    # timedout, we continue to wait. Since the timeout is an error, and it goes to /dev/null, only
-    # condition met will have anything in waitresult, in any other condition, the waitresult is empty.
-    if [[ -z "${waitresult}" ]]; then
-      currentTime=$(date +%s)
-      elapsed=$(( currentTime - startTime ))
-      echo -ne "\033[0K\r"
-      echo -ne "   Time elapsed: ${Green}${elapsed}${ColorOff} seconds\033[0K"
-    else
-       break
-    fi
-  done
-  echo ""
-  echo -e "${Green}Astra pods are ready now${ColorOff}"
-}
-
 function deployConnector() {
   # Only deploy connector when apitoken is provided.
   if [[ ! -z "${APITOKEN}" ]]; then
@@ -271,7 +248,8 @@ function downOperator() {
 function deployNeptune() {
   echo -e "${Green}Deploying Neptune controller...${ColorOff}"
   kubectl -n astra-connector apply -f /home/addon/neptune.yaml
-  wait_for_pod 'astra-connector' 'control-plane=controller-manager' 'ready'
+  echo -e "${Green}Waiting for neptune controller to be ready..."
+  waitforpod 'astra-connector' 'control-plane=controller-manager'
 
   # if [[ -z ${REGISTRY} ]]; then
   #   IMG="kind-registry:5001/controller:${TAG}" REGISTRY="kind-registry:5001" TAG=${TAG} make deploy
@@ -283,13 +261,14 @@ function deployNeptune() {
 }
 
 function deployOperator() {
-  echo -e "${Green}Deploying Neptune and Connector...${ColorOff}"
-  echo -e "Target Kubernetes onto cluster: ${Green}${CLUSTERNAME}${ColorOff}"
+  echo -e "Deploying Astra Connector Operator on cluster: ${Green}${CLUSTERNAME}${ColorOff}..."
 
-  kubectl apply -f https://github.com/NetApp/astra-connector-operator/releases/latest/download/astraconnector_operator.yaml
-  wait_for_pod 'astra-connector-operator' 'control-plane=controller-manager' 'ready'
+  kubectl apply -f https://github.com/NetApp/astra-connector-operator/releases/latest/download/astraconnector_operator.yaml > /dev/null 2>&1
+  echo -e "${Green}Waiting for Astra Connector Operator to be ready..."
+  waitforpod 'astra-connector-operator' 'control-plane=controller-manager'
 
-  echo -e "${Green}Neptune is ready!!!${ColorOff}"
+  echo -e "${Green}Astra Connector Operator is ready!!!${ColorOff}"
+  echo -e "${Green}You may now deploy an Astra Connector resource.${ColorOff}"
 }
 
 function loginToRepo() {
@@ -510,14 +489,16 @@ function deployMinio() {
   kubectl apply -n ${NAMESPACE} -f /home/addon/minio-lb.yaml
 
   # Wait for minio to be ready
+  echo -e "${Green}Waiting for Minio to be ready...${ColorOff}"
+  showTimer 'minio' &
   while : ; do
     isready=$(kubectl logs -n ${NAMESPACE} minio 2>/dev/null | grep '1 Online, 0 Offline' | head -n1)
     if [[ ! -z $isready ]]; then
       break
     fi
-    echo 'Waiting for minio to be available...'
     sleep 3
   done
+  stopTimer 'minio'
 
   # Now we setup alias named minio and create bucket for test using the default userid and password
   kubectl exec -ti -n ${NAMESPACE} pod/minio \
@@ -659,6 +640,7 @@ setupContext
 if [[ "${CMD}" == "up" ]]; then
   echo ""
   checkInNeptune
+  source /home/bin/utils
 
   echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
   ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --cluster-name "${CLUSTERNAME}" --k8s-release ${K8SRELEASE}
@@ -678,6 +660,7 @@ if [[ "${CMD}" == "up" ]]; then
 elif [[ "${CMD}" == "prepare" ]]; then
   echo ""
   checkInNeptune
+  source /home/bin/utils
 
   echo ""
   echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
@@ -717,7 +700,7 @@ elif [[ "${CMD}" == "cleanall" ]]; then
 
 elif [[ "${CMD}" == "deploy" ]]; then
   checkInNeptune
-  
+  source /home/bin/utils
   deployNeptune
 
 elif [[ "${CMD}" == "refresh" ]]; then
@@ -755,6 +738,7 @@ elif [[ "${CMD}" == "webui" ]]; then
   exposeUI
 
 elif [[ "${CMD}" == "conn" ]]; then
+  source /home/bin/utils
   deployConnector
 
 elif [[ "${CMD}" == "make" ]]; then

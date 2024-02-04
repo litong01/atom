@@ -311,7 +311,7 @@ fi
 #=================begin cluster modules======================
 function setupLoadBalancer() {
 # Setup metallb using a specific version
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.5/config/manifests/metallb-native.yaml
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.5/config/manifests/metallb-native.yaml > /dev/null 2>&1
 
 # The following scripts are to make sure that the kube configuration for the cluster
 # is not using loopback ip as part of the api server endpoint. Without doing this,
@@ -349,7 +349,8 @@ else
 fi
 
 # Wait for metallb to be ready
-waitForPods metallb-system app=metallb 10
+echo -e "${Green}Waiting for metal loadBalancer to be ready...${ColorOff}"
+waitforpod metallb-system app=metallb
 
 # Now configure the loadbalancer public IP range
 cat <<EOF | kubectl apply -f -
@@ -369,23 +370,6 @@ metadata:
   name: empty
   namespace: metallb-system
 EOF
-}
-
-# utility function to wait for pods to be ready
-function waitForPods() {
-  ns=$1
-  lb=$2
-  waittime=$3
-  # Wait for the pods to be ready in the given namespace with lable
-  while : ; do
-    res=$(kubectl wait --context "kind-${CLUSTERNAME}" -n ${ns} pod \
-      -l ${lb} --for=condition=Ready --timeout=${waittime}s 2>/dev/null ||true)
-    if [[ "${res}" == *"condition met"* ]]; then
-      break
-    fi
-    echo "Waiting for pods in namespace ${ns} with label ${lb} to be ready..."
-    sleep ${waittime}
-  done
 }
 
 # setupkind creates one kind k8s cluster
@@ -948,6 +932,7 @@ if [[ "${CMD}" == "clusters" ]]; then
     exit 0
   fi
   processTopologyContent
+  source /home/bin/utils
 
   cInfo=""
   cInfoLength=0
@@ -960,6 +945,7 @@ if [[ "${CMD}" == "clusters" ]]; then
     setup_kind_registry
   fi
 elif [[ "${CMD}" == "cluster" ]]; then
+  source /home/bin/utils
   # handling removal of just one cluster
   if [[ "$ACTION" == "DEL" ]]; then
     if [[ -z "${CLUSTERNAME}" ]]; then
