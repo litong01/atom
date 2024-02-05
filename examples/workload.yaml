@@ -113,3 +113,41 @@ spec:
         - name: nginxconfig
           configMap:
             name: nginxconfig
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hello-world-not-protected
+  labels:
+    astra.netapp.io/protected: "false"
+spec:
+  completions: 1
+  parallelism: 1
+  backoffLimit: 0
+  template:
+    spec:
+      containers:
+      - name: hello
+        image: busybox
+        command: ["echo", "Hello World"]
+      restartPolicy: Never
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hello-world-protected
+  labels:
+    astra.netapp.io/protected: "true"
+spec:
+  completions: 1
+  parallelism: 1
+  backoffLimit: 0
+  template:
+    spec:
+      containers:
+      - name: hello
+        image: busybox
+        command: ["echo", "Hello World"]
+      restartPolicy: Never
+
