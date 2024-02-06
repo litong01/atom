@@ -356,7 +356,7 @@ function refreshDeployment() {
           docker tag ${imagename} localhost:5001/${imagename}
           docker push localhost:5001/${imagename}
           # Remove the cached image
-          docker exec ${CLUSTERNAME}-control-plane crictl rmi "${anImage}"
+          docker exec ${CLUSTERNAME}-control-plane crictl rmi "${anImage}" > /dev/null 2>&1 || true
       fi
     done
     kubectl rollout restart -n ${NAMESPACE} deployment ${DEPLOYMENT}
