@@ -4,10 +4,10 @@
 function getConnectorImages() {
   echo "Ready to pull some images"
   prefix="netappdownloads.jfrog.io/docker-astra-control-staging/arch30/neptune/"
-  if [[ -f ~/.astra3/neptune-images.list ]]; then
-    filecontent=$(cat ~/.astra3/neptune-images.list)
-    cimages=($(echo $filecontent))
-  else
+  # if [[ -f ~/.astra3/neptune-images.list ]]; then
+  #   filecontent=$(cat ~/.astra3/neptune-images.list)
+  #   cimages=($(echo $filecontent))
+  # else
     cimages=(
       'controller'
       'exechook'
@@ -22,7 +22,7 @@ function getConnectorImages() {
       'kube-rbac-proxy:v0.14.1'
       'trident-autosupport:24.1.1-custom'
     )
-  fi
+  # fi
 
   for cimage in "${cimages[@]}"; do
     echo "Pulling image ${prefix}${cimage}..."
