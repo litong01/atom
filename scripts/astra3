@@ -288,12 +288,12 @@ function doNeptuneImage() {
   echo -e "${Green}Setting up Neptune Manager image...${ColorOff}"
 
   prefix="netappdownloads.jfrog.io/docker-astra-control-staging/arch30/neptune/"
-  if [[ ! -f ${WORKDIR}/neptune-images.list ]]; then
-    cp /home/addon/neptune-images.list ${WORKDIR}/neptune-images.list
-  fi
+  # if [[ ! -f ${WORKDIR}/neptune-images.list ]]; then
+  #   cp /home/addon/neptune-images.list ${WORKDIR}/neptune-images.list
+  # fi
 
   # this image list file should only contain the image name and tag.
-  filecontent=$(cat ${WORKDIR}/neptune-images.list)
+  filecontent=$(cat /home/addon/neptune-images.list)
   allimages=($(echo $filecontent))
 
   loggedIn="false"
