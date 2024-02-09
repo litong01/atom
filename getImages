@@ -1,28 +1,27 @@
 #!/bin/bash
 # If the script fails to pull image from jfrog, most likely that you do not have
 # permission to pull from jfrog, you may contact Jeremy Harrod for access to jfrog
+
 function getConnectorImages() {
-  echo "Ready to pull some images"
-  prefix="netappdownloads.jfrog.io/docker-astra-control-staging/arch30/neptune/"
-  # if [[ -f ~/.astra3/neptune-images.list ]]; then
-  #   filecontent=$(cat ~/.astra3/neptune-images.list)
-  #   cimages=($(echo $filecontent))
-  # else
-    cimages=(
-      'controller'
-      'exechook'
-      'resourcebackup'
-      'resourcedelete'
-      'resourcerestore'
-      'resourcesummaryupload'
-      'restic'
-      'astra-connector'
-      'nats:2.8.4-alpine3.15'
-      'natssync-client:2.1.202309262120'
-      'kube-rbac-proxy:v0.14.1'
-      'trident-autosupport:24.1.1-custom'
-    )
-  # fi
+  echo "Ready to pull astra connector images..."
+  prefix=$1
+  if [[ -z $prefix ]]; then
+    prefix="netappdownloads.jfrog.io/docker-astra-control-staging/arch30/neptune/"
+  fi
+  cimages=(
+    'controller'
+    'exechook'
+    'resourcebackup'
+    'resourcedelete'
+    'resourcerestore'
+    'resourcesummaryupload'
+    'restic'
+    'astra-connector'
+    'nats:2.8.4-alpine3.15'
+    'natssync-client:2.1.202309262120'
+    'kube-rbac-proxy:v0.14.1'
+    'trident-autosupport:24.1.1-custom'
+  )
 
   for cimage in "${cimages[@]}"; do
     echo "Pulling image ${prefix}${cimage}..."
@@ -32,4 +31,4 @@ function getConnectorImages() {
   done
 }
 
-getConnectorImages
+getConnectorImages $@
