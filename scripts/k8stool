@@ -778,6 +778,7 @@ function getNextPort() {
 
 function getLBServices() {
   CLUSTERNAME=$1 #cluster name
+  echo -e "${Green}Retrieving load balancer services for cluster ${CLUSTERNAME}...${ColorOff}"
   lbservices=$(kubectl get services -A -o \
     jsonpath='{range .items[?(@.spec.type == "LoadBalancer")]}{.metadata.name}{","}{.status.loadBalancer.ingress[0].ip}{","}{.spec.ports[*].port}{"\n"}{end}')
   # get lbservice list
@@ -789,23 +790,21 @@ function getLBServices() {
     IFS=$',' sv=($(echo "${lbs}"))
     IFS=$' ' svports=($(echo "${sv[2]}"))
     for port in "${svports[@]}"; do
-      getNextPort "${STARTPORT}"
-      PORTMAP="${PORTMAP} -p ${NEXTPORT}:${NEXTPORT}"
+      PORTMAP="${PORTMAP} -p ${port}:${port}"
       # Generate the config content
       CONFIG=$(cat << EOF
 ${CONFIG}
   server {
-    listen ${NEXTPORT};
+    listen ${port};
     proxy_pass ${sv[1]}:${port};
   }
 EOF
 )
       MSG=$(cat << EOF
 ${MSG}
-${sv[0]}@${CLUSTERNAME} ${sv[1]}:${port} ==> http://localhost:${NEXTPORT}
+${sv[0]}@${CLUSTERNAME} ${sv[1]}:${port} ==> http://localhost:${port}
 EOF
 )
-       STARTPORT=$((NEXTPORT+1))
     done
   done
 }
@@ -913,7 +912,7 @@ ${CONFIG}
 }
 EOF
 
-  configpath=$(docker inspect astra | jq -r --arg WORKDIR "${WORKDIR}" '.[0].Mounts | .[] | select(.Destination == $WORKDIR).Source')
+  configpath=$(docker inspect astra3 | jq -r --arg WORKDIR "${WORKDIR}" '.[0].Mounts | .[] | select(.Destination == $WORKDIR).Source')
   PORTMAP=$(echo ${PORTMAP})
   # Now start up the proxy container
   docker run --name kubeproxy-${CLUSTERNAME} -d --network=kind ${PORTMAP} \
