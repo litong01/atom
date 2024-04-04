@@ -42,6 +42,7 @@ function printHelp() {
   echo "     bash     - run bash interactively"
   echo "     log      - display logs"
   echo "     k9s      - run k9s tool"
+  echo "     k        - run kubectl command"
   echo ""
   echo -e "Parameters for ${Green}up, prepare${ColorOff} command:"
   echo "     -r|--k8srelease     - a k8s release to be used to create k8s cluster"
@@ -64,7 +65,7 @@ function printHelp() {
 function validateCMD() {
   cmd=$1
   allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "webui" "conn" "log" "k9s" \
-    "update" "k8stool" "bash" "addon" "hostpath" "test" "rmtest" "vtest" "rstest" "testhostpath")
+    "update" "k8stool" "bash" "addon" "hostpath" "test" "rmtest" "vtest" "rstest" "testhostpath" "trident" "k")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -94,7 +95,7 @@ REST="$@"
 validateCMD "${CMD}"
 
 # We will only handle command parameters if command was not make and not k8stool
-if [[ "${CMD}" == "make" || "${CMD}" == "k8stool" || "${CMD}" == "bash" ]]; then
+if [[ "${CMD}" == "make" || "${CMD}" == "k8stool" || "${CMD}" == "bash" || "${CMD}" == "k" ]]; then
   echo ""
 else
   # Handling parameters
@@ -134,6 +135,34 @@ fi
 function setupContext() {
   # Always use the ${CLUSTERNAME}.yaml as the kubeconfig file
   export KUBECONFIG=${HOME}/.kube/${CLUSTERNAME}.yaml
+}
+
+function setupTrident() {
+  set +e
+  tridentns="trident"
+  kubectl get namespace ${tridentns} >/dev/null 2>&1
+  # namespace does not exist, create it
+  if [[ $? == 1 ]]; then
+    echo "Creating namespace ${tridentns}"
+    set -e
+    kubectl create ns ${tridentns}
+  else
+    echo "Namespace ${tridentns} already exists"
+  fi
+  set -e
+
+  echo -e "${Green}Deploying trident onto kubernetes cluster...${ColorOff}"
+  kubectl apply -f /home/trident/tridentorchestrator.yaml -n ${tridentns}
+  echo "Trident CRDs are deployed"
+  ARCH=$(uname -m) && if [[ "${ARCH}" == "aarch64" ]]; then ARCH=arm64; fi
+  if [[ "${ARCH}" == "x86_64" ]]; then ARCH="amd64"; fi
+
+  # Now make sure that the node using right architecture node label
+  ARCH=$ARCH yq e '.spec.controllerPluginNodeSelector."kubernetes.io/arch" = env(ARCH)' -i /home/trident/tridentorchestrator_cr.yaml
+  ARCH=$ARCH yq e '.spec.nodePluginNodeSelector."kubernetes.io/arch" = env(ARCH)' -i /home/trident/tridentorchestrator_cr.yaml
+
+  # Deploy the orchestrator
+  kubectl apply -f /home/trident/tridentorchestrator_cr.yaml -n ${tridentns}
 }
 
 function installStorageCRDs() {
@@ -769,6 +798,10 @@ elif [[ "${CMD}" == "make" ]]; then
   # We are ready to execute,
   make ${REST} REGISTRY=${REGISTRY} PLATFORMS=${PLATFORMS} REPOSITORY=${REPOSITORY} TAG=${TAG}
 
+elif [[ "${CMD}" == "k" ]]; then
+
+  kubectl ${REST}
+
 elif [[ "${CMD}" == "log" ]]; then
   if [[ -z $DEPLOYMENT ]]; then
     DEPLOYMENT="neptune-controller-manager"
@@ -779,6 +812,10 @@ elif [[ "${CMD}" == "log" ]]; then
 elif [[ "${CMD}" == "k9s" ]]; then
 
   k9s
+
+elif [[ "${CMD}" == "trident" ]]; then
+
+  setupTrident
 
 elif [[ "${CMD}" == "bash" ]]; then
 
