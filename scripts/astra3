@@ -32,7 +32,7 @@ function printHelp() {
   echo "     cleanall - Remove all astra including k8s cluster, proxy, local registry"
   echo "     update   - update this tool"
   echo "     refresh  - restart a deployment and its image"
-  echo "     webui    - expose minio and vault console"
+  echo "     proxy    - make load balancer accessible locally"
   echo "     test     - run neptune tests"
   echo "     vtest    - verify test results"
   echo "     rmtest   - remove neptune tests"
@@ -64,7 +64,7 @@ function printHelp() {
 
 function validateCMD() {
   cmd=$1
-  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "webui" "conn" "log" "k9s" \
+  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "proxy" "conn" "log" "k9s" \
     "update" "k8stool" "bash" "addon" "hostpath" "test" "rmtest" "vtest" "rstest" "testhostpath" "trident" "k")
   ccmd=""
   for item in "${allCommands[@]}"; do
@@ -579,7 +579,7 @@ function doAddon() {
   kubectl -n ${NAMESPACE} apply -f /home/addon/pathecho-tls.yaml
 }
 
-function exposeUI() {
+function proxy() {
   ${SCRIPTDIR}/k8stool proxy --cluster-name ${CLUSTERNAME}
 }
 
@@ -798,8 +798,8 @@ elif [[ "${CMD}" == "rmtest" ]]; then
 elif [[ "${CMD}" == "rstest" ]]; then
   restoreTest test1 astra-connector test2
 
-elif [[ "${CMD}" == "webui" ]]; then
-  exposeUI
+elif [[ "${CMD}" == "proxy" ]]; then
+  proxy
 
 elif [[ "${CMD}" == "conn" ]]; then
   source /home/bin/utils
