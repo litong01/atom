@@ -223,6 +223,35 @@ function checkEnvironmentVariables() {
   echo ""
 }
 
+generate_uuid() {
+  local input_string="$1"
+  local namespace_uuid="1b671a64-40d5-491e-99b0-da01ff1f3341" # Namespace UUID
+  local hash
+
+  # Generate SHA-1 hash of the namespace UUID concatenated with the input string
+  hash=$(echo -n "$namespace_uuid$input_string" | openssl dgst -sha1)
+
+  # Extract the hash value without the '(stdin)= ' prefix
+  hash="${hash#*= }"
+
+  # Format the hash as a UUID v5
+  local time_low="${hash:0:8}"
+  local time_mid="${hash:8:4}"
+  local time_high_and_version="${hash:12:4}"
+  local clock_seq_high_and_res_clock_seq_low="${hash:16:4}"
+  local node="${hash:20:12}"
+
+  # Set the version to 5 (SHA-1 Name-Based UUID)
+  time_high_and_version=$(printf '%04x' "$((0x$time_high_and_version & 0x0fff | 0x5000))")
+
+  # Set the variant to DCE 1.1, ISO/IEC 11578:1996
+  clock_seq_high_and_res_clock_seq_low=$(printf '%04x' "$((0x$clock_seq_high_and_res_clock_seq_low & 0x3fff | 0x8000))")
+
+  # Output the formatted UUID
+  echo "$time_low-$time_mid-$time_high_and_version-$clock_seq_high_and_res_clock_seq_low-$node"
+}
+
+
 function deployConnector() {
   # Only deploy connector when apitoken is provided.
   if [[ ! -z "${APITOKEN}" ]]; then
@@ -255,6 +284,12 @@ function deployConnector() {
       if [[ ! -z "${CLUSTERNAME}" ]]; then
         CLUSTERNAME="${CLUSTERNAME}" yq e '.spec.astra.clusterName = env(CLUSTERNAME)' -i /home/addon/connector.yaml
       fi
+
+      # Set up cluster id and cloud id for astra connector
+      clusterid=$(generate_uuid "${CLUSTERNAME}")
+      CLUSTERID="${clusterid}" yq e '.spec.astra.clusterId = env(CLUSTERID)' -i /home/addon/connector.yaml
+      CLOUDID=$(generate_uuid "${CLUSTERNAME}-cloud")
+      CLOUDID="${clusterid}" yq e '.spec.astra.cloudId = env(CLOUDID)' -i /home/addon/connector.yaml
 
       # Create the connector CR
       kubectl -n astra-connector apply -f /home/addon/connector.yaml
