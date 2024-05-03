@@ -126,6 +126,10 @@ else
         BRIDGEURL="$2";shift 2;;
       --aliasip)
         ALIASIP="$2";shift 2;;
+      -c|--cloudid)
+        CLOUDID="$2";shift 2;;
+      -i|--clusterid)
+        CLUSTERID="$2";shift 2;;
       *) # unknown option
         echo "parameter $1 is not supported"; exit 1;;
     esac
@@ -286,10 +290,11 @@ function deployConnector() {
       fi
 
       # Set up cluster id and cloud id for astra connector
-      clusterid=$(generate_uuid "${CLUSTERNAME}")
-      CLUSTERID="${clusterid}" yq e '.spec.astra.clusterId = env(CLUSTERID)' -i /home/addon/connector.yaml
-      CLOUDID=$(generate_uuid "${CLUSTERNAME}-cloud")
-      CLOUDID="${clusterid}" yq e '.spec.astra.cloudId = env(CLOUDID)' -i /home/addon/connector.yaml
+      # clusterid=$(generate_uuid "${CLUSTERNAME}")
+      # CLUSTERID="${clusterid}" yq e '.spec.astra.clusterId = env(CLUSTERID)' -i /home/addon/connector.yaml
+
+      CLOUDID="${CLOUDID}" yq e '.spec.astra.cloudId = env(CLOUDID)' -i /home/addon/connector.yaml
+      CLUSTERID="${CLUSTERID}" yq e '.spec.astra.clusterId = env(CLUSTERID)' -i /home/addon/connector.yaml
 
       # Create the connector CR
       kubectl -n astra-connector apply -f /home/addon/connector.yaml
