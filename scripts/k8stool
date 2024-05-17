@@ -309,6 +309,20 @@ if [[ -p /dev/stdin ]]; then
 fi
 
 #=================begin cluster modules======================
+
+function createInterKubeconfig() {
+  echo -e "${Green}Creating inter cluster kubeconfig for cluster ${CLUSTERNAME}...${ColorOff}"
+  serverip=$(docker inspect -f '{{ .NetworkSettings.Networks.kind.IPAddress }}' "${CLUSTERNAME}-control-plane" 2>/dev/null)
+  if [[ -z "${serverip}" ]]; then
+    echo -e "${Red}Cannot get the server ip address for cluster ${CLUSTERNAME}${ColorOff}"
+    return
+  fi
+
+  cp $KUBECONFIG /tmp/${CLUSTERNAME}-v2.yaml
+  kubectl config set-cluster kind-${CLUSTERNAME} --server=https://${serverip}:6443 --kubeconfig=/tmp/${CLUSTERNAME}-v2.yaml
+  cp /tmp/${CLUSTERNAME}-v2.yaml ~/.kube/${CLUSTERNAME}-v2.yaml
+}
+
 function setupLoadBalancer() {
 # Setup metallb using a specific version
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.5/config/manifests/metallb-native.yaml > /dev/null 2>&1
@@ -440,6 +454,9 @@ EOF
   if [[ "${LOADBALANCER}" == "true" ]]; then
     setupLoadBalancer
   fi
+
+  createInterKubeconfig
+
   echo "Kubernetes cluster ${CLUSTERNAME} was created successfully!"
 }
 #=================end cluster modules========================
