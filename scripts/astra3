@@ -179,7 +179,7 @@ function installStorageCRDs() {
   # We will also install trident crds to avoid an connector issue which assumes whatever
   # resource it looks for already have CRDs installed which is wrong. this can be removed
   # once connector fixes the problems.
-  # kubectl apply -f /home/addon/tridentcrds.yaml
+  kubectl apply -f /home/addon/tridentcrds.yaml
 }
 
 function doADTUpdate() {
