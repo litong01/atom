@@ -5,6 +5,7 @@ resourcedelete
 resourcerestore
 resourcesummaryupload
 restic
+kopia
 astra-connector
 kube-rbac-proxy:v0.14.1
 trident-autosupport:24.1.1-custom
