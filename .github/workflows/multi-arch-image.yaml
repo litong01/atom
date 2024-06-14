@@ -11,12 +11,12 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: astra3dt
+  IMAGE_NAME: atom
   IMAGE_TAG: v0.1.0
   DH_REGISTRY: docker.io
   DH_NAMESPACE: tli551
   GH_REGISTRY: ghcr.io
-  GH_NAMESPACE: litong01/astra
+  GH_NAMESPACE: litong01/atom
 
 jobs:
   build:
