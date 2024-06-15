@@ -14,9 +14,9 @@ Download [atom](./atom) file, name it `atom` and `chmod +x atom`. It is best to 
 Download [atom.cmd](./atom.cmd) file, name it `atom.cmd`. It is best to move `atom.cmd` to a directory in your %PATH% so that you do not have to refer its location when running it.
 
 ## One-step Atom deployment and cleanup
-All the command should run from your neptune root directory
+All the command should run from your atom root directory
 
-1. ### Create k8s cluster and set up neptune controller
+1. ### Create k8s cluster and set up atom controller
 ```
    atom up
 ```
