@@ -50,7 +50,9 @@ jobs:
         with:
           username: ${{ secrets.DH_USER }}
           password: ${{ secrets.DH_KEY }}
-          repository: ${{env.GH_NAMESPACE }}
+          repository: ${{env.DH_NAMESPACE }}/${{env.IMAGE_NAME}}
+          short-description: |
+            This is a multi-arch image for Atom.
 
       - name: login to Github package
         uses: docker/login-action@v3
