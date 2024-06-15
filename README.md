@@ -1,5 +1,5 @@
 # Atom developer tool
-Atom developer tool(ADT) is a tool to build, setup Astra Neptune
+Atom developer tool(ADT) is a tool to build, setup Atom
 
 ## One time environment setup
 
@@ -13,7 +13,7 @@ Download [atom](./atom) file, name it `atom` and `chmod +x atom`. It is best to 
 ### For Windows system
 Download [atom.cmd](./atom.cmd) file, name it `atom.cmd`. It is best to move `atom.cmd` to a directory in your %PATH% so that you do not have to refer its location when running it.
 
-## One-step Neptune deployment and cleanup
+## One-step Atom deployment and cleanup
 All the command should run from your neptune root directory
 
 1. ### Create k8s cluster and set up neptune controller
@@ -25,31 +25,31 @@ All the command should run from your neptune root directory
    atom cleanall
 ```
 
-## Neptune development
-1. ### Create k8s cluster and image repository for Neptune development
+## Atom development
+1. ### Create k8s cluster and image repository for Atom development
 ```
    atom prepare
 ```
-2. ### Push local built Astra neptune controller image to local registry
+2. ### Push local built Atom controller image to local registry
 ```
    atom image
 ```
-3. ### Deploy Neptune CRDs and control
+3. ### Deploy Atom CRDs and control
 ```
    atom deploy
 ```
-4. ### Build Neptune
+4. ### Build Atom
 ```
    atom make <target>
 ```
-   Replace <target> with any target that Neptune Makefile defines
+   Replace <target> with any target that Atom Makefile defines
 
-5. ### Remove Neptune from k8s cluster
+5. ### Remove Atom from k8s cluster
 ```
   atom down
 ```
 
-6. ### Bounce a deployment after you produced a newer Neptune image
+6. ### Bounce a deployment after you produced a newer Atom image
 ```
   astra refresh -d controller-manager
 ```
@@ -59,7 +59,7 @@ All the command should run from your neptune root directory
    atom update
 ```
 
-8. ### Get a bash session with Neptune
+8. ### Get a bash session with Atom
 ```
    atom bash
 ```
