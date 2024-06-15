@@ -14,8 +14,8 @@ DEPLOYMENT="${DEPLOYMENT:-neptune-controller-manager}"
 TAG=${TAG:-latest}
 SECRETNAME=${SECRETNAME:-regcred}
 APITOKEN=${APITOKEN:-""}
-CLUSTERNAME=${CLUSTERNAME:-"neptune"}
-CONNECTORCLUSTERNAME=${CLUSTERNAME:-"neptune"}
+CLUSTERNAME=${CLUSTERNAME:-"atom"}
+CONNECTORCLUSTERNAME=${CLUSTERNAME:-"atom"}
 K8SRELEASE=${K8SRELEASE:-"1.29.0"}
 
 function printHelp() {
@@ -67,7 +67,7 @@ function printHelp() {
 
 function validateCMD() {
   cmd=$1
-  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "proxy" "conn" "log" "k9s" \
+  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "proxy" "log" "k9s" \
     "update" "k8stool" "bash" "addon" "hostpath" "test" "rmtest" "vtest" "rstest" "testhostpath" "trident" "k")
   ccmd=""
   for item in "${allCommands[@]}"; do
@@ -188,7 +188,7 @@ function installStorageCRDs() {
 }
 
 function doADTUpdate() {
-  adtimage=$(docker inspect astra3 --format "{{.Config.Image}}" 2>/dev/null || true)
+  adtimage=$(docker inspect atom --format "{{.Config.Image}}" 2>/dev/null || true)
   if [[ ! -z "${adtimage}" ]]; then
     if [[ ! -z $REGISTRY_USERID ]] && [[ ! -z $REGISTRY_TOKEN ]]; then
       if [[ -z $REGISTRY ]]; then
@@ -261,53 +261,6 @@ generate_uuid() {
 }
 
 
-function deployConnector() {
-  # Only deploy connector when apitoken is provided.
-  if [[ ! -z "${APITOKEN}" ]]; then
-    #1. Create secret in astra-connector namespace
-    exists=$(kubectl get -n ${NAMESPACE} secrets astra-token --no-headers 2>/dev/null || true)
-    if [[ ! -z ${exists} ]]; then
-      kubectl delete -n ${NAMESPACE} secrets astra-token >/dev/null 2>&1 || null
-    fi
-    kubectl create secret generic astra-token \
-      --from-literal=apiToken=${APITOKEN} -n ${NAMESPACE} || true
-
-    #2. Now create connector CR.
-    if [[ ! -z "${ACCOUNTID}" ]] && [[ ! -z "${ALIASIP}" ]]; then
-      ACCOUNTID=$ACCOUNTID yq e '.spec.astra.accountId = env(ACCOUNTID)' -i /home/addon/connector.yaml
-      ALIASIP=$ALIASIP yq e '.spec.natsSyncClient.hostAliasIP = env(ALIASIP)' -i /home/addon/connector.yaml
-
-      if [[ -z "${BRIDGEURL}" ]]; then
-        BRIDGEURL="https://integration.astra.netapp.io"
-      fi
-      BRIDGEURL=$BRIDGEURL yq e '.spec.natsSyncClient.cloudBridgeURL = env(BRIDGEURL)' -i /home/addon/connector.yaml
-
-      if [[ ! -z "${REGISTRY}" ]]; then
-        REGISTRY="${REGISTRY}" yq e '.spec.imageRegistry.name = env(REGISTRY)' -i /home/addon/connector.yaml
-      else
-        REGISTRY="kind-registry:5001" yq e '.spec.imageRegistry.name = env(REGISTRY)' -i /home/addon/connector.yaml
-      fi
-      if [[ ! -z "${SECRETNAME}" ]] && [[ ! -z "${REGISTRY}" ]]; then
-        SECRETNAME="${SECRETNAME}" yq e '.spec.imageRegistry.secret = env(SECRETNAME)' -i /home/addon/connector.yaml
-      fi
-      if [[ ! -z "${CONNECTORCLUSTERNAME}" ]]; then
-        CONNECTORCLUSTERNAME="${CONNECTORCLUSTERNAME}" yq e '.spec.astra.clusterName = env(CONNECTORCLUSTERNAME)' -i /home/addon/connector.yaml
-        CONNECTORCLUSTERNAME="${CONNECTORCLUSTERNAME}-connector" yq e '.metadata.name = env(CONNECTORCLUSTERNAME)' -i /home/addon/connector.yaml
-      fi
-
-      # Set up cluster id and cloud id for astra connector
-      # clusterid=$(generate_uuid "${CLUSTERNAME}")
-      # CLUSTERID="${clusterid}" yq e '.spec.astra.clusterId = env(CLUSTERID)' -i /home/addon/connector.yaml
-
-      CLOUDID="${CLOUDID}" yq e '.spec.astra.cloudId = env(CLOUDID)' -i /home/addon/connector.yaml
-      CLUSTERID="${CLUSTERID}" yq e '.spec.astra.clusterId = env(CLUSTERID)' -i /home/addon/connector.yaml
-
-      # Create the connector CR
-      kubectl -n astra-connector apply -f /home/addon/connector.yaml
-    fi
-  fi
-}
-
 function downOperator() {
   echo -e "${Green}Uninstalling Neptune and Connector...${ColorOff}"
   echo -e "Target Kubernetes onto cluster: ${Green}${CLUSTERNAME}${ColorOff}"
@@ -348,8 +301,6 @@ function deployOperator() {
 
 function loginToRepo() {
   reg=$1
-  # the login file should be one line with id:token, expect the
-  # file login be in /tmp/astra3/ directory for this to work
   if [[ -f ${WORKDIR}/login ]]; then
     keyPair=$(cat ${WORKDIR}/login)
     id=$(echo $keyPair | cut -d ":" -f 1)
@@ -542,15 +493,15 @@ function deployVault() {
     sleep 3
   done
 
-  kubectl exec -ti -n vault statefulset/vault -- vault operator init --format json > /home/work/astra3/vault.key.json
-  allkeys=($(cat /home/work/astra3/vault.key.json | jq -r '.unseal_keys_b64 | join(" ")'))
+  kubectl exec -ti -n vault statefulset/vault -- vault operator init --format json > /home/work/atom/vault.key.json
+  allkeys=($(cat /home/work/atom/vault.key.json | jq -r '.unseal_keys_b64 | join(" ")'))
   for key in ${allkeys[@]}; do
     kubectl exec -ti -n vault statefulset/vault -- vault operator unseal ${key} >/dev/null 2>&1
   done
   kubectl apply -n vault -f /home/addon/vault-lb.yaml
 
   # Get root token
-  # roottoken=$(cat /home/work/astra3/vault.key.json | jq -r '.root_token')
+  # roottoken=$(cat /home/work/atom/vault.key.json | jq -r '.root_token')
   # Here we use the root token login first, then enable username password login,then create a admin user with root access
   # kubectl exec -n vault statefulset/vault -- \
   #  /bin/sh -c "echo ${roottoken} | vault login -; vault auth enable userpass; vault write auth/userpass/users/admin policies=root password=admin;"
@@ -714,7 +665,7 @@ setupContext
 # cluster processes
 if [[ "${CMD}" == "up" ]]; then
   echo ""
-  checkInNeptune
+  # checkInNeptune
   source /home/bin/utils
 
   echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
@@ -722,19 +673,19 @@ if [[ "${CMD}" == "up" ]]; then
   
   installStorageCRDs
 
-  ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --workdir "${WORKDIR}" --cluster-name "${CLUSTERNAME}"
+  # ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --workdir "${WORKDIR}" --cluster-name "${CLUSTERNAME}"
   
-  doNeptuneImage
+  # doNeptuneImage
 
   # Setup hostpath csi driver without test
-  doAddon
+  # doAddon
   setupHostpath
 
-  deployOperator
+  # deployOperator
 
 elif [[ "${CMD}" == "prepare" ]]; then
   echo ""
-  checkInNeptune
+  # checkInNeptune
   source /home/bin/utils
 
   echo ""
@@ -811,10 +762,6 @@ elif [[ "${CMD}" == "rstest" ]]; then
 
 elif [[ "${CMD}" == "proxy" ]]; then
   proxy
-
-elif [[ "${CMD}" == "conn" ]]; then
-  source /home/bin/utils
-  deployConnector
 
 elif [[ "${CMD}" == "make" ]]; then
   checkInNeptune

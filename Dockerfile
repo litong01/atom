@@ -1,7 +1,7 @@
 FROM email4tong/hammer3:v0.2.0
 LABEL maintainer="litong01"
 
-COPY ./scripts/astra3 /home/bin
+COPY ./scripts/atom /home/bin
 COPY ./scripts/k8stool /home/bin
 COPY ./scripts/verify /home/bin
 COPY ./scripts/utils /home/bin
@@ -10,8 +10,8 @@ COPY ./jqlib /home/.jq
 COPY ./trident /home/trident
 COPY ./examples /home/examples
 COPY ./hostpath /home/hostpath
-COPY ./astra3 /home/startscript/astra3
-COPY ./astra3.cmd /home/startscript/astra3.cmd
+COPY ./atom /home/startscript/atom
+COPY ./atom.cmd /home/startscript/atom.cmd
 
 RUN apk add curl bash-completion
 
@@ -19,8 +19,8 @@ RUN mkdir -p /home/neptune
 ENV PATH /home/bin:$PATH
 ENV LOCALBIN=/home/bin
 ENV HOME=/home
-ENV GOCACHE=/home/work/astra3/gocache
-ENV GOPATH=/home/work/astra3/go
+ENV GOCACHE=/home/work/atom/gocache
+ENV GOPATH=/home/work/atom/go
 ENV REGISTRY=
 ENV REGISTRY_USERID=
 ENV REGISTRY_TOKEN=
@@ -30,5 +30,5 @@ ENV WORKDIR=/home/.kube
 #     echo "astra ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/astra && \
 #     chmod 0440 /etc/sudoers.d/astra
 
-WORKDIR /home/neptune
-CMD /home/bin/astra3
+WORKDIR /home/atom
+CMD /home/bin/atom

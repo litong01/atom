@@ -6,12 +6,12 @@
 #    TAG              - the tag be used, default to latest
 #    PLATFORMS        - a list of image architectures to be built
 # All these variables are used when build and push images
-docker run -it --rm --name astra3 --network host \
+docker run -it --rm --name atom --network host \
    -e "REGISTRY=${REGISTRY}" \
    -e "REGISTRY_USERID=${REGISTRY_USERID}" \
    -e "REGISTRY_TOKEN=${REGISTRY_TOKEN}" \
    -e "TAG=${TAG}" \
    -e "PLATFORMS=${PLATFORMS}" \
    -v /var/run/docker.sock:/var/run/docker.sock \
-   -v $(pwd):/home/neptune -v ${HOME}/.astra3:/home/.kube \
-   tli551/astra3dt:v0.1.0 time astra3 $@
+   -v $(pwd):/home/neptune -v ${HOME}/.atom:/home/.kube \
+   tli551/atom:v0.1.0 time atom $@
