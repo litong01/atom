@@ -13,5 +13,5 @@ docker run -it --rm --name atom --network host ^
    -e "TAG=%TAG%" ^
    -e "PLATFORMS=%PLATFORMS%" ^
    -v /var/run/docker.sock:/var/run/docker.sock ^
-   -v %CD%:/home/neptune -v %USERPROFILE%/.atom:/home/.kube ^
+   -v %CD%:/home/atom -v %USERPROFILE%/.atom:/home/.kube ^
    tli551/atom:v0.1.0 time atom %*
