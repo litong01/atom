@@ -1,11 +1,11 @@
-# Astra developer tool
+# Atom developer tool
 Atom developer tool(ADT) is a tool to build, setup Astra Neptune
 
 ## One time environment setup
 
-   * Pull Astra [neptune](https://github.com/NetApp-Polaris/neptune) source code if you have not.
+   * Pull Atom project source code [atom](https://bitbucket.ngage.netapp.com/projects/QUARK-BB/repos/volume-controller) source code if you have not.
 
-## Get Astra developer tool
+## Get Atom developer tool
 
 ### For OS X and Linux system
 Download [atom](./atom) file, name it `atom` and `chmod +x atom`. It is best to move `atom` to a directory in your $PATH so that you do not have to refer its location when running it.
