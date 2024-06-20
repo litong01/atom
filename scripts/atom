@@ -309,17 +309,18 @@ function loginToRepo() {
   fi
 }
 
-function doNeptuneImage() {
-  # The assumption is that this repo has all necessary neptune needed images
-  echo -e "${Green}Setting up Neptune Manager image...${ColorOff}"
+function doATOMImage() {
+  # The assumption is that this repo has all necessary atom needed images
+  echo -e "${Green}Setting up ATOM images...${ColorOff}"
 
-  prefix="netappdownloads.jfrog.io/docker-astra-control-staging/arch30/neptune/"
-  # if [[ ! -f ${WORKDIR}/neptune-images.list ]]; then
-  #   cp /home/addon/neptune-images.list ${WORKDIR}/neptune-images.list
-  # fi
+  imageTag=$(git rev-parse --short HEAD)
+  if [[ -z ${imageTag} ]]; then
+    echo -e "${Red}Could not get the image tag${ColorOff}"
+    return
+  fi
+  dRegistry="docker.repo.eng.netapp.com"
 
-  # this image list file should only contain the image name and tag.
-  filecontent=$(cat /home/addon/neptune-images.list)
+  filecontent=$(cat /home/addon/atom-images.list)
   allimages=($(echo $filecontent))
 
   loggedIn="false"
@@ -335,25 +336,15 @@ function doNeptuneImage() {
     #handle the tag
     tag=$(echo $img | cut -d ":" -f 2)
     if [[ -z ${tag} ]] || [[ "${tag}" == "${fullname}" ]]; then
-      tag=${TAG:-latest}
+      tag=${imageTag}
     fi
+    echo -e "${Green}Processing image ${fullname}:${tag}${ColorOff}"
     # check if the image is already available locally
-    localImg=$(docker image ls ${name}:${tag} --quiet)
+    localImg=$(docker image ls localhost:5001/${fullname}:${tag} --quiet)
     if [[ -z "${localImg}" ]]; then
-      # Since the local image does not exist, we will try to retrieve it from jfrog
-      if [[ "${loggedIn}" == "false" ]]; then
-        loginToRepo $prefix
-        loggedIn="true"
-      fi
-      echo -e "${Red}${name}:${tag} local image does not exist, try to pull from ${prefix}${ColorOff}"
-      docker pull ${prefix}${name}:${tag} 
-      docker tag ${prefix}${name}:${tag} ${name}:${tag}
-      docker tag ${prefix}${name}:${tag} localhost:5001/${name}:${tag}
-    else
-      # local image exists, we tag them to the localhost one, then push
-      docker tag ${name}:${tag} localhost:5001/${name}:${tag}
+      docker tag ${dRegistry}/${fullname}:${tag} localhost:5001/${fullname}:${tag}
     fi
-    docker push localhost:5001/${name}:${tag}
+    docker push localhost:5001/${fullname}:${tag}
   done
 }
 
@@ -675,7 +666,7 @@ if [[ "${CMD}" == "up" ]]; then
 
   # ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --workdir "${WORKDIR}" --cluster-name "${CLUSTERNAME}"
   
-  # doNeptuneImage
+  # doATOMImage
 
   # Setup hostpath csi driver without test
   # doAddon
@@ -734,7 +725,7 @@ elif [[ "${CMD}" == "refresh" ]]; then
   refreshDeployment
 
 elif [[ "${CMD}" == "image" ]]; then
-  doNeptuneImage
+  doATOMImage
 
 elif [[ "${CMD}" == "update" ]]; then
   doADTUpdate
