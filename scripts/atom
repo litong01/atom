@@ -296,6 +296,14 @@ function buildnvcclientcli() {
 }
 
 
+function createCerts() {
+
+  helm upgrade --install cert-gen	--namespace atom-quark \
+		--set image.registry=${REGISTRY} \
+		--set image.digest="" helm/charts/cert-gen
+
+}
+
 function deployAtom() {
   echo -e "${Green}Deploying Atom operator...${ColorOff}"
   TAG=$(git rev-parse --short HEAD)
@@ -324,6 +332,8 @@ function deployAtom() {
 		--override containerParameters.enableBucket=true \
 		--override gcov.enabled=false \
 		--override gcov.images.initContainer.registry=${REGISTRY}
+
+  createCerts
 
   # kubectl -n astra-connector apply -f /home/addon/neptune.yaml
   # echo -e "${Green}Waiting for neptune controller to be ready..."
@@ -359,6 +369,25 @@ function doATOMImageBuild() {
     build-nhc build-nm build-quarkop build-nsc build-snc)
 
 } 
+
+function extraImage() {
+  # This is to build the extra images
+  imgFullname="certs-gen:v0.1.78"
+  remoteImage="us.gcr.io/netapp-hcl/${imgFullname}"
+  localImage="localhost:5001/${imgFullname}"
+  echo -e "${Green}Processing image ${imgFullname}${ColorOff}"
+  img=$(docker image ls ${localImage} --quiet)
+  if [[ -z ${img} ]]; then
+    img=$(docker image ls ${remoteImage} --quiet)
+    if [[ -z ${img} ]]; then
+      echo -e "${Green}Image ${remoteImage} not exists, pull that image first${ColorOff}"
+      exit 1
+    else
+      docker tag ${remoteImage} ${localImage}
+    fi
+  fi
+  docker push "${localImage}"
+}
 
 function doATOMImage() {
   # The assumption is that this repo has all necessary atom needed images
@@ -397,6 +426,7 @@ function doATOMImage() {
     fi
     docker push ${localrepo}/${fullname}:${tag}
   done
+  extraImage
 }
 
 function refreshDeployment() {
