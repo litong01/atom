@@ -292,9 +292,7 @@ function buildnvcclientcli() {
   export flags="-X quark.netapp.io/volume-controller/cmd/nvcclientcli/cmd.Version=${TAG} -extldflags -static"
   thecmd="go build -ldflags='${flags}' -o bin/anvcclientcli cmd/nvcclientcli/*.go"
   sh -c "${thecmd}"
-
 }
-
 
 function createCerts() {
 
@@ -335,9 +333,64 @@ function deployAtom() {
 
   createCerts
 
-  # kubectl -n astra-connector apply -f /home/addon/neptune.yaml
-  # echo -e "${Green}Waiting for neptune controller to be ready..."
-  # waitforpod 'astra-connector' 'control-plane=controller-manager'
+  bin/anvcclientcli reconcile quarkCR \
+	  -N atom-quark \
+	  -C /home/.kube/${CLUSTERNAME}.yaml \
+	  --override images.quark.tag=${TAG} \
+	  --override images.ontap.tag=${TAG} \
+	  --override quarkVersion=${TAG} \
+	  --cloud gcp \
+	  --override project.tenantProjectNumber=1047111997442 \
+	  --variant internal \
+	  --regional true \
+	  --override debug=true \
+    --override darkContent=false \
+    --override featureFlags.enableGcp1p=true \
+    --override featureFlags.disableDiskPacking=false \
+    --override featureFlags.enableEtcdCostReduction=true \
+    --override featureFlags.enableAzureTp=false \
+    --override featureFlags.enableIntegratedBackup=false \
+    --override featureFlags.enableGranularLiveness=true \
+    --override featureFlags.enableThinProvisioningTuning=false \
+    --override featureFlags.enableServiceMesh=false \
+    --override featureFlags.rightSize=true \
+    --override featureFlags.nodevol=true \
+    --override featureFlags.enableSWIFTNetworking=false \
+    --override devFeatureFlagsString="" \
+    --override project.clusterName=tli-nvc-cluster \
+    --override project.customerProjectNumber=tli \
+    --override project.tenantProjectNumber="1047111997442" \
+    --override controllerConfig.variant="internal" \
+    --override controllerConfig.etcdClusterSize="3" \
+    --override aksProject.azureCustomerSubscriptionId="" \
+    --override aksProject.azureCustomerResourceGroup="tli-nvc" \
+    --override logging.url=localhost \
+    --override logging.output=stdout \
+    --override volume.minPVCSize=1073741824 \
+    --override volume.maxPVCSize=70368744177664 \
+    --override volume.minDataPVCs=1 \
+    --override featureFlags.nodevol=true \
+    --override ilb.subnet=https://www.googleapis.com/compute/v1/projects/quark-dev-234914/regions/us-east1/subnetworks/quark-dev-producer-us-east1-ilb \
+    --override ilb.protocol=BOTH \
+    --override images.imagePullPolicy=Always \
+    --override images.quark.registry=${REGISTRY} \
+    --override images.ontap.registry=${REGISTRY} \
+    --override images.external.registry=${REGISTRY} \
+    --override images.quark.tag=${TAG} \
+    --override images.quark.podrick.tag=${TAG} \
+    --override images.quark.nvc.tag=${TAG} \
+    --override images.quark.nsc.tag=${TAG} \
+    --override images.quark.csc.tag=${TAG} \
+    --override images.quark.nhc.tag=${TAG} \
+    --override images.quark.nodeMonitor.tag=${TAG} \
+    --override images.quark.nodevolWorker.tag=${TAG} \
+    --override images.quark.nodevolController.tag=${TAG} \
+    --override images.quark.svcmeshctrl.tag=${TAG} \
+    --override images.ontap.tag= \
+    --override images.ontap.dmap.tag=${TAG} \
+    --override images.ontap.secd.tag=${TAG} \
+    --override images.ontap.ccpd.tag=${TAG} \
+    --override images.quark.snc.tag=${TAG}
 
 }
 
