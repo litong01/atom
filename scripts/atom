@@ -707,7 +707,7 @@ elif [[ "${CMD}" == "prepare" ]]; then
   # echo -e "${Green}Create traefik certificate${ColorOff}"
   ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --workdir "${WORKDIR}" --cluster-name "${CLUSTERNAME}"
 
-  echo -e "${Green}Ready to deploy Astra Neptune, please run deploy command${ColorOff}"
+  echo -e "${Green}Ready to deploy ATOM, you may run deploy command${ColorOff}"
 
 elif [[ "${CMD}" == "down" ]]; then
   echo ""
