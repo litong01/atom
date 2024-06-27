@@ -8,4 +8,4 @@ nodevol-controller
 netapp-volume-controller
 nodevol-worker
 cloud-snapshot-controller
-cicd/quark/nvc-k8s-codegen
+

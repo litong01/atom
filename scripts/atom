@@ -46,6 +46,7 @@ function printHelp() {
   echo "     k        - run kubectl command"
   echo "     go       - run go command"
   echo "     gobuild  - run build native utility"
+  echo "     build    - run build atom container images"
   echo ""
   echo -e "Parameters for ${Green}up, prepare${ColorOff} command:"
   echo "     -r|--k8srelease     - a k8s release to be used to create k8s cluster"
@@ -70,7 +71,7 @@ function printHelp() {
 function validateCMD() {
   cmd=$1
   allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "proxy" "log" "k9s" "gobuild" \
-    "update" "k8stool" "bash" "addon" "hostpath" "test" "rmtest" "vtest" "rstest" "testhostpath" "trident" "k" "go")
+    "build" "update" "k8stool" "bash" "addon" "hostpath" "test" "rmtest" "vtest" "rstest" "testhostpath" "trident" "k" "go")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -279,6 +280,22 @@ function downOperator() {
 
 }
 
+function buildnvcclientcli() {
+  echo -e "${Green}Building nvcclientcli...${ColorOff}"
+
+  gocache=$(pwd)/.cache.d/arm64
+  mkdir -p ${gocache}
+  export GOPATH=${gocache}/pkg
+  export GOCACHE=${gocache}
+  # make sure that the binary is built with the right version
+  export TAG=$(git rev-parse --short HEAD)
+  export flags="-X quark.netapp.io/volume-controller/cmd/nvcclientcli/cmd.Version=${TAG} -extldflags -static"
+  thecmd="go build -ldflags='${flags}' -o bin/anvcclientcli cmd/nvcclientcli/*.go"
+  sh -c "${thecmd}"
+
+}
+
+
 function deployAtom() {
   echo -e "${Green}Deploying Atom operator...${ColorOff}"
   TAG=$(git rev-parse --short HEAD)
@@ -289,17 +306,24 @@ function deployAtom() {
   kubectl create namespace quark-system --dry-run=client -o yaml \
     | kubectl apply -f - > /dev/null 2>&1
 
-  bin/nvcclientcli reconcile operator \
+  if [[ ! -f bin/anvcclientcli ]]; then
+    buildnvcclientcli
+  fi
+
+  if [[ -z ${REGISTRY} ]]; then
+    REGISTRY="kind-registry:5001"
+  fi
+
+  bin/anvcclientcli reconcile operator \
 		-N atom-quark \
-		-C /home/.kube/${CLUSTERNAME}.yaml \
-		-v tli-${TAG} \
-		--override images.globalRegistry=us.gcr.io/netapp-hcl \
+		-C /home/.kube/${CLUSTERNAME}.yaml -v ${TAG} \
+		--override images.globalRegistry=${REGISTRY} \
 		--override images.quarkop.digest= \
 		--override images.imagePullPolicy=Always \
 		--override containerParameters.debug=true \
 		--override containerParameters.enableBucket=true \
 		--override gcov.enabled=false \
-		--override gcov.images.initContainer.registry=us.gcr.io/netapp-hcl \
+		--override gcov.images.initContainer.registry=${REGISTRY}
 
   # kubectl -n astra-connector apply -f /home/addon/neptune.yaml
   # echo -e "${Green}Waiting for neptune controller to be ready..."
@@ -328,6 +352,14 @@ function loginToRepo() {
   fi
 }
 
+function doATOMImageBuild() {
+  echo -e "${Green}Building ATOM images...${ColorOff}"
+
+  makeTarget=(build-csc build-nvc build-nc build-nw build-podrick build-quarkha \
+    build-nhc build-nm build-quarkop build-nsc build-snc)
+
+} 
+
 function doATOMImage() {
   # The assumption is that this repo has all necessary atom needed images
   echo -e "${Green}Setting up ATOM images...${ColorOff}"
@@ -337,7 +369,7 @@ function doATOMImage() {
     echo -e "${Red}Could not get the image tag${ColorOff}"
     return
   fi
-  dRegistry="docker.repo.eng.netapp.com"
+  localrepo="localhost:5001"
 
   filecontent=$(cat /home/addon/atom-images.list)
   allimages=($(echo $filecontent))
@@ -359,11 +391,11 @@ function doATOMImage() {
     fi
     echo -e "${Green}Processing image ${fullname}:${tag}${ColorOff}"
     # check if the image is already available locally
-    localImg=$(docker image ls localhost:5001/${fullname}:${tag} --quiet)
+    localImg=$(docker image ls ${localrepo}/${fullname}:${tag} --quiet)
     if [[ -z "${localImg}" ]]; then
-      docker tag ${dRegistry}/${fullname}:${tag} localhost:5001/${fullname}:${tag}
+      echo -e "${Green}Image ${fullname}:${tag} is not available locally, run make IMAGE_REPO=localhost:5001 build-components${ColorOff}"
     fi
-    docker push localhost:5001/${fullname}:${tag}
+    docker push ${localrepo}/${fullname}:${tag}
   done
 }
 
@@ -777,30 +809,8 @@ elif [[ "${CMD}" == "proxy" ]]; then
 elif [[ "${CMD}" == "make" ]]; then
   checkInVC
 
-  if [[ "$REST" == "all-buildx" ]]; then
-
-    # Only login to image repository when both registry userid and token are available
-    # this is to allow publish to the image repo will be successful
-    if [[ ! -z $REGISTRY_USERID ]] && [[ ! -z $REGISTRY_TOKEN ]]; then
-      # Login to the registry only to allow multiarch image built and push easier
-      if [[ -z "$REGISTRY" ]]; then
-        echo ${REGISTRY_TOKEN} | docker login docker.io -u ${REGISTRY_USERID} --password-stdin >/dev/null 2>&1
-        REGISTRY="${REGISTRY_USERID}/"
-      else
-        echo ${REGISTRY_TOKEN} | docker login ${REGISTRY} -u ${REGISTRY_USERID} --password-stdin >/dev/null 2>&1
-      fi
-    fi
-  fi
-
-  if [[ -z ${PLATFORMS} ]]; then
-    ARCH=$(uname -m)
-    if [[ "${ARCH}" == "aarch64" ]]; then ARCH=arm64; fi
-    if [[ "${ARCH}" == "x86_64" ]]; then ARCH="amd64"; fi
-    PLATFORMS=linux/${ARCH}
-  fi
-
   # We are ready to execute,
-  make ${REST} REGISTRY=${REGISTRY} PLATFORMS=${PLATFORMS} REPOSITORY=${REPOSITORY} TAG=${TAG}
+  make ${REST}
 
 elif [[ "${CMD}" == "k" ]]; then
 
