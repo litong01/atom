@@ -1,0 +1,547 @@
+# ---
+# kubectl get clusterrole certs-installer -o yaml
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: ClusterRole
+# metadata:
+#   annotations:
+#     helm.sh/hook: pre-install
+#     helm.sh/hook-delete-policy: hook-succeeded
+#     helm.sh/hook-weight: "1"
+#   name: certs-installer
+# rules:
+# - apiGroups:
+#   - ""
+#   resources:
+#   - secrets
+#   verbs:
+#   - get
+#   - list
+#   - delete
+#   - create
+# ---
+# kubectl get clusterrole netapp-nodevol-controller-cluster-role -o yaml
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: ClusterRole
+# metadata:
+#   annotations:
+#     meta.helm.sh/release-name: quark-operator
+#     meta.helm.sh/release-namespace: atom-quark
+#   labels:
+#     app.kubernetes.io/managed-by: Helm
+#   name: netapp-nodevol-controller-cluster-role
+# rules:
+# - apiGroups:
+#   - ""
+#   resources:
+#   - nodes
+#   verbs:
+#   - get
+#   - list
+#   - watch
+# - apiGroups:
+#   - ""
+#   resources:
+#   - nodes/status
+#   verbs:
+#   - get
+#   - list
+#   - watch
+---
+# kubectl get clusterrole quark-operator -o yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: quark-operator
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  verbs:
+  - get
+  - list
+  - create
+  - watch
+  - delete
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - nodes/proxy
+  - nodes/metrics
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - nodes/status
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - endpoints
+  - secrets
+  - persistentvolumeclaims
+  - events
+  verbs:
+  - '*'
+- apiGroups:
+  - etcd.database.coreos.com
+  resources:
+  - etcdclusters
+  - etcdbackups
+  - etcdrestores
+  verbs:
+  - '*'
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - ingresses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumes
+  verbs:
+  - get
+  - create
+  - list
+  - watch
+  - update
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims
+  verbs:
+  - get
+  - create
+  - list
+  - watch
+  - update
+  - delete
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - endpoints
+  - events
+  verbs:
+  - get
+  - list
+  - create
+  - watch
+  - update
+  - delete
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - get
+  - list
+  - create
+  - watch
+  - update
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - create
+  - delete
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - storageclasses
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - delete
+  - update
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  - customresourcedefinitions/status
+  verbs:
+  - '*'
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - roles
+  - rolebindings
+  - clusterroles
+  - clusterrolebindings
+  verbs:
+  - get
+  - create
+  - delete
+  - update
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+- apiGroups:
+  - batch
+  resources:
+  - cronjobs
+  verbs:
+  - get
+  - create
+  - delete
+  - update
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - delete
+  - update
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  - ingresses/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingress
+  verbs:
+  - get
+- apiGroups:
+  - mesh.cloud.google.com
+  resources:
+  - controlplanerevisions
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - security.istio.io
+  resources:
+  - peerauthentications
+  verbs:
+  - create
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - get
+  - create
+  - delete
+- apiGroups:
+  - scheduling.k8s.io
+  resources:
+  - priorityclasses
+  verbs:
+  - get
+  - create
+  - delete
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+  - patch
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
+  - volumesnapshots
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+- apiGroups:
+  - quark.netapp.io
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
+  - multitenancy.acn.azure.com
+  resources:
+  - podnetworkinstances
+  - podnetworks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - multitenancy.acn.azure.com
+  resources:
+  - podnetworkinstances/finalizers
+  - podnetworks/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - multitenancy.acn.azure.com
+  resources:
+  - podnetworkinstances/status
+  - podnetworks/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+# kubectl get clusterrole quark-kube-state-metrics -o yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    meta.helm.sh/release-name: quark-operator
+    meta.helm.sh/release-namespace: atom-quark
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: quark-kube-state-metrics
+rules:
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - cronjobs
+  - jobs
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - certificates.k8s.io
+  resources:
+  - certificatesigningrequests
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - certificates.k8s.io
+  resources:
+  - certificatesigningrequests
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - storageclasses
+  - volumeattachments
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - mutatingwebhookconfigurations
+  - validatingwebhookconfigurations
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - networkpolicies
+  - ingresses
+  - ingress
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - secrets
+  - nodes
+  - pods
+  - services
+  - resourcequotas
+  - replicationcontrollers
+  - limitranges
+  - persistentvolumeclaims
+  - persistentvolumes
+  - namespaces
+  - endpoints
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - statefulsets
+  - daemonsets
+  - deployments
+  - replicasets
+  verbs:
+  - list
+  - watch
+---
+# kubectl get clusterrolebindings quark-operator
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    meta.helm.sh/release-name: quark-operator
+    meta.helm.sh/release-namespace: atom-quark
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: quark-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: quark-operator
+subjects:
+- kind: ServiceAccount
+  name: quark-operator
+  namespace: atom-quark
+# ---
+# kubectl get clusterrolebindings tli-cluster-admin-binding -o yaml
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: ClusterRoleBinding
+# metadata:
+#   name: tli-cluster-admin-binding
+# roleRef:
+#   apiGroup: rbac.authorization.k8s.io
+#   kind: ClusterRole
+#   name: cluster-admin
+# subjects:
+# - apiGroup: rbac.authorization.k8s.io
+#   kind: User
+#   name: user-service-account@quark-dev-234914.iam.gserviceaccount.com
+---
+# kubectl get clusterrolebindings quark-kube-state-metrics -o yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    meta.helm.sh/release-name: quark-operator
+    meta.helm.sh/release-namespace: atom-quark
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: quark-kube-state-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: quark-kube-state-metrics
+subjects:
+- kind: ServiceAccount
+  name: quark-kube-state-metrics
+  namespace: quark-system

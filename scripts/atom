@@ -38,12 +38,14 @@ function printHelp() {
   echo "     vtest    - verify test results"
   echo "     rmtest   - remove neptune tests"
   echo "     rstest   - test restore of a backup"
-  echo "     make     - run neptune make command"
+  echo "     make     - run atom make command"
   echo "     conn     - deploy connector"
   echo "     bash     - run bash interactively"
   echo "     log      - display logs"
   echo "     k9s      - run k9s tool"
   echo "     k        - run kubectl command"
+  echo "     go       - run go command"
+  echo "     gobuild  - run build native utility"
   echo ""
   echo -e "Parameters for ${Green}up, prepare${ColorOff} command:"
   echo "     -r|--k8srelease     - a k8s release to be used to create k8s cluster"
@@ -67,8 +69,8 @@ function printHelp() {
 
 function validateCMD() {
   cmd=$1
-  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "proxy" "log" "k9s" \
-    "update" "k8stool" "bash" "addon" "hostpath" "test" "rmtest" "vtest" "rstest" "testhostpath" "trident" "k")
+  allCommands=("up" "down" "image" "deploy" "clean" "cleanall" "prepare" "refresh" "make" "proxy" "log" "k9s" "gobuild" \
+    "update" "k8stool" "bash" "addon" "hostpath" "test" "rmtest" "vtest" "rstest" "testhostpath" "trident" "k" "go")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -98,7 +100,7 @@ REST="$@"
 validateCMD "${CMD}"
 
 # We will only handle command parameters if command was not make and not k8stool
-if [[ "${CMD}" == "make" || "${CMD}" == "k8stool" || "${CMD}" == "bash" || "${CMD}" == "k" ]]; then
+if [[ "${CMD}" == "make" || "${CMD}" == "k8stool" || "${CMD}" == "bash" || "${CMD}" == "k" || "${CMD}" == "go" || "${CMD}" == "gobuild" ]]; then
   echo ""
 else
   # Handling parameters
@@ -211,9 +213,13 @@ function loginToDockerHub() {
   fi
 }
 
-function checkInNeptune() {
-    projectName=$(cat PROJECT | yq '.projectName')
-    if [[ ! -f "${CURDIR}/Makefile" ]] || [[ "${projectName}" != "neptune" ]]; then
+function checkInVC() {
+    if [[ ! -f "${CURDIR}/Makefile" ]]; then
+      echo -e "${Red}You are not in NetApp Volume Controller root directory, quiting...${ColorOff}"
+      exit 1
+    fi
+    projectName=$(cat Makefile | grep 'echo "NetApp Volume Controller"')
+    if [[ -z "${projectName}" ]]; then
       echo -e "${Red}You are not in neptune root directory, quiting...${ColorOff}"
       exit 1
     fi
@@ -273,19 +279,32 @@ function downOperator() {
 
 }
 
-function deployNeptune() {
-  echo -e "${Green}Deploying Neptune controller...${ColorOff}"
-  kubectl -n astra-connector apply -f /home/addon/neptune.yaml
-  echo -e "${Green}Waiting for neptune controller to be ready..."
-  waitforpod 'astra-connector' 'control-plane=controller-manager'
+function deployAtom() {
+  echo -e "${Green}Deploying Atom operator...${ColorOff}"
+  TAG=$(git rev-parse --short HEAD)
 
-  # if [[ -z ${REGISTRY} ]]; then
-  #   IMG="kind-registry:5001/controller:${TAG}" REGISTRY="kind-registry:5001" TAG=${TAG} make deploy
-  # else
-  #   # fix up registry missing trailing slash
-  #   reg=$(echo ${REGISTRY%/})
-  #   SECRET=${SECRETNAME} REGISTRY="${reg}/" TAG=${TAG} make deploy
-  # fi
+  # Create two namespaces first
+  kubectl create namespace atom-quark --dry-run=client -o yaml \
+    | kubectl apply -f - > /dev/null 2>&1
+  kubectl create namespace quark-system --dry-run=client -o yaml \
+    | kubectl apply -f - > /dev/null 2>&1
+
+  bin/nvcclientcli reconcile operator \
+		-N atom-quark \
+		-C /home/.kube/${CLUSTERNAME}.yaml \
+		-v tli-${TAG} \
+		--override images.globalRegistry=us.gcr.io/netapp-hcl \
+		--override images.quarkop.digest= \
+		--override images.imagePullPolicy=Always \
+		--override containerParameters.debug=true \
+		--override containerParameters.enableBucket=true \
+		--override gcov.enabled=false \
+		--override gcov.images.initContainer.registry=us.gcr.io/netapp-hcl \
+
+  # kubectl -n astra-connector apply -f /home/addon/neptune.yaml
+  # echo -e "${Green}Waiting for neptune controller to be ready..."
+  # waitforpod 'astra-connector' 'control-plane=controller-manager'
+
 }
 
 function deployOperator() {
@@ -656,7 +675,7 @@ setupContext
 # cluster processes
 if [[ "${CMD}" == "up" ]]; then
   echo ""
-  # checkInNeptune
+  # checkInVC
   source /home/bin/utils
 
   echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
@@ -676,7 +695,7 @@ if [[ "${CMD}" == "up" ]]; then
 
 elif [[ "${CMD}" == "prepare" ]]; then
   echo ""
-  # checkInNeptune
+  # checkInVC
   source /home/bin/utils
 
   echo ""
@@ -693,7 +712,7 @@ elif [[ "${CMD}" == "prepare" ]]; then
 elif [[ "${CMD}" == "down" ]]; then
   echo ""
   echo -e "${Green}Removing Neptune CRDs and Controllers...${ColorOff}"
-  checkInNeptune
+  checkInVC
 
   downOperator
 
@@ -716,12 +735,13 @@ elif [[ "${CMD}" == "cleanall" ]]; then
   docker volume prune -f &> /dev/null || true
 
 elif [[ "${CMD}" == "deploy" ]]; then
-  checkInNeptune
+  checkInVC
   source /home/bin/utils
-  deployNeptune
+  deployAtom
+
 
 elif [[ "${CMD}" == "refresh" ]]; then
-  checkInNeptune
+  checkInVC
   refreshDeployment
 
 elif [[ "${CMD}" == "image" ]]; then
@@ -755,7 +775,7 @@ elif [[ "${CMD}" == "proxy" ]]; then
   proxy
 
 elif [[ "${CMD}" == "make" ]]; then
-  checkInNeptune
+  checkInVC
 
   if [[ "$REST" == "all-buildx" ]]; then
 
@@ -785,6 +805,28 @@ elif [[ "${CMD}" == "make" ]]; then
 elif [[ "${CMD}" == "k" ]]; then
 
   kubectl ${REST}
+
+elif [[ "${CMD}" == "go" ]]; then
+
+  gocache=$(pwd)/.cache.d/arm64
+  mkdir -p ${gocache}
+  export GOPATH=${gocache}/pkg
+  export GOCACHE=${gocache}
+  go ${REST}
+
+elif [[ "${CMD}" == "gobuild" ]]; then
+
+  # setup both GOPATH and GOCACHE first to make sure that we can
+  # always build things faster
+  gocache=$(pwd)/.cache.d/arm64
+  mkdir -p ${gocache}
+  export GOPATH=${gocache}/pkg
+  export GOCACHE=${gocache}
+  # make sure that the binary is built with the right version
+  export TAG=$(git rev-parse --short HEAD)
+  export flags="-X quark.netapp.io/volume-controller/cmd/nvcclientcli/cmd.Version=${TAG} -extldflags -static"
+  thecmd="go build -ldflags='${flags}' ${REST}"
+  sh -c "${thecmd}"
 
 elif [[ "${CMD}" == "log" ]]; then
   if [[ -z $DEPLOYMENT ]]; then
