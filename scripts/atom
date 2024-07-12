@@ -17,6 +17,7 @@ APITOKEN=${APITOKEN:-""}
 CLUSTERNAME=${CLUSTERNAME:-"atom"}
 CONNECTORCLUSTERNAME=${CLUSTERNAME:-"atom"}
 K8SRELEASE=${K8SRELEASE:-"1.29.0"}
+WORKERNODES=0
 
 function printHelp() {
   echo ""
@@ -52,6 +53,7 @@ function printHelp() {
   echo "     -r|--k8srelease     - a k8s release to be used to create k8s cluster"
   echo -e "                           valid values are 1.21.14 ~ 1.29.0 default is ${Green}1.29.0${ColorOff}"
   echo "        --cluster-name   - name of the k8s cluster to be created"
+  echo "        --work-nodes     - number of worker nodes, default 0"
   echo ""
   echo -e "Parameters for ${Green}refresh${ColorOff} command:"
   echo "     -d|--deployment-name  - a deployment name such as neptune-controller-manager"
@@ -126,6 +128,8 @@ else
         APITOKEN="$2";shift 2;;
       --cluster-name)
         CLUSTERNAME="$2";shift 2;;
+      --worker-nodes)
+        WORKERNODES="$(($2+0))";shift 2;;
       -r|--k8s-release)
         K8SRELEASE="$2";shift 2;;
       --bridgeurl)
@@ -782,6 +786,22 @@ EOF
 
 }
 
+function setupIstio() {
+  echo -e "${Green}Setting up Istio...${ColorOff}"
+  # This section setup istio onto the cluster
+  kubectl create namespace istio-system --dry-run=client -o yaml \
+    | kubectl apply -f -
+
+  # Install istio
+  istioctl install --set profile=ambient --skip-confirmation
+
+  # Install kubernetes gateway API CRDs
+  kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+  { kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v1.1.0" | kubectl apply -f -; }
+
+  echo -e "${Green}Istio has been setup!!!${ColorOff}"
+}
+
 #=================Start main process=========================
 
 set -e
@@ -815,12 +835,14 @@ elif [[ "${CMD}" == "prepare" ]]; then
 
   echo ""
   echo -e "${Green}Setting up kubernetes cluster...${ColorOff}"
-  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --cluster-name ${CLUSTERNAME} --k8s-release ${K8SRELEASE}
+  ${SCRIPTDIR}/k8stool clusters --workdir "${WORKDIR}" --cluster-name ${CLUSTERNAME} --k8s-release ${K8SRELEASE} --worker-nodes ${WORKERNODES}
 
   installStorageCRDs
 
   # echo -e "${Green}Create traefik certificate${ColorOff}"
   ${SCRIPTDIR}/k8stool cert --namespace ${NAMESPACE} --workdir "${WORKDIR}" --cluster-name "${CLUSTERNAME}"
+
+  setupIstio
 
   echo -e "${Green}Ready to deploy ATOM, you may run deploy command${ColorOff}"
 
