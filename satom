@@ -1,0 +1,118 @@
+#!/bin/bash
+# Define some colors
+ColorOff='\033[0m'        # Text Reset
+Black='\033[0;30m'        # Black
+Red='\033[0;31m'          # Red
+Green='\033[0;32m'        # Green
+
+# Set your project ID and image prefix
+IMAGENAMES=("swift-networking-controller" "ntapvol-snat-controller" "quark-operator" \
+            "node-monitor" "netapp-ha-controller" "podrick" "nodevol-controller" \
+            "netapp-volume-controller" "nodevol-worker" "cloud-snapshot-controller")
+PROJECT_ID="netapp-hcl"
+TAG_PREFIX="${USER}-"
+
+function printHelp() {
+  echo ""
+  echo "Usage:"
+  echo "    ${APPNAME} <cmd> [options]"
+  echo ""
+  echo -e "Available commands:"
+  echo "     list       - List all my images"
+  echo "     rmi        - Dlete all my images" 
+  echo "     get        - Display all Quark CRs"
+  echo "     build      - Build the image"
+  echo "     deploy     - Deploy quark"
+  echo "     undeploy   - Undeploy quark"
+  echo "     -h, --help - Display this help message"
+  echo ""
+}
+
+function validateCMD() {
+  cmd=$1
+  allCommands=("list" "get" "rmi" "build" "deploy" "undeploy")
+  ccmd=""
+  for item in "${allCommands[@]}"; do
+    if [[ "${cmd}" == "${item}" ]]; then
+      ccmd="${cmd}"
+      isValidCMD="true"
+      break
+    fi
+  done
+  if [[ -z "${ccmd}" ]]; then
+    if [[ "${cmd}" != "-h" ]] && [[ "${cmd}" != "--help" ]] && [[ "${cmd}" != "" ]]; then
+      echo ""
+      echo -e "ERROR: ${Red}${cmd}${ColorOff} is not a supported command!"
+      printHelp "${isValidCMD}"
+      exit 1
+    else
+      printHelp "${isValidCMD}"
+      exit 0
+    fi
+  fi
+}
+
+function getAllQuarkCR() {
+  quarkCRDs=($(kubectl get crds -o custom-columns='NAME:metadata.name' | grep "quark.netapp.io"))
+  IFS=',';allcrds="${quarkCRDs[*]}";IFS=$' \t\n'
+  kubectl get --all-namespaces -o custom-columns='NAME:metadata.name,KIND:kind,NAMESPACE:metadata.namespace' "${allcrds}"
+}
+
+function doListOrDelete() {
+  cmd=$1
+  for IMAGENAME in ${IMAGENAMES[@]}; do
+    # List all tags for the specified image and filter by the tag prefix
+    # echo -e "Looking for image ${Green}$IMAGENAME${ColorOff} with tag prefix: ${Green}$TAG_PREFIX${ColorOff}"
+    IMAGETAGS=$(gcloud container images list-tags us.gcr.io/$PROJECT_ID/$IMAGENAME --format="get(TAGS)" | grep "^$TAG_PREFIX")
+    if [ -z "$IMAGETAGS" ]; then
+      echo -e "No ${Green}us.gcr.io/${PROJECT_ID}/$IMAGENAME${ColorOff} image found with tag prefix: ${Green}$TAG_PREFIX${ColorOff}"
+      continue
+    fi
+    # Loop through each image and delete it
+    for IMAGETAG in $IMAGETAGS; do
+      # Redirect the warning message to /dev/null.
+      if [[ "${cmd}" == "list" ]]; then
+        echo "Found image: us.gcr.io/${PROJECT_ID}/${IMAGENAME}:$IMAGETAG"
+        continue
+      else
+        echo "Deleting image: us.gcr.io/${PROJECT_ID}/${IMAGENAME}:$IMAGETAG"
+        gcloud container images delete "us.gcr.io/${PROJECT_ID}/${IMAGENAME}:$IMAGETAG" --force-delete-tags --quiet 2>/dev/null
+      fi
+      # Alternative way to delete the image using sha256 digest
+      # Getting the sha256 digest of the image
+      # IMAGESHA256=$(gcloud container images describe "us.gcr.io/${PROJECT_ID}/${IMAGENAME}:$IMAGETAG" --format="get(digest,tags)" 2>/dev/null)
+      # gcloud container images delete "us.gcr.io/${PROJECT_ID}/${IMAGENAME}:$IMAGESHA256" --force-delete-tags --quiet 2>/dev/null
+    done
+  done
+}
+
+CMD=$1
+if [[ -z "${CMD}" ]]; then
+  CMD="list"
+fi
+shift
+# This saves the rest of the command in case it is to pass along for make command
+REST="$@"
+# Validate the command
+validateCMD "${CMD}"
+
+if [[ "${CMD}" == "get" ]]; then
+  getAllQuarkCR
+elif [[ "${CMD}" == "rmi" ]] || [[ "${CMD}" == "list" ]]; then
+  doListOrDelete "${CMD}"
+elif [[ "${CMD}" == "build" ]]; then
+  ./quark.sh -b all
+  ./quark.sh -b quarkop
+elif [[ "${CMD}" == "deploy" ]]; then
+  echo "Deploying quark"
+  qubeTag="${USER}-"$(git rev-parse --short HEAD)
+  quarkTag=$(gcloud container images list-tags us.gcr.io/netapp-hcl/quark_dmap \
+    --filter "tags ~ dev-\d{7,}-non-debug" --format "value(tags[0])" --limit 1 \
+    2> /dev/null)
+  QUARKOP_TAG=$qubeTag ./quark.sh -i -s -W -P Always -d $quarkTag
+elif [[ "${CMD}" == "undeploy" ]]; then
+  echo "Undeploying quark"
+  ./quark.sh -u -r
+fi
+
+
