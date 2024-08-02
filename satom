@@ -30,7 +30,7 @@ function printHelp() {
 
 function validateCMD() {
   cmd=$1
-  allCommands=("list" "get" "rmi" "build" "deploy" "undeploy")
+  allCommands=("list" "get" "rmi" "build" "deploy" "undeploy" "inspect" "clean")
   ccmd=""
   for item in "${allCommands[@]}"; do
     if [[ "${cmd}" == "${item}" ]]; then
@@ -86,6 +86,43 @@ function doListOrDelete() {
   done
 }
 
+# This method lists all the cluster role, role for a service account
+function getRoleClusterRolesForSA() {
+  sa=$1
+  ccs='ROLENAME:roleRef.name,KIND:kind,NAME:metadata.name,SERVICE_ACCOUNTS:subjects[?(@.kind=="ServiceAccount")].name'
+  echo -e "=====ClusterRoleBindings and RoleBindings for ServiceAccount: ${Green}${sa}${ColorOff}====="
+  kubectl get clusterrolebindings,rolebindings -A -o custom-columns=${ccs} | grep "${sa}"
+}
+
+# This method lists all the cluster role, role for service account in a namespace
+function getSARoleClusterRolesForNS() {
+  ns=$1
+  jpath='{range .items[?(@.metadata.name!="default")]}{.metadata.name}{"\n"}{end}'
+  kubectl get serviceaccounts -n $ns -o jsonpath="${jpath}" | while read sa; do
+    getRoleClusterRolesForSA $sa
+  done
+}
+
+# This method lists all the resources currently still resides in a namespace
+# Ensure that custom CRDs are not removed
+function getAllResourcesForNS() {
+  ns=$1
+  echo -e "=====Resources for namespace: ${Green}${ns}${ColorOff}====="
+  kubectl api-resources --verbs=list --namespaced -o name | grep -v "events" | \
+    xargs -n 1 kubectl get --show-kind --ignore-not-found -n $ns
+}
+
+function deepCleanNS() {
+  ns=$1
+  echo -e "=====Deep cleaning namespace: ${Green}${ns}${ColorOff}====="
+  kubectl api-resources --verbs=list --namespaced -o name | grep -v "events" | \
+    xargs -n 1 sh -c 'kubectl get $0 \
+    -o jsonpath="{range .items[*]}{.kind}/{.metadata.name}{\"\n\"}{end}" \
+    --ignore-not-found -n $ns' | while read kindname; do
+      kubectl delete $kindname -n $ns --ignore-not-found
+    done
+}
+
 CMD=$1
 if [[ -z "${CMD}" ]]; then
   CMD="list"
@@ -98,6 +135,22 @@ validateCMD "${CMD}"
 
 if [[ "${CMD}" == "get" ]]; then
   getAllQuarkCR
+
+elif [[ "${CMD}" == "inspect" ]]; then
+  if [[ -z "${REST}" ]]; then
+    echo "Please provide the namespace to inspect"
+    exit 1
+  fi
+  getSARoleClusterRolesForNS "${REST}"
+  getAllResourcesForNS "${REST}"
+
+elif [[ "${CMD}" == "clean" ]]; then
+  if [[ -z "${REST}" ]]; then
+    echo "Please provide the namespace to be deepcleaned"
+    exit 1
+  fi
+  deepCleanNS "${REST}"
+
 elif [[ "${CMD}" == "rmi" ]] || [[ "${CMD}" == "list" ]]; then
   doListOrDelete "${CMD}"
 elif [[ "${CMD}" == "build" ]]; then
