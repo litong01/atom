@@ -6,6 +6,25 @@ Red='\033[0;31m'          # Red
 Green='\033[0;32m'        # Green
 
 
+
+function waitForRS() {
+  local namespace=$1
+  local rs=$2
+ 
+  timeout=60
+  interval=2
+  elapsed=0
+  query=$(kubectl get -n $namespace $rs -o jsonpath='{.metadata.name}' 2>/dev/null)
+  while [[ "${query}" == "" ]]; do
+    if [[ $elapsed -ge $timeout ]]; then
+      echo "Timeout waiting for ${rs} in ${namespace} to become available"
+      return
+    fi
+    sleep $interval
+    elapsed=$((elapsed + interval))
+  done
+}
+
 echo -e "${Green}Removing quark operator from atom-quark namespace...${ColorOff}"
 helm uninstall quark-operator -n atom-quark
 
@@ -88,7 +107,8 @@ echo -e "${Green}Deploy quark to quark-system...${ColorOff}"
     --override images.quark.snc.tag=tli-88b95e9b
 
 echo -e "${Green}Waiting for quark to be available...${ColorOff}"
-kubectl -n quark-system wait deploy/netapp-volume-controller --for condition=Available --timeout=120s
+waitForRS quark-system deployment/netapp-volume-controller
+kubectl -n quark-system wait deployment/netapp-volume-controller --for condition=Available --timeout=120s
 
 echo -e "${Green}Moving etcd-client-tls-cert from atom-quark to quark-system...${ColorOff}"
 kubectl get secret etcd-client-tls-cert -n atom-quark -o yaml | sed 's/namespace: atom-quark/namespace: quark-system/g' | kubectl apply -f -
@@ -102,25 +122,31 @@ kubectl get role netapp-volume-controller-role -n atom-quark -o yaml | sed 's/na
 echo -e "${Green}Moving netapp-volume-controller-binding from atom-quark to quark-system...${ColorOff}"
 kubectl get rolebinding netapp-volume-controller-binding -n atom-quark -o yaml | sed 's/namespace: atom-quark/namespace: quark-system/g' | kubectl apply -f -
 
-echo -e "${Green}Annotate service account netapp-volume-controller-account...${ColorOff}"
-kubectl annotate serviceaccount netapp-volume-controller-account --namespace quark-system \
-  iam.gke.io/gcp-service-account=nvc-service-account@quark-dev-234914.iam.gserviceaccount.com
 
 echo -e "${Green}Removing old quark from atom-quark namespace...${ColorOff}"
 helm uninstall quark -n atom-quark
 echo -e "${Green}Waiting for old quark to be removed...${ColorOff}"
 kubectl wait --for=delete -n atom-quark pod -l app=netapp-volume-controller --timeout=60s
 
-echo -e "${Green}Copy configmaps from quark-system to atom-quark...${ColorOff}"
-kubectl wait --for=condition=Available -n quark-system configmaps/supportability-config --timeout=60s
-kubectl wait --for=condition=Available -n quark-system configmaps/exporter-config --timeout=60s
-kubectl wait --for=condition=Available -n quark-system configmaps/fluentbit-sidecar-config --timeout=60s
 
+echo -e "${Green}Annotate service account netapp-volume-controller-account...${ColorOff}"
+waitForRS quark-system serviceaccount/netapp-volume-controller-account
+kubectl annotate serviceaccount netapp-volume-controller-account --namespace quark-system \
+  iam.gke.io/gcp-service-account=nvc-service-account@quark-dev-234914.iam.gserviceaccount.com
+
+echo -e "${Green}Copy configmaps from quark-system to atom-quark...${ColorOff}"
+waitForRS quark-system configmaps/supportability-config
 kubectl get configmap supportability-config -n quark-system -o yaml | sed 's/namespace: quark-system/namespace: atom-quark/g' | kubectl apply -f -
+
+waitForRS quark-system configmaps/exporter-config
 kubectl get configmap exporter-config -n quark-system -o yaml | sed 's/namespace: quark-system/namespace: atom-quark/g' | kubectl apply -f -
+
+waitForRS quark-system configmaps/fluentbit-sidecar-config
 kubectl get configmap fluentbit-sidecar-config -n quark-system -o yaml | sed 's/namespace: quark-system/namespace: atom-quark/g' | kubectl apply -f -
 
 echo -e "${Green}Copy netapp-quark-role and its role bindings from quark-system to atom-quark...${ColorOff}"
+kubectl -n atom-quark create serviceaccount netapp-quark-account
 kubectl get role  netapp-quark-role -n quark-system -o yaml | sed 's/namespace: quark-system/namespace: atom-quark/g' | kubectl apply -f -
 kubectl get rolebindings netapp-quark-role-binding -n quark-system -o yaml | sed 's/namespace: quark-system/namespace: atom-quark/g' | kubectl apply -f -
+
 
