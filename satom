@@ -136,7 +136,7 @@ function deepCleanNS() {
     --ignore-not-found -n '${ns} | while read kindname; do
       # skip pvc
       echo -e "Deleting ${Green}${kindname}${ColorOff}"
-      if [[ "${kindname}" == "PersistentVolumeClaim/*" ]]; then
+      if [[ ${kindname} == PersistentVolumeClaim/* ]]; then
         continue
       fi
       kubectl delete $kindname -n $ns --ignore-not-found
