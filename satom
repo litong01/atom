@@ -134,11 +134,13 @@ function deepCleanNS() {
     xargs -n 1 sh -c 'kubectl get $0 \
     -o jsonpath="{range .items[*]}{.kind}/{.metadata.name}{\"\n\"}{end}" \
     --ignore-not-found -n '${ns} | while read kindname; do
-      # skip pvc
-      echo -e "Deleting ${Green}${kindname}${ColorOff}"
-      if [[ ${kindname} == PersistentVolumeClaim/* ]]; then
+      # skip pvc, configmap and serviceaccount
+      if [[ ${kindname} == PersistentVolumeClaim/* ]] || \
+        [[ ${kindname} == ConfigMap/kube-root-ca.crt ]] || \
+        [[ ${kindname} == ServiceAccount/default ]]; then
         continue
       fi
+      echo -e "Deleting ${Green}${kindname}${ColorOff}"
       kubectl delete $kindname -n $ns --ignore-not-found
     done
 }
