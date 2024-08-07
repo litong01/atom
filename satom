@@ -89,9 +89,23 @@ function doListOrDelete() {
 # This method lists all the cluster role, role for a service account
 function getRoleClusterRolesForSA() {
   sa=$1
-  ccs='ROLENAME:roleRef.name,KIND:kind,NAME:metadata.name,SERVICE_ACCOUNTS:subjects[?(@.kind=="ServiceAccount")].name'
-  echo -e "=====ClusterRoleBindings and RoleBindings for ServiceAccount: ${Green}${sa}${ColorOff}====="
-  kubectl get clusterrolebindings,rolebindings -A -o custom-columns=${ccs} | grep "${sa}"
+  ns=$2
+  # ccs='ROLENAME:roleRef.name,KIND:kind,NAME:metadata.name,SERVICE_ACCOUNTS:subjects[?(@.kind=="ServiceAccount")].name'
+  # echo -e "=====ClusterRoleBindings and RoleBindings for ServiceAccount: ${Green}${sa}${ColorOff}====="
+  # kubectl get clusterrolebindings,rolebindings -A -o custom-columns=${ccs} | grep "${sa}"
+
+  rstring='.items[] | select(.subjects[]? | select(.kind == "ServiceAccount" and .name == "SERVICEACCOUNT")) | .roleRef.name + "==" + .metadata.name'
+
+  tstring="${rstring/SERVICEACCOUNT/$sa}"
+  echo -e "Role and RoleBindings for ServiceAccount: ${Green}${sa}${ColorOff}"
+  kubectl get rolebinding -n "${ns}" -o json | jq -r "${tstring}"
+
+  rstring='.items[] | select(.subjects[]? | select(.kind == "ServiceAccount" and .name == "SERVICEACCOUNT" and .namespace == "NAMESPACE")) | .roleRef.name  + "==" + .metadata.name'
+  tstring="${rstring/SERVICEACCOUNT/$sa}"
+  tstring="${tstring/NAMESPACE/$ns}"
+  echo -e "ClusterRole and ClusterRoleBindings for ServiceAccount: ${Green}${sa}${ColorOff}"
+  kubectl get clusterrolebinding -o json | jq -r "${tstring}"
+
 }
 
 # This method lists all the cluster role, role for service account in a namespace
@@ -99,7 +113,8 @@ function getSARoleClusterRolesForNS() {
   ns=$1
   jpath='{range .items[?(@.metadata.name!="default")]}{.metadata.name}{"\n"}{end}'
   kubectl get serviceaccounts -n $ns -o jsonpath="${jpath}" | while read sa; do
-    getRoleClusterRolesForSA $sa
+    getRoleClusterRolesForSA $sa $ns
+    echo ""
   done
 }
 
@@ -118,7 +133,12 @@ function deepCleanNS() {
   kubectl api-resources --verbs=list --namespaced -o name | grep -v "events" | \
     xargs -n 1 sh -c 'kubectl get $0 \
     -o jsonpath="{range .items[*]}{.kind}/{.metadata.name}{\"\n\"}{end}" \
-    --ignore-not-found -n $ns' | while read kindname; do
+    --ignore-not-found -n '${ns} | while read kindname; do
+      # skip pvc
+      echo -e "Deleting ${Green}${kindname}${ColorOff}"
+      if [[ "${kindname}" == "PersistentVolumeClaim/*" ]]; then
+        continue
+      fi
       kubectl delete $kindname -n $ns --ignore-not-found
     done
 }
@@ -153,9 +173,11 @@ elif [[ "${CMD}" == "clean" ]]; then
 
 elif [[ "${CMD}" == "rmi" ]] || [[ "${CMD}" == "list" ]]; then
   doListOrDelete "${CMD}"
+
 elif [[ "${CMD}" == "build" ]]; then
   ./quark.sh -b all
   ./quark.sh -b quarkop
+
 elif [[ "${CMD}" == "deploy" ]]; then
   echo "Deploying quark"
   qubeTag="${USER}-"$(git rev-parse --short HEAD)
@@ -163,9 +185,11 @@ elif [[ "${CMD}" == "deploy" ]]; then
     --filter "tags ~ dev-\d{7,}-non-debug" --format "value(tags[0])" --limit 1 \
     2> /dev/null)
   QUARKOP_TAG=$qubeTag ./quark.sh -i -s -W -P Always -d $quarkTag
+
 elif [[ "${CMD}" == "undeploy" ]]; then
   echo "Undeploying quark"
   ./quark.sh -u -r
+
 fi
 
 
